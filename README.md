@@ -1,10 +1,10 @@
 # cervelAI
 
-![license](https://img.shields.io/badge/license-MIT-blue)
-![platform](https://img.shields.io/badge/platform-Proxmox%20LXC-orange)
-![Debian](https://img.shields.io/badge/Debian-13-red)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![platform](https://img.shields.io/badge/platform-Proxmox%20LXC-orange)](https://pve.proxmox.com/wiki/Linux_Container)
+[![Debian](https://img.shields.io/badge/Debian-13-red)](https://www.debian.org/releases/trixie/)
 
-> Spin up a ready-to-use Proxmox LXC for coding with terminal AI agents — from your laptop, from your phone, from anywhere.
+> Spin up a ready-to-use Proxmox LXC for coding with terminal AI agents from your laptop, from your phone, from anywhere.
 
 cervelAI provisions an unprivileged Debian 13 LXC preloaded with every terminal
 AI agent CLI (Claude Code, Codex, opencode, Pi.dev, Aider, Crush, Gemini CLI,
@@ -21,17 +21,17 @@ On the Proxmox host, **as root**. One-liner — fetches the project (tarball, no
 `git` needed) then runs the provisioner:
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/youruser/cervelAI/main/bootstrap.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/bootstrap.sh)"
 ```
 
-Replace `youruser` with your GitHub account — in **two places**: the URL above
-**and** the `CERVELAI_REPO` variable at the top of `bootstrap.sh`.
+Forking it? Point the installer at your own repo with `CERVELAI_REPO` /
+`CERVELAI_REF`, or edit those defaults at the top of `bootstrap.sh`.
 
 Prefer to read before you run? The manual variant is more auditable and
 recommended on a production host:
 
 ```bash
-curl -fsSL https://github.com/youruser/cervelAI/archive/refs/heads/main.tar.gz | tar -xz
+curl -fsSL https://github.com/BorisLord/cervelAI/archive/refs/heads/main.tar.gz | tar -xz
 bash cervelAI-main/cervelAI-lxc.sh
 ```
 
