@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# ai-run — run a command (typically an AI agent) and send an ntfy notification
+# when it exits. "Launch a prompt, go for lunch, come back": run it, detach the
+# tmux session, walk away.
+#
+# Usage: ai-run <cmd> [args...]
+#   ai-run claude -p "implement X"
+#   ai-run pi "refactor Y"
+#
+# Config in ~/.config/cervelAI/env: NTFY_SERVER, NTFY_TOPIC.
+# If NTFY_TOPIC is empty the command still runs — just without a notification.
+set -uo pipefail
+
+env_file="$HOME/.config/cervelAI/env"
+[ -r "$env_file" ] && . "$env_file"
+
+[ "$#" -eq 0 ] && { echo "usage: ai-run <cmd> [args...]" >&2; exit 2; }
+
+ntfy_server="${NTFY_SERVER:-https://ntfy.sh}"
+ntfy_topic="${NTFY_TOPIC:-}"
+host="$(hostname)"
+cmd="$*"
+start="$(date +%s)"
+
+"$@"
+rc=$?
+
+dur=$(( $(date +%s) - start ))
+
+if [ -n "$ntfy_topic" ]; then
+    if [ "$rc" -eq 0 ]; then
+        title="ai-run OK — $host"
+        prio="default"
+    else
+        title="ai-run FAILED rc=$rc — $host"
+        prio="high"
+    fi
+    curl -fsS -m 10 \
+        -H "Title: $title" \
+        -H "Priority: $prio" \
+        -d "$cmd  (${dur}s)" \
+        "$ntfy_server/$ntfy_topic" >/dev/null 2>&1 \
+        || echo "ai-run: ntfy notification failed (network?)" >&2
+else
+    echo "ai-run: NTFY_TOPIC empty in $env_file — no notification" >&2
+fi
+
+exit "$rc"
