@@ -22,17 +22,30 @@ install_runtimes_mise() {
     fi
 }
 
-# node + python ship their global tooling (tsc/tsx, ruff) — not worth a category.
-install_runtimes_node() {
-    mise_use "node" "lts"
-    mise_npm "typescript"
+install_runtimes_node() { mise_use "node" "lts"; }
+
+# pnpm itself is an npm: package, but config.toml says "use pnpm for npm:*" —
+# circular. MISE_NPM_PACKAGE_MANAGER=npm forces this single install via npm.
+install_runtimes_pnpm() {
+    if _user_bash "command -v pnpm" &>/dev/null; then
+        log_skip "mise: pnpm already on PATH"
+        return 0
+    fi
+    log_info "mise use -g npm:pnpm (bootstrap via MISE_NPM_PACKAGE_MANAGER=npm)"
+    run _user_bash "MISE_NPM_PACKAGE_MANAGER=npm mise use -g npm:pnpm@latest" \
+        || log_warn "pnpm bootstrap failed — later npm:* installs will too"
+}
+
+# Run AFTER pnpm bootstrap so tsc/tsx flow through pnpm.
+install_runtimes_node_tools() {
+    mise_use "npm:typescript" latest tsc
     mise_npm "tsx"
 }
+
 install_runtimes_python() {
     mise_use "python" "3.13"   # 3.14 has no scipy/numpy wheels — aider would fail to build
     mise_aqua "astral-sh/ruff"
 }
-install_runtimes_pnpm()    { mise_use "pnpm"    "latest"; }
 install_runtimes_uv()      { mise_aqua "astral-sh/uv"; }
 install_runtimes_go()      { mise_use "go"      "latest"; }
 install_runtimes_rust()    { mise_use "rust"    "latest"; }
@@ -67,8 +80,9 @@ install_runtimes_elixir() {
 install_runtimes_all() {
     install_runtimes_mise
     install_runtimes_node
-    install_runtimes_python
     install_runtimes_pnpm
+    install_runtimes_node_tools
+    install_runtimes_python
     install_runtimes_uv
     local csv="${CERVELAI_RUNTIMES:-}"
     [[ "$csv" == "all" ]] && csv="go,rust,bun,deno,zig,java,kotlin,dotnet,php,ruby,dart,scala,elixir,erlang,lua"
