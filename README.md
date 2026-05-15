@@ -35,22 +35,36 @@ curl -fsSL https://github.com/BorisLord/cervelAI/archive/refs/heads/main.tar.gz 
 bash cervelAI-main/cervelAI-lxc.sh
 ```
 
-The script first **asks for** the LXC specs: CTID, hostname, vCPU, RAM, disk,
-Proxmox storage, network bridge, username (default `agent`). Then, inside the
-LXC, a **whiptail menu** lets you pick exactly which tools, AI agents, runtimes,
-editors, git forges and shell to install — nothing is forced on you.
+The script first **prompts for** the LXC specs (CTID, hostname, vCPU, RAM, disk,
+storage, bridge, username) — every field has a sensible default (next free CTID,
+a btrfs/zfs pool when available, …) and the rootfs-capable storages are listed,
+so you can just hit Enter through them. Then,
+inside the LXC, an interactive **`gum` menu** lets you pick exactly which tools,
+AI agents, runtimes, editors, git forges and shell to install — arrow keys to
+move, Space to toggle, Enter to confirm. Nothing is forced on you.
+
+> **Recommended — `GITHUB_TOKEN`:** `setup.sh` prompts for a GitHub token early
+> on. You can also `export GITHUB_TOKEN` before running — it is forwarded into
+> the LXC and the prompt is skipped. `mise` and several agent installers hammer
+> the GitHub API; a token lifts the 60-request/hour unauthenticated limit to
+> 5000/h, well clear of what a full install needs. A token with no scopes
+> (public read-only) is enough.
+>
+> ```bash
+> GITHUB_TOKEN=ghp_xxx bash cervelAI-main/cervelAI-lxc.sh
+> ```
 
 ## What you get
 
-- **9 AI agent CLIs** — Claude Code, Codex, opencode, Pi.dev, Aider, Crush, Gemini CLI, Goose, Continue
-- **Language runtimes via `mise`** — 18 languages available; `node` + `python` by default, the rest opt-in
-- **Modern CLI tools** — ripgrep, fd, fzf, jq, yq, dasel, gron, ast-grep, typos, bat, eza, zoxide, hyperfine
+- **9 AI agent CLIs** — Claude Code, Codex, opencode, Pi.dev, Aider, Crush, Gemini CLI, Goose, Continue. All but Claude Code (which self-updates) are `mise`-managed, so `mise upgrade` keeps them current.
+- **Language runtimes via `mise`** — `node`, `python`, `pnpm` and `uv` always installed (infrastructure); 15 more languages opt-in
+- **Modern CLI tools** — ripgrep, fd, sd, fzf, jq, yq, dasel, gron, ast-grep, typos, bat, eza, glow, zoxide, tldr, hyperfine
 - **Editors** — vim + neovim by default; emacs, helix, micro optional
-- **Git tooling** — gh/glab/tea forge CLIs + git-delta + lazygit
-- **Shell** — bash + bash-it (zsh/fish optional), tmux, starship
+- **Git tooling** — gh/glab/tea forge CLIs + git-delta + lazygit + gitleaks (secret scanning)
+- **Shell** — bash + bash-it (zsh/fish optional), tmux
 - **Remote-friendly** — SSH + Mosh, optional key-only sshd hardening
 - **`ai-run`** — wrap any command to get an `ntfy` push notification when it exits
-- **Opt-in extras** — code-server, Docker/Podman/distrobox, token savers (snip/rtk), usage trackers (tokscale, ccusage)
+- **Opt-in extras** — code-server, Docker/Podman/distrobox + lazydocker, token savers (snip/rtk), usage trackers (tokscale, ccusage)
 
 ## How it works
 
@@ -69,35 +83,33 @@ cervelAI/
 ├── bootstrap.sh                       ← one-liner installer (curl) — fetches the project + runs phase 1
 ├── cervelAI-lxc.sh                    ← phase 1, Proxmox host
 ├── setup.sh                           ← phase 2, guest LXC (orchestrator)
-├── menu.sh                            ← whiptail menus (interactive setup)
+├── menu.sh                            ← gum-backed menus (interactive setup)
 ├── install/                           ← thematic scripts, sourced by setup.sh
-│   ├── base.sh           (essential packages, mosh, whiptail)
+│   ├── base.sh           (essential packages, mosh, sshd, gum)
 │   ├── shell.sh          (bash-it / oh-my-zsh / fish, tmux / zellij)
-│   ├── search.sh         (rg, fd, fzf, jq, yq, dasel, gron, ast-grep, typos, bat, eza, zoxide, hyperfine)
+│   ├── search.sh         (rg, fd, sd, fzf, jq, yq, dasel, gron, ast-grep, typos, bat, eza, glow, zoxide, tldr, hyperfine)
 │   ├── editor.sh         (vim|neovim|emacs|helix|micro via CERVELAI_EDITORS)
-│   ├── git-tools.sh      (gh|glab|tea via CERVELAI_GIT_FORGES + git-delta + lazygit)
-│   ├── runtimes.sh       (mise + 18 languages, default node@lts + python@latest)
-│   ├── python-tools.sh   (uv + ruff)
-│   ├── node-tools.sh     (pnpm, typescript, tsx — opt-in)
-│   ├── agents.sh         (the 9 AI agent CLIs)
+│   ├── git-tools.sh      (gh|glab|tea via CERVELAI_GIT_FORGES + git-delta + lazygit + gitleaks)
+│   ├── runtimes.sh       (mise system-wide + node/python/pnpm/uv always — node ships tsc/tsx, python ships ruff — +15 langs opt-in)
+│   ├── agents.sh         (the 9 AI agent CLIs — mise-managed except Claude Code)
 │   ├── token-savers.sh   (snip | rtk via CERVELAI_TOKEN_SAVER — opt-in)
 │   ├── usage-trackers.sh (tokscale + ccusage + ccstatusline — opt-in)
 │   ├── ide-web.sh        (code-server — opt-in)
-│   └── containers.sh     (docker, podman, distrobox — opt-in)
+│   └── containers.sh     (docker, podman, distrobox, lazydocker — opt-in)
 └── configs/                           ← dotfiles + scripts deployed into the LXC
+    ├── agents/AGENTS.md               (quickstart → ~/AGENTS.md: VM tools + per-editor rules paths)
     ├── bash/.bashrc, .bash_profile    (default shell: PATH, mise, `ai`/`t` aliases)
     ├── zsh/.zshrc, .zshenv            (optional shell: oh-my-zsh + mise)
     ├── tmux/.tmux.conf
-    ├── mise/config.toml
-    ├── bin/ai-run                     (run an agent + ntfy notification on exit)
-    └── snip/filters/                  (add your own YAML filters here)
+    ├── mise/config.toml               (settings only — mise owns [tools])
+    └── bin/ai-run                     (run an agent + ntfy notification on exit)
 ```
 
 ### Install modes
 
 | Mode | Behaviour |
 |---|---|
-| **Interactive (default)** | A whiptail menu picks the categories, then sub-menus pick the individual AI agents, runtimes, editors, git forges and shell. No agents pre-selected. |
+| **Interactive (default)** | A `gum` menu picks the categories, then sub-menus pick the individual AI agents, runtimes, editors, git forges and shell. No agents pre-selected. |
 | **`dev_mode=nomenu`** | Non-interactive. Installs everything by default, or the categories in `CERVELAI_SELECTED` (e.g. `CERVELAI_SELECTED=shell,search,agents` + `CERVELAI_AGENTS=claude-code,opencode`). |
 
 ### `dev_mode` env var (CSV)
@@ -106,19 +118,19 @@ cervelAI/
 |---|---|
 | `trace` | `set -x` everywhere |
 | `dryrun` | Prints actions, runs nothing |
-| `nomenu` | Bypass whiptail, read `CERVELAI_*` env vars |
+| `nomenu` | Bypass the menu, read `CERVELAI_*` env vars |
 
 Example: `dev_mode=trace,dryrun bash setup.sh`.
 
 ## BYOK (Bring Your Own Keys)
 
-After install, an interactive prompt collects your API keys:
+After install, an interactive prompt collects API keys — but **only the ones the
+agents you installed can actually use** (no agents selected → no prompt):
 
-- `ANTHROPIC_API_KEY` (Claude Code)
-- `OPENAI_API_KEY` (Codex CLI, opencode)
-- `GEMINI_API_KEY` (Gemini CLI)
-- `OPENROUTER_API_KEY` (multi-provider)
-- `GROQ_API_KEY` (fast, limited free tier)
+- `ANTHROPIC_API_KEY` — Claude Code, Pi, and any multi-provider agent
+- `OPENAI_API_KEY` — Codex, and any multi-provider agent
+- `GEMINI_API_KEY` — Gemini CLI
+- `OPENROUTER_API_KEY` — multi-provider agents (opencode, Aider, Crush, Goose, Continue)
 
 Written to `~agent/.config/cervelAI/env` (mode 600), sourced by bash, zsh and
 `ai-run`. Skippable if you'd rather manage keys with 1password-cli, vault or
@@ -172,9 +184,9 @@ bash smoke.sh    # smoke: setup.sh dryrun in a throwaway Debian 13 (needs Docker
 |---|---|
 | Format | Unprivileged Debian 13 Trixie LXC |
 | Architecture | Everything on the OS, no Docker in the LXC by default |
-| Mode | Interactive whiptail menu (default); `dev_mode=nomenu` + `CERVELAI_SELECTED` for scripting |
+| Mode | Interactive `gum` menu (default); `dev_mode=nomenu` + `CERVELAI_SELECTED` for scripting |
 | User | Single-user `agent` (configurable), sudo NOPASSWD |
-| Specs | Always prompted (vCPU/RAM/disk/storage/bridge) |
+| Specs | Prompted with sensible defaults — Enter through to accept |
 | BYOK | Post-install prompt, keys in `~/.config/cervelAI/env` |
 | Notifications | `ai-run <cmd>` runs, then notifies via ntfy on exit |
 | Idempotence | Re-run = "already installed" everywhere |

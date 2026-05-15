@@ -10,20 +10,21 @@ OpenCode AGENTS.md / Pi) after install.
 ```
 configs/
 ├── README.md                          ← this file
+├── agents/AGENTS.md                   ← quickstart deployed to ~/AGENTS.md (tools + per-editor rules paths)
 ├── bash/.bashrc, .bash_profile         ← default shell: PATH, mise, bash-it, `ai`/`t` aliases
 ├── zsh/.zshrc, .zshenv                 ← optional shell: oh-my-zsh + mise
 ├── tmux/.tmux.conf                     ← minimal (reload prefix+r, mouse, 10k scrollback)
-├── mise/config.toml                    ← global node lts / python latest
-├── bin/ai-run                          ← wrapper: run an agent + ntfy notification on exit
-└── snip/filters/                       ← add your own custom YAML filters (if snip is installed)
+├── mise/config.toml                    ← mise [settings] (mise owns the [tools] section)
+└── bin/ai-run                          ← wrapper: run an agent + ntfy notification on exit
 ```
 
-## Why no AI agent config here?
+## Why no AI agent prompt here?
 
 Every dev has their own preferences (language, style, hooks, skills, subagents,
-MCP servers…). A generic `AGENTS.md` or example skills would just be noise to
-prune. The install provides the agent **binaries** (`claude`, `codex`,
-`opencode`, `pi`, `aider`, …); **the config is yours**.
+MCP servers…). A generic `CLAUDE.md` / example skills would just be noise to
+prune. The install provides the agent **binaries** + an `AGENTS.md` quickstart
+listing the VM's tools and where each editor reads its rules from — **the
+prompt content is yours**.
 
 ### After install, configure your agents
 
@@ -40,10 +41,11 @@ or use `chezmoi` / `stow` / `yadm`.
 
 ## Deployment by setup.sh
 
-`setup.sh#install_configs()` deploys via an explicit source→destination mapping
-(`install -D`, copy). Each file lands in its real place: `zsh/.zshrc` →
-`~/.zshrc`, `mise/config.toml` → `~/.config/mise/config.toml`, `bin/ai-run` →
-`~/.local/bin/ai-run`, etc.
+`setup.sh#install_configs()` deploys the shell + tmux dotfiles and `bin/` scripts
+via an explicit source→destination mapping (`install -D`, copy): `zsh/.zshrc` →
+`~/.zshrc`, `bin/ai-run` → `~/.local/bin/ai-run`, etc. `mise/config.toml` is the
+exception — `install_runtimes_mise()` deploys it earlier, before `mise use -g`
+writes the `[tools]` section.
 
 ## Customization
 

@@ -1,34 +1,63 @@
 #!/usr/bin/env bash
 # install/token-savers.sh — CLI-noise filters that cut tokens fed to AI agents.
-#   snip (default) : extensible YAML filters (match + pipeline DSL)
-#   rtk            : Rust binary, hardcoded filters for 100+ commands
-# Pick one on the agent's PreToolUse hook — not both (their hooks would clash).
-# Switch via CERVELAI_TOKEN_SAVER=snip|rtk|both|none (default: snip).
-# Security: both install via `curl … master/install.sh | sh` as root (moving
-# branch, supply-chain surface). Pin to a tag if you want to harden this.
+# CERVELAI_TOKEN_SAVER=snip|rtk|both|none (default: snip). Pick one for the
+# agent's PreToolUse hook — not both, their hooks would clash.
 
-install_token_savers_snip() {
-    if has_cmd snip; then log_skip "snip already installed"; return 0; fi
-    log_info "installing snip (YAML filters)"
-    run sh -c 'curl -fsSL https://raw.githubusercontent.com/edouard-claude/snip/master/install.sh | sh' \
-        || log_warn "snip install failed — check upstream URL"
+install_token_savers_snip() { mise_use "github:edouard-claude/snip"; }
+install_token_savers_rtk()  { mise_aqua "rtk-ai/rtk"; }
+
+# Wire the snip PreToolUse hook for one cervelAI agent. Silent for agents
+# snip doesn't know about (opencode/aider/crush/goose/continue).
+_snip_init_one() {
+    local target
+    case "$1" in
+        claude-code) target="claude-code" ;;
+        codex)       target="codex" ;;
+        gemini-cli)  target="gemini" ;;
+        pi)          target="pi" ;;
+        *) return 0 ;;
+    esac
+    log_info "snip init --agent $target"
+    run _user_bash "snip init --agent $target"
 }
 
-install_token_savers_rtk() {
-    mise_present && soft mise_aqua "rtk-ai/rtk" 2>/dev/null && return 0
-    if has_cmd rtk; then log_skip "rtk already installed"; return 0; fi
-    log_info "installing rtk (curl fallback)"
-    run sh -c 'curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/master/install.sh | sh' \
-        || log_warn "rtk install failed — check upstream URL"
+# Wire the rtk hook for one cervelAI agent. Silent for non-supported ones.
+_rtk_init_one() {
+    local cmd
+    case "$1" in
+        claude-code) cmd="rtk init -g" ;;
+        codex)       cmd="rtk init -g --codex" ;;
+        gemini-cli)  cmd="rtk init -g --gemini" ;;
+        *) return 0 ;;
+    esac
+    log_info "$cmd"
+    run _user_bash "$cmd"
+}
+
+# _init_token_saver <snip|rtk> — wire the chosen tool into every installed agent.
+_init_token_saver() {
+    local tool="$1" agents="${CERVELAI_AGENTS:-}"
+    [[ "$agents" == "all" ]] && agents="claude-code,codex,opencode,pi,aider,crush,gemini-cli,goose,continue"
+    [[ -z "$agents" ]] && { log_skip "$tool init — no AI agents installed"; return 0; }
+    local -a list; IFS=',' read -r -a list <<< "$agents"
+    local a
+    for a in "${list[@]}"; do
+        a="${a// /}"
+        case "$tool" in
+            snip) _snip_init_one "$a" ;;
+            rtk)  _rtk_init_one  "$a" ;;
+        esac
+    done
 }
 
 install_token_savers_all() {
     case "${CERVELAI_TOKEN_SAVER:-snip}" in
-        snip) install_token_savers_snip ;;
-        rtk)  install_token_savers_rtk ;;
-        both) install_token_savers_snip; install_token_savers_rtk ;;
+        snip) install_token_savers_snip; _init_token_saver snip ;;
+        rtk)  install_token_savers_rtk;  _init_token_saver rtk ;;
+        # both: install both binaries, but init snip only — their hooks collide.
+        both) install_token_savers_snip; install_token_savers_rtk; _init_token_saver snip ;;
         none) log_skip "token-savers: none (CERVELAI_TOKEN_SAVER=none)" ;;
         *)    log_warn "unknown CERVELAI_TOKEN_SAVER=${CERVELAI_TOKEN_SAVER}, defaulting to snip"
-              install_token_savers_snip ;;
+              install_token_savers_snip; _init_token_saver snip ;;
     esac
 }
