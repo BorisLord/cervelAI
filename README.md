@@ -69,11 +69,14 @@ move, Space to toggle, Enter to confirm. Nothing is forced on you.
 - **Language runtimes via `mise`** — `node`, `python`, `pnpm` and `uv` always installed (infrastructure); 15 more languages opt-in
 - **Modern CLI tools** — ripgrep, fd, sd, fzf, jq, yq, dasel, gron, ast-grep, typos, bat, eza, glow, zoxide, tldr, hyperfine
 - **Editors** — vim + neovim by default; emacs, helix, micro optional
+- **LSPs (auto-installed)** — bash, yaml, taplo (TOML), marksman (md), typescript-language-server (TS+JS), vscode-json-languageserver, basedpyright. Per-runtime: gopls, rust-analyzer, zls, metals (scala), lua-ls, intelephense (php), kotlin-ls, csharp-ls (.NET), next-ls (elixir), erlang_ls. Docker LSPs (dockerfile + docker-compose) only if `containers` is selected. Java/Ruby: install yourself (jdtls / `gem install ruby-lsp`).
 - **Git tooling** — gh/glab/tea forge CLIs + git-delta + lazygit + gitleaks (secret scanning)
 - **Shell** — bash + bash-it (zsh/fish optional), tmux
 - **Remote-friendly** — SSH + Mosh, optional key-only sshd hardening
 - **`ai-run`** — wrap any command to get an `ntfy` push notification when it exits
+- **`topgrade`** — one command to update everything (apt + mise + npm/pipx globals + bash-it/oh-my-zsh + Claude Code)
 - **Opt-in extras** — code-server, Docker/Podman/distrobox + lazydocker, token savers (snip/rtk), usage trackers (tokscale, ccusage), DB clients (sqlite/psql/redis/usql), HTTP (xh), data tools (duckdb, miller)
+- **Opt-in agent memory** — cross-session recall, none pre-selected. Lite (CLI on-demand): `memsearch`, `qmd`, `engram`. Heavy (daemon, manual bootstrap): `claude-mem`, `mcp-memory-service`, `agentmemory`.
 
 ## How it works
 

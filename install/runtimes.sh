@@ -88,6 +88,7 @@ install_runtimes_all() {
     install_runtimes_node_tools
     install_runtimes_python
     install_runtimes_uv
+    mise_aqua "topgrade-rs/topgrade"
     local csv="${CERVELAI_RUNTIMES:-}"
     [[ "$csv" == "all" ]] && csv="go,rust,bun,deno,zig,java,kotlin,dotnet,php,ruby,dart,scala,elixir,erlang,lua"
     IFS=',' read -r -a list <<< "$csv"

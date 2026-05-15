@@ -13,10 +13,14 @@ Debian 13 LXC pre-loaded for AI coding agents. Some tools are opt-in — run
 | Shell | bash + bash-it · zsh + oh-my-zsh · fish. tmux / zellij. `ai`, `t`, `br`/`zr` aliases |
 | Search / text | rg, fd, sd, fzf, jq, yq, dasel, gron, ast-grep, typos, bat, eza, glow, zoxide, tldr, hyperfine |
 | Editors | vim, neovim (default); emacs, helix, micro (opt-in) |
+| LSPs (always) | bash-ls, yaml-ls, taplo (TOML), marksman (md), typescript-ls (TS+JS), vscode-json-languageserver, basedpyright |
+| LSPs (runtime-gated) | gopls (go), rust-analyzer (rust), zls (zig), metals (scala), lua-ls (lua), intelephense (php), kotlin-ls, csharp-ls (dotnet), next-ls (elixir), erlang_ls. Built-in: `dart language-server`, `deno lsp`. Java/Ruby → install via editor plugin or `gem install`. |
+| LSPs (containers-gated) | docker-langserver, docker-compose-langserver (only if `containers` opt-in is selected) |
 | Git | gh, glab, tea, git-delta, lazygit, gitleaks |
 | DB (opt-in) | sqlite3, psql, redis-cli, usql |
 | HTTP (opt-in) | xh |
 | Data (opt-in) | duckdb, miller (`mlr`) |
+| Memory (opt-in) | memsearch, qmd, engram (lite) · claude-mem, `memory` (mcp-memory-service), agentmemory (heavy — daemon bootstrap required) |
 | Containers (opt-in) | docker, podman, distrobox, lazydocker |
 | Web IDE (opt-in) | code-server (`sudo systemctl start code-server@agent`) |
 | Token saver | snip or rtk — PreToolUse hook auto-wired into supported agents (-70 to -90 % tokens) |
@@ -26,6 +30,10 @@ Debian 13 LXC pre-loaded for AI coding agents. Some tools are opt-in — run
 
 - `ai-run <cmd>` → runs, then pushes via `ntfy` on exit. Topic in `~/.config/cervelAI/env`.
 - API keys live in `~/.config/cervelAI/env` (mode 600), sourced by every shell + `ai-run`.
+
+## Update everything
+
+`topgrade` → apt + mise + npm/pipx globals + bash-it/oh-my-zsh + Claude Code, in one shot.
 
 ## mise
 

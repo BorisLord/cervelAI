@@ -167,6 +167,7 @@ OPTIONAL_CATEGORIES=(  # pre-unchecked in the menu
     db
     http
     data
+    agent-memory
 )
 
 main() {
@@ -205,7 +206,8 @@ main() {
             : "${CERVELAI_EDITORS:=all}"
             : "${CERVELAI_GIT_FORGES:=all}"
             : "${CERVELAI_RUNTIMES:=all}"
-            export CERVELAI_AGENTS CERVELAI_EDITORS CERVELAI_GIT_FORGES CERVELAI_RUNTIMES
+            : "${CERVELAI_AGENT_MEMORY:=all}"
+            export CERVELAI_AGENTS CERVELAI_EDITORS CERVELAI_GIT_FORGES CERVELAI_RUNTIMES CERVELAI_AGENT_MEMORY
         else
             IFS=',' read -r -a selected <<< "$CERVELAI_SELECTED"
         fi
@@ -249,13 +251,19 @@ main() {
                             local ts_sel=""
                             menu_token_saver_select ts_sel && { CERVELAI_TOKEN_SAVER="$ts_sel"; export CERVELAI_TOKEN_SAVER; }
                             ;;
+                        agent-memory)
+                            local am_sel=()
+                            if menu_agent_memory_select am_sel; then
+                                CERVELAI_AGENT_MEMORY="$(IFS=,; echo "${am_sel[*]}")"
+                                export CERVELAI_AGENT_MEMORY
+                            fi ;;
                     esac
                 done
                 menu_summary_confirm && break
                 log_info "redoing selection…"
                 unset CERVELAI_RUNTIMES CERVELAI_AGENTS CERVELAI_EDITORS \
                       CERVELAI_GIT_FORGES CERVELAI_SHELL CERVELAI_MULTIPLEXER \
-                      CERVELAI_TOKEN_SAVER
+                      CERVELAI_TOKEN_SAVER CERVELAI_AGENT_MEMORY
             else
                 log_warn "menu cancelled — installing nothing beyond base + mise + default runtimes"
                 selected=()
@@ -267,6 +275,9 @@ main() {
     log_step "mise + runtimes"
     source_install runtimes
     install_runtimes_all
+
+    log_step "language servers (LSP)"
+    source_install lsp && install_lsp_all
 
     # Re-order selected[] to follow the canonical category order: token-savers
     # must run AFTER agents (its hook init needs the agent binaries installed).

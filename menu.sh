@@ -18,6 +18,7 @@ declare -gA _MENU_DESC=(
     [db]="sqlite3 + psql + redis-cli + usql (universal SQL)"
     [http]="xh (modern curl)"
     [data]="duckdb + miller (mlr) - SQL on CSV/Parquet/JSON"
+    [agent-memory]="memsearch | qmd | engram | claude-mem | mcp-memory-service | agentmemory (sub-menu)"
 )
 
 # Derived from setup.sh: ON = ALL_CATEGORIES (pre-checked), OFF = OPTIONAL_CATEGORIES.
@@ -142,6 +143,16 @@ menu_multiplexer_select() {
         none   "none"   OFF
 }
 
+menu_agent_memory_select() {
+    _menu_multi "$1" "Agent memory tools (none pre-selected, multi-select):" \
+        memsearch           "lite - project Markdown memory"            OFF \
+        qmd                 "lite - BM25/hybrid search facts/notes"     OFF \
+        engram              "lite - Go binary, cross-agent (CLI+MCP)"   OFF \
+        claude-mem          "heavy - daemon, multi-IDE hooks"           OFF \
+        mcp-memory-service  "heavy - SQLite + ONNX, MCP + HTTP API"     OFF \
+        agentmemory         "heavy - 51 MCP tools, viewer, 107 endp"    OFF
+}
+
 menu_token_saver_select() {
     _menu_single "$1" "CLI token-saver (filters noise fed to agents):" \
         snip "snip - extensible YAML filters" ON \
@@ -150,16 +161,26 @@ menu_token_saver_select() {
         none "none"                           OFF
 }
 
+# shellcheck disable=SC2154  # selected[] comes from caller's scope (main in setup.sh).
+_menu_in_selected() { [[ " ${selected[*]:-} " == *" $1 "* ]]; }
+
 menu_summary_confirm() {
     {
         printf '\n──── Selection summary ────\n'
-        printf '  Categories:   %s\n' "${selected[*]:-(none)}"
-        printf '  Runtimes+:    %s\n' "${CERVELAI_RUNTIMES:-(none — node/python/pnpm/uv only)}"
-        [[ -n "${CERVELAI_AGENTS:-}" ]]       && printf '  Agents:       %s\n' "$CERVELAI_AGENTS"
-        [[ -n "${CERVELAI_EDITORS:-}" ]]      && printf '  Editors:      %s\n' "$CERVELAI_EDITORS"
-        [[ -n "${CERVELAI_GIT_FORGES:-}" ]]   && printf '  Git forges:   %s\n' "$CERVELAI_GIT_FORGES"
-        [[ -n "${CERVELAI_SHELL:-}" ]]        && printf '  Shell:        %s + %s\n' "$CERVELAI_SHELL" "${CERVELAI_MULTIPLEXER:-tmux}"
-        [[ -n "${CERVELAI_TOKEN_SAVER:-}" ]]  && printf '  Token-saver:  %s\n' "$CERVELAI_TOKEN_SAVER"
+        printf '  Categories:    %s\n' "${selected[*]:-(none)}"
+        printf '  Runtimes+:     %s\n' "${CERVELAI_RUNTIMES:-(none — node/python/pnpm/uv only)}"
+        [[ -n "${CERVELAI_AGENTS:-}" ]]       && printf '  Agents:        %s\n' "$CERVELAI_AGENTS"
+        [[ -n "${CERVELAI_EDITORS:-}" ]]      && printf '  Editors:       %s\n' "$CERVELAI_EDITORS"
+        [[ -n "${CERVELAI_GIT_FORGES:-}" ]]   && printf '  Git forges:    %s\n' "$CERVELAI_GIT_FORGES"
+        [[ -n "${CERVELAI_SHELL:-}" ]]        && printf '  Shell:         %s + %s\n' "$CERVELAI_SHELL" "${CERVELAI_MULTIPLEXER:-tmux}"
+        [[ -n "${CERVELAI_TOKEN_SAVER:-}" ]]  && printf '  Token-saver:   %s\n' "$CERVELAI_TOKEN_SAVER"
+        [[ -n "${CERVELAI_AGENT_MEMORY:-}" ]] && printf '  Agent memory:  %s\n' "$CERVELAI_AGENT_MEMORY"
+        _menu_in_selected db              && printf '  DB:            sqlite3, psql, redis-cli, usql\n'
+        _menu_in_selected http            && printf '  HTTP:          xh\n'
+        _menu_in_selected data            && printf '  Data:          duckdb, mlr (miller)\n'
+        _menu_in_selected containers      && printf '  Containers:    docker, podman, distrobox, lazydocker\n'
+        _menu_in_selected ide-web         && printf '  IDE web:       code-server\n'
+        _menu_in_selected usage-trackers  && printf '  Usage:         tokscale, ccusage, ccstatusline\n'
         printf '\n'
     } > /dev/tty
     gum confirm --default=Yes "Install with these choices?" < /dev/tty
