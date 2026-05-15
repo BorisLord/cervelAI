@@ -4,16 +4,34 @@
 [![platform](https://img.shields.io/badge/platform-Proxmox%20LXC-orange)](https://pve.proxmox.com/wiki/Linux_Container)
 [![Debian](https://img.shields.io/badge/Debian-13-red)](https://www.debian.org/releases/trixie/)
 
-> Spin up a ready-to-use Proxmox LXC for coding with terminal AI agents from your laptop, from your phone, from anywhere.
+> Self-hosted Proxmox LXC for terminal AI coding agents — Claude Code, Codex, opencode, Gemini CLI, Aider, Pi.dev, Goose, Crush, Continue — accessible by SSH and Mosh from your laptop, your phone, anywhere.
 
-cervelAI provisions an unprivileged Debian 13 LXC preloaded with every terminal
-AI agent CLI (Claude Code, Codex, opencode, Pi.dev, Aider, Crush, Gemini CLI,
-Goose, Continue), language runtimes via `mise`, modern CLI tooling, editors and
-a shell setup. You bring your own API keys; it brings everything else.
+cervelAI provisions a clean, opinionated **unprivileged Debian 13 LXC**
+preloaded with every major terminal AI agent CLI, language runtimes managed by
+`mise`, modern CLI tooling (ripgrep, fd, fzf, jq, lazygit, …), editors and a
+shell setup. You bring your own API keys; it brings everything else.
 
-The LXC is the **interactive workspace** of a human driving AI agents from
-anywhere — reachable over SSH/Mosh, with `ntfy` notifications when a long agent
-run finishes.
+The LXC is the **remote interactive workspace** of a human driving AI coding
+agents from anywhere — reachable over **SSH / Mosh**, with **`ntfy` push
+notifications** when a long agent run finishes.
+
+## Why cervelAI?
+
+If you're a homelabber who codes — and you want your AI agents reachable from
+your phone in the metro, your iPad on the couch, or any laptop, *without*
+renting someone else's cloud — you need a remote, self-hosted dev environment.
+That's what cervelAI provisions: one well-curated LXC on your Proxmox, your
+keys, your tunnel, your sovereignty.
+
+Built for:
+
+- **Homelabbers** who already run Proxmox and want a turnkey workspace for AI coding agents.
+- **Solo devs** who want to fire a long agent run, walk away, and get an `ntfy` push when it's done.
+- **Remote-first nomads** who code from anywhere — train, café, phone — over SSH/Mosh through a VPN they control.
+
+Not built for: enterprise multi-tenancy, replacing Coder / Gitpod / GitHub
+Codespaces, or hosting end users. cervelAI is **one person, one workspace,
+KISS**.
 
 ## Quick start
 
@@ -43,16 +61,7 @@ inside the LXC, an interactive **`gum` menu** lets you pick exactly which tools,
 AI agents, runtimes, editors, git forges and shell to install — arrow keys to
 move, Space to toggle, Enter to confirm. Nothing is forced on you.
 
-> **Recommended — `GITHUB_TOKEN`:** `setup.sh` prompts for a GitHub token early
-> on. You can also `export GITHUB_TOKEN` before running — it is forwarded into
-> the LXC and the prompt is skipped. `mise` and several agent installers hammer
-> the GitHub API; a token lifts the 60-request/hour unauthenticated limit to
-> 5000/h, well clear of what a full install needs. A token with no scopes
-> (public read-only) is enough.
->
-> ```bash
-> GITHUB_TOKEN=ghp_xxx bash cervelAI-main/cervelAI-lxc.sh
-> ```
+> **Recommended — `GITHUB_TOKEN`:** `setup.sh` prompts for one, or `export GITHUB_TOKEN` before running. Lifts the GitHub API rate limit (60→5000 req/h) that `mise` and agent installers otherwise hit mid-install. No scopes needed.
 
 ## What you get
 
@@ -64,7 +73,7 @@ move, Space to toggle, Enter to confirm. Nothing is forced on you.
 - **Shell** — bash + bash-it (zsh/fish optional), tmux
 - **Remote-friendly** — SSH + Mosh, optional key-only sshd hardening
 - **`ai-run`** — wrap any command to get an `ntfy` push notification when it exits
-- **Opt-in extras** — code-server, Docker/Podman/distrobox + lazydocker, token savers (snip/rtk), usage trackers (tokscale, ccusage)
+- **Opt-in extras** — code-server, Docker/Podman/distrobox + lazydocker, token savers (snip/rtk), usage trackers (tokscale, ccusage), DB clients (sqlite/psql/redis/usql), HTTP (xh), data tools (duckdb, miller)
 
 ## How it works
 
@@ -78,49 +87,15 @@ Two phases:
    `configs/`, prompts for API keys, configures Mosh. Idempotent — re-running
    is safe.
 
-```
-cervelAI/
-├── bootstrap.sh                       ← one-liner installer (curl) — fetches the project + runs phase 1
-├── cervelAI-lxc.sh                    ← phase 1, Proxmox host
-├── setup.sh                           ← phase 2, guest LXC (orchestrator)
-├── menu.sh                            ← gum-backed menus (interactive setup)
-├── install/                           ← thematic scripts, sourced by setup.sh
-│   ├── base.sh           (essential packages, mosh, sshd, gum)
-│   ├── shell.sh          (bash-it / oh-my-zsh / fish, tmux / zellij)
-│   ├── search.sh         (rg, fd, sd, fzf, jq, yq, dasel, gron, ast-grep, typos, bat, eza, glow, zoxide, tldr, hyperfine)
-│   ├── editor.sh         (vim|neovim|emacs|helix|micro via CERVELAI_EDITORS)
-│   ├── git-tools.sh      (gh|glab|tea via CERVELAI_GIT_FORGES + git-delta + lazygit + gitleaks)
-│   ├── runtimes.sh       (mise system-wide + node/python/pnpm/uv always — node ships tsc/tsx, python ships ruff — +15 langs opt-in)
-│   ├── agents.sh         (the 9 AI agent CLIs — mise-managed except Claude Code)
-│   ├── token-savers.sh   (snip | rtk via CERVELAI_TOKEN_SAVER — opt-in)
-│   ├── usage-trackers.sh (tokscale + ccusage + ccstatusline — opt-in)
-│   ├── ide-web.sh        (code-server — opt-in)
-│   └── containers.sh     (docker, podman, distrobox, lazydocker — opt-in)
-└── configs/                           ← dotfiles + scripts deployed into the LXC
-    ├── agents/AGENTS.md               (quickstart → ~/AGENTS.md: VM tools + per-editor rules paths)
-    ├── bash/.bashrc, .bash_profile    (default shell: PATH, mise, `ai`/`t` aliases)
-    ├── zsh/.zshrc, .zshenv            (optional shell: oh-my-zsh + mise)
-    ├── tmux/.tmux.conf
-    ├── mise/config.toml               (settings only — mise owns [tools])
-    └── bin/ai-run                     (run an agent + ntfy notification on exit)
-```
+Repo layout:
 
-### Install modes
+- `bootstrap.sh` — curl one-liner installer
+- `cervelAI-lxc.sh` — phase 1 (Proxmox host)
+- `setup.sh` + `menu.sh` — phase 2 (inside the LXC) + interactive `gum` menus
+- `install/*.sh` — one file per category (shell, search, editor, git-tools, runtimes, agents, …) — opt-in via the menu
+- `configs/` — dotfiles deployed to the LXC (bash/zsh/tmux/mise + `ai-run` + `AGENTS.md`)
 
-| Mode | Behaviour |
-|---|---|
-| **Interactive (default)** | A `gum` menu picks the categories, then sub-menus pick the individual AI agents, runtimes, editors, git forges and shell. No agents pre-selected. |
-| **`dev_mode=nomenu`** | Non-interactive. Installs everything by default, or the categories in `CERVELAI_SELECTED` (e.g. `CERVELAI_SELECTED=shell,search,agents` + `CERVELAI_AGENTS=claude-code,opencode`). |
-
-### `dev_mode` env var (CSV)
-
-| Flag | Effect |
-|---|---|
-| `trace` | `set -x` everywhere |
-| `dryrun` | Prints actions, runs nothing |
-| `nomenu` | Bypass the menu, read `CERVELAI_*` env vars |
-
-Example: `dev_mode=trace,dryrun bash setup.sh`.
+Non-interactive scripting mode: `dev_mode=nomenu CERVELAI_SELECTED=shell,search,agents bash setup.sh`.
 
 ## BYOK (Bring Your Own Keys)
 
@@ -166,51 +141,28 @@ mosh --ssh="ssh -J jump.example.com" agent@<lxc-ip>   # via ProxyJump
 
 ### Networking (beyond the LAN)
 
-Several options, **not set up by this script** — configure them on your firewall
-or in the LXC:
+Not handled by this script — configure on your firewall or in the LXC:
 
-- **WireGuard** — best performance and sovereignty. [Docs](https://www.wireguard.com/quickstart/).
-- **Tailscale** — zero-config, MagicDNS, 100 devices free. [tailscale.com](https://tailscale.com/).
-- **NetBird** — self-hostable OSS alternative to Tailscale. [netbird.io](https://netbird.io/).
-- **Cloudflare Tunnel** — handy for HTTP, **unsuitable for SSH/Mosh** (TCP-only, no UDP).
-
-## Development
-
-No automatic CI (deliberate). Two gates to run by hand:
-
-```bash
-bash check.sh    # lint: bash -n + shellcheck (instant, anywhere)
-bash smoke.sh    # smoke: setup.sh dryrun in a throwaway Debian 13 (needs Docker)
-```
-
-## Design decisions
-
-| Topic | Choice |
-|---|---|
-| Format | Unprivileged Debian 13 Trixie LXC |
-| Architecture | Everything on the OS, no Docker in the LXC by default |
-| Mode | Interactive `gum` menu (default); `dev_mode=nomenu` + `CERVELAI_SELECTED` for scripting |
-| User | Single-user `agent` (configurable), sudo NOPASSWD |
-| Specs | Prompted with sensible defaults — Enter through to accept |
-| BYOK | Post-install prompt, keys in `~/.config/cervelAI/env` |
-| Notifications | `ai-run <cmd>` runs, then notifies via ntfy on exit |
-| Idempotence | Re-run = "already installed" everywhere |
-| Layout pattern | Omakub-lite (thematic `install/` + `configs/`) |
-
-## Out of scope
-
-- No Proxmox VM (LXC only).
-- No VPN/tunnel setup (just mosh-server + open SSH/Mosh ports).
-- No Docker by default (opt-in in the menu).
-- No web IDE by default (code-server opt-in in the menu).
-- No multi-user, no Coder-style multi-workspace.
-- No UI/dashboard.
+- **[WireGuard](https://www.wireguard.com/quickstart/)** — best performance, full sovereignty (tip: listen on UDP/443 to dodge carrier shaping on mobile).
+- **[Tailscale](https://tailscale.com/)** — zero-config, MagicDNS, 100 devices free.
 
 ## Contributing
 
-Issues and PRs welcome. Run `bash check.sh` before submitting — it must pass
-clean. Keep the KISS spirit: simplest thing that works, no premature
-abstraction.
+cervelAI is a community-friendly KISS project — **issues and pull requests are
+very welcome**, whatever your level. A few light guidelines :
+
+- **Run the gates** before opening a PR:
+  ```bash
+  bash check.sh    # bash -n + shellcheck
+  bash smoke.sh    # setup.sh dryrun in a throwaway Debian 13 (needs Docker)
+  ```
+- **Keep KISS in mind** — simplest thing that works. Three similar lines beat a premature abstraction.
+- **Document the WHY in commit messages**, not the WHAT (the diff speaks for itself).
+- **Small focused PRs** merge faster than large refactors. Open an issue first if you're unsure.
+
+Found a bug, want a new AI agent supported, hit a Proxmox / Debian edge case?
+Open an issue — even a one-paragraph report helps. Got an opinion on the
+architecture or layout? Discussions tab welcome.
 
 ## License
 
