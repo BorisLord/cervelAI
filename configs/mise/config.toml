@@ -4,9 +4,6 @@
 # file; node, python and pnpm always end up here. Per-project .mise.toml
 # overrides as usual.
 
-[settings]
-experimental = true
-
 [settings.npm]
 # Every `mise use -g npm:<pkg>` routes through pnpm (faster + content-addressable
 # store dedupes). pnpm itself bootstraps with MISE_NPM_PACKAGE_MANAGER=npm in

@@ -132,6 +132,11 @@ agents you installed can actually use** (no agents selected → no prompt):
 - `GEMINI_API_KEY` — Gemini CLI
 - `OPENROUTER_API_KEY` — multi-provider agents (opencode, Aider, Crush, Goose, Continue)
 
+The multi-provider agents (opencode, Aider, Crush, Goose, Continue) accept any
+one of `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `OPENROUTER_API_KEY` — pick the
+provider you want each agent to use. The prompt asks for the union of keys the
+agents you installed can read.
+
 Written to `~agent/.config/cervelAI/env` (mode 600), sourced by bash, zsh and
 `ai-run`. Skippable if you'd rather manage keys with 1password-cli, vault or
 `direnv` later.

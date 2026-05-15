@@ -77,7 +77,6 @@ menu_select() {
     _menu_multi "$1" "Categories to install (Space to toggle, Enter to confirm):" "${args[@]}"
 }
 
-# Extra runtimes — node/python/pnpm/uv are infrastructure, always installed.
 menu_runtimes_select() {
     _menu_multi "$1" "Extra language runtimes (node/python/pnpm/uv always installed):" \
         go     "Backend/DevOps/CLI (kubectl traefik Charm)" OFF \
@@ -119,7 +118,6 @@ menu_editors_select() {
         micro  "micro"             OFF
 }
 
-# delta + lazygit + gitleaks are always installed alongside the chosen forges.
 menu_git_forges_select() {
     _menu_multi "$1" "Git forge CLIs (delta + lazygit + gitleaks always installed):" \
         github "GitHub CLI (gh)"   ON \
@@ -147,4 +145,19 @@ menu_token_saver_select() {
         rtk  "rtk - Rust binary - hardcoded"  OFF \
         both "both"                           OFF \
         none "none"                           OFF
+}
+
+menu_summary_confirm() {
+    {
+        printf '\n──── Selection summary ────\n'
+        printf '  Categories:   %s\n' "${selected[*]:-(none)}"
+        printf '  Runtimes+:    %s\n' "${CERVELAI_RUNTIMES:-(none — node/python/pnpm/uv only)}"
+        [[ -n "${CERVELAI_AGENTS:-}" ]]       && printf '  Agents:       %s\n' "$CERVELAI_AGENTS"
+        [[ -n "${CERVELAI_EDITORS:-}" ]]      && printf '  Editors:      %s\n' "$CERVELAI_EDITORS"
+        [[ -n "${CERVELAI_GIT_FORGES:-}" ]]   && printf '  Git forges:   %s\n' "$CERVELAI_GIT_FORGES"
+        [[ -n "${CERVELAI_SHELL:-}" ]]        && printf '  Shell:        %s + %s\n' "$CERVELAI_SHELL" "${CERVELAI_MULTIPLEXER:-tmux}"
+        [[ -n "${CERVELAI_TOKEN_SAVER:-}" ]]  && printf '  Token-saver:  %s\n' "$CERVELAI_TOKEN_SAVER"
+        printf '\n'
+    } > /dev/tty
+    gum confirm --default=Yes "Install with these choices?" < /dev/tty
 }

@@ -9,12 +9,10 @@ path_prepend() {
 
 path_prepend "$HOME/.local/bin"
 path_prepend "$HOME/bin"
-path_prepend "$HOME/.local/share/mise/shims"
 [ -s "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 export GOPATH="$HOME/go"
 path_prepend "$GOPATH/bin"
 path_prepend "$HOME/.local/share/npm/bin"
-path_prepend "$HOME/.pi/bin"
 
 export ZSH="$HOME/.oh-my-zsh"
 

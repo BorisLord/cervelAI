@@ -6,8 +6,7 @@
 install_token_savers_snip() { mise_use "github:edouard-claude/snip"; }
 install_token_savers_rtk()  { mise_aqua "rtk-ai/rtk"; }
 
-# Wire the snip PreToolUse hook for one cervelAI agent. Silent for agents
-# snip doesn't know about (opencode/aider/crush/goose/continue).
+# Silent for agents snip doesn't know about (opencode/aider/crush/goose/continue).
 _snip_init_one() {
     local target
     case "$1" in
@@ -21,7 +20,6 @@ _snip_init_one() {
     run _user_bash "snip init --agent $target"
 }
 
-# Wire the rtk hook for one cervelAI agent. Silent for non-supported ones.
 _rtk_init_one() {
     local cmd
     case "$1" in
@@ -34,7 +32,6 @@ _rtk_init_one() {
     run _user_bash "$cmd"
 }
 
-# _init_token_saver <snip|rtk> — wire the chosen tool into every installed agent.
 _init_token_saver() {
     local tool="$1" agents="${CERVELAI_AGENTS:-}"
     [[ "$agents" == "all" ]] && agents="claude-code,codex,opencode,pi,aider,crush,gemini-cli,goose,continue"

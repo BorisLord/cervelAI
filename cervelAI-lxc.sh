@@ -34,8 +34,7 @@ run() {
     fi
 }
 
-# push_and_setup <ctid> <ct_user> <ssh_pub_key> — tar the project into the LXC,
-# then run setup.sh. Shared by the create and --update paths.
+# Shared by the create and --update paths.
 push_and_setup() {
     local _ctid="$1" _ct_user="$2" _ssh_key="$3"
 
@@ -99,10 +98,10 @@ if [[ -n "$UPDATE_CTID" ]]; then
     exit 0
 fi
 
-# Every prompt has a default — hit Enter to accept.
+# Reads from /dev/tty explicitly so it works under `bash -c "$(curl ...)"`.
 prompt_default() {
     local var="$1" question="$2" def="$3" val=""
-    read -r -p "$question [$def]: " val
+    read -r -p "$question [$def]: " val < /dev/tty
     printf -v "$var" '%s' "${val:-$def}"
 }
 
@@ -125,13 +124,13 @@ prompt_default CTID             "Container ID (CTID):"            "${DEFAULT_CTI
 prompt_default HOSTNAME         "Hostname:"                       "cervelai"
 prompt_default VCPU             "vCPU cores:"                     "2"
 prompt_default RAM_MB           "RAM (MB):"                       "4096"
+prompt_default SWAP_MB          "Swap (MB, 0 to disable):"        "512"
 prompt_default STORAGE          "Proxmox storage for the rootfs:" "${DEFAULT_STORAGE:-local-lvm}"
 prompt_default DISK_GB          "Disk size (GB):"                 "20"
 prompt_default BRIDGE           "Network bridge:"                 "vmbr0"
 prompt_default CT_USER          "User to create inside LXC:"      "agent"
 prompt_default TEMPLATE_STORAGE "Storage for the LXC template:"   "${DEFAULT_TMPL_STORAGE:-local}"
 
-# SSH key — the host's root public key, if any.
 SSH_KEY_FILE="/root/.ssh/id_ed25519.pub"
 [[ -f "$SSH_KEY_FILE" ]] || SSH_KEY_FILE="/root/.ssh/id_rsa.pub"
 if [[ -f "$SSH_KEY_FILE" ]]; then
@@ -172,7 +171,7 @@ run pct create "$CTID" "$TEMPLATE_PATH" \
     --hostname "$HOSTNAME" \
     --cores "$VCPU" \
     --memory "$RAM_MB" \
-    --swap 512 \
+    --swap "$SWAP_MB" \
     --rootfs "${STORAGE}:${DISK_GB}" \
     --net0 "name=eth0,bridge=${BRIDGE},ip=dhcp" \
     --features "keyctl=1,nesting=1" \

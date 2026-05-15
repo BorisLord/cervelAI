@@ -15,11 +15,11 @@ install_agents_opencode()   { mise_use "npm:opencode-ai" latest opencode; }
 install_agents_pi()         { mise_use "npm:@earendil-works/pi-coding-agent" latest pi; }
 install_agents_aider()      { mise_use "pipx:aider-chat" latest aider; }
 install_agents_crush()      { mise_aqua "charmbracelet/crush"; }
-install_agents_gemini_cli() { mise_npm "@google/gemini-cli"; }
+install_agents_gemini_cli() { mise_use "npm:@google/gemini-cli" latest gemini; }
 # block/goose redirects to aaif-goose/goose; aqua still pins block/goose and its
 # attestation check fails on the mismatch — go through github: directly.
 install_agents_goose()      { mise_use "github:aaif-goose/goose"; }
-install_agents_continue()   { mise_npm "@continuedev/cli"; }
+install_agents_continue()   { mise_use "npm:@continuedev/cli" latest cn; }
 
 install_agents_all() {
     local csv="${CERVELAI_AGENTS:-}"

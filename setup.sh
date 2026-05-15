@@ -19,7 +19,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALL_DIR="${SCRIPT_DIR}/install"
 CONFIGS_DIR="${SCRIPT_DIR}/configs"
 
-# Shared env file (mise PATH + API keys + ntfy), sourced by the shells + ai-run.
 ENV_FILE_REL=".config/cervelAI/env"
 
 DEV_MODE="${dev_mode:-}"
@@ -38,8 +37,6 @@ log_warn()  { printf '%s[ WARN ]%s %s\n' "$(_color '1;33')" "$(_color 0)" "$*" >
 log_err()   { printf '%s[ ERR  ]%s %s\n' "$(_color '1;31')" "$(_color 0)" "$*" >&2; }
 log_step()  { printf '\n%s━━━ %s ━━━%s\n' "$(_color '1;36')" "$*" "$(_color 0)"; }
 
-# run <cmd...> — execute (print in dryrun). Failures are logged + counted in
-# SETUP_ERRORS; non-blocking, the verdict lands at the end of main().
 run() {
     if (( DRY_RUN )); then
         printf '%s[DRYRUN]%s %s\n' "$(_color '1;35')" "$(_color 0)" "$*"
@@ -54,7 +51,7 @@ run() {
     return "$rc"
 }
 
-# soft <cmd...> — run a command whose failure is tolerated; doesn't count in SETUP_ERRORS.
+# Run a command without counting its failure in SETUP_ERRORS.
 soft() {
     local before=$SETUP_ERRORS
     "$@"
@@ -112,7 +109,6 @@ mise_use() {
         log_warn "mise not present — skip mise_use $pkg (install runtimes first)"
         return 1
     fi
-    # Skip if already on PATH; name defaults to the package basename.
     if [[ -z "$name" ]]; then
         name="${pkg##*/}"; name="${name##*:}"
     fi
@@ -199,7 +195,6 @@ main() {
         exit 1
     fi
 
-    # Resolve which categories and per-category items to install.
     if (( NO_MENU )); then
         if [[ "${CERVELAI_SELECTED:-all}" == "all" ]]; then
             selected=("${ALL_CATEGORIES[@]}" "${OPTIONAL_CATEGORIES[@]}")
@@ -213,53 +208,74 @@ main() {
         fi
         log_info "selected: ${selected[*]:-(none)}"
     else
-        if menu_select selected; then
-            log_info "selected: ${selected[*]:-(none)}"
-            local rt_sel=()
-            if menu_runtimes_select rt_sel; then
-                CERVELAI_RUNTIMES="$(IFS=,; echo "${rt_sel[*]}")"
-                export CERVELAI_RUNTIMES
+        # Loop until the summary is confirmed — lets the user redo any selection.
+        while :; do
+            if menu_select selected; then
+                log_info "selected: ${selected[*]:-(none)}"
+                local rt_sel=()
+                if menu_runtimes_select rt_sel; then
+                    CERVELAI_RUNTIMES="$(IFS=,; echo "${rt_sel[*]}")"
+                    export CERVELAI_RUNTIMES
+                fi
+                for cat in "${selected[@]}"; do
+                    case "$cat" in
+                        agents)
+                            local ag_sel=()
+                            if menu_agents_select ag_sel; then
+                                CERVELAI_AGENTS="$(IFS=,; echo "${ag_sel[*]}")"
+                                export CERVELAI_AGENTS
+                            fi ;;
+                        editor)
+                            local ed_sel=()
+                            if menu_editors_select ed_sel; then
+                                CERVELAI_EDITORS="$(IFS=,; echo "${ed_sel[*]}")"
+                                export CERVELAI_EDITORS
+                            fi ;;
+                        git-tools)
+                            local gf_sel=()
+                            if menu_git_forges_select gf_sel; then
+                                CERVELAI_GIT_FORGES="$(IFS=,; echo "${gf_sel[*]}")"
+                                export CERVELAI_GIT_FORGES
+                            fi ;;
+                        shell)
+                            local sh_sel="" mx_sel=""
+                            menu_shell_select sh_sel       && { CERVELAI_SHELL="$sh_sel"; export CERVELAI_SHELL; }
+                            menu_multiplexer_select mx_sel && { CERVELAI_MULTIPLEXER="$mx_sel"; export CERVELAI_MULTIPLEXER; }
+                            ;;
+                        token-savers)
+                            local ts_sel=""
+                            menu_token_saver_select ts_sel && { CERVELAI_TOKEN_SAVER="$ts_sel"; export CERVELAI_TOKEN_SAVER; }
+                            ;;
+                    esac
+                done
+                menu_summary_confirm && break
+                log_info "redoing selection…"
+                unset CERVELAI_RUNTIMES CERVELAI_AGENTS CERVELAI_EDITORS \
+                      CERVELAI_GIT_FORGES CERVELAI_SHELL CERVELAI_MULTIPLEXER \
+                      CERVELAI_TOKEN_SAVER
+            else
+                log_warn "menu cancelled — installing nothing beyond base + mise + default runtimes"
+                selected=()
+                break
             fi
-            for cat in "${selected[@]}"; do
-                case "$cat" in
-                    agents)
-                        local ag_sel=()
-                        if menu_agents_select ag_sel; then
-                            CERVELAI_AGENTS="$(IFS=,; echo "${ag_sel[*]}")"
-                            export CERVELAI_AGENTS
-                        fi ;;
-                    editor)
-                        local ed_sel=()
-                        if menu_editors_select ed_sel; then
-                            CERVELAI_EDITORS="$(IFS=,; echo "${ed_sel[*]}")"
-                            export CERVELAI_EDITORS
-                        fi ;;
-                    git-tools)
-                        local gf_sel=()
-                        if menu_git_forges_select gf_sel; then
-                            CERVELAI_GIT_FORGES="$(IFS=,; echo "${gf_sel[*]}")"
-                            export CERVELAI_GIT_FORGES
-                        fi ;;
-                    shell)
-                        local sh_sel="" mx_sel=""
-                        menu_shell_select sh_sel       && { CERVELAI_SHELL="$sh_sel"; export CERVELAI_SHELL; }
-                        menu_multiplexer_select mx_sel && { CERVELAI_MULTIPLEXER="$mx_sel"; export CERVELAI_MULTIPLEXER; }
-                        ;;
-                    token-savers)
-                        local ts_sel=""
-                        menu_token_saver_select ts_sel && { CERVELAI_TOKEN_SAVER="$ts_sel"; export CERVELAI_TOKEN_SAVER; }
-                        ;;
-                esac
-            done
-        else
-            log_warn "menu cancelled — installing nothing beyond base + mise + default runtimes"
-            selected=()
-        fi
+        done
     fi
 
     log_step "mise + runtimes"
     source_install runtimes
     install_runtimes_all
+
+    # Re-order selected[] to follow the canonical category order: token-savers
+    # must run AFTER agents (its hook init needs the agent binaries installed).
+    # CERVELAI_SELECTED is user-supplied (nomenu) so its order can't be trusted.
+    local -a ordered=()
+    local s
+    for cat in "${ALL_CATEGORIES[@]}" "${OPTIONAL_CATEGORIES[@]}"; do
+        for s in "${selected[@]}"; do
+            [[ "$s" == "$cat" ]] && { ordered+=("$cat"); break; }
+        done
+    done
+    selected=("${ordered[@]}")
 
     for cat in "${selected[@]}"; do
         [[ "$cat" == "base" || "$cat" == "runtimes" ]] && continue
@@ -306,18 +322,38 @@ create_user() {
     else
         log_info "creating user $u"
         run useradd -m -s /bin/bash -G sudo "$u"
-        run install -d -m 700 -o "$u" -g "$u" "/home/$u/.ssh"
     fi
+    # Pre-create XDG dirs as the agent user. `install -d` does NOT propagate
+    # -o to intermediate dirs it creates on the way, so each level is listed
+    # explicitly. Idempotent: install -d re-applies -o on existing dirs.
+    run install -d -m 700 -o "$u" -g "$u" "/home/$u/.ssh"
+    run install -d -m 755 -o "$u" -g "$u" "/home/$u/.config"
+    run install -d -m 755 -o "$u" -g "$u" "/home/$u/.cache"
+    run install -d -m 755 -o "$u" -g "$u" "/home/$u/.local"
+    run install -d -m 755 -o "$u" -g "$u" "/home/$u/.local/bin"
+    run install -d -m 755 -o "$u" -g "$u" "/home/$u/.local/share"
+    run install -d -m 755 -o "$u" -g "$u" "/home/$u/.local/state"
     local sudoers="/etc/sudoers.d/90-${u}"
     if [[ ! -f "$sudoers" ]]; then
-        run bash -c "echo '${u} ALL=(ALL) NOPASSWD:ALL' > '$sudoers' && chmod 440 '$sudoers'"
-        log_ok "sudo NOPASSWD configured for $u"
+        if (( DRY_RUN )); then
+            log_info "(dryrun) would write $sudoers"
+        else
+            printf '%s ALL=(ALL) NOPASSWD:ALL\n' "$u" > "$sudoers"
+            chmod 440 "$sudoers"
+            log_ok "sudo NOPASSWD configured for $u"
+        fi
     fi
     if [[ -n "${CERVELAI_SSH_KEY:-}" ]]; then
         local ak="/home/$u/.ssh/authorized_keys"
         if ! grep -qF "${CERVELAI_SSH_KEY}" "$ak" 2>/dev/null; then
-            run bash -c "echo '${CERVELAI_SSH_KEY}' >> '$ak' && chmod 600 '$ak' && chown ${u}:${u} '$ak'"
-            log_ok "SSH key added for $u"
+            if (( DRY_RUN )); then
+                log_info "(dryrun) would append SSH key to $ak"
+            else
+                printf '%s\n' "${CERVELAI_SSH_KEY}" >> "$ak"
+                chmod 600 "$ak"
+                chown "$u:$u" "$ak"
+                log_ok "SSH key added for $u"
+            fi
         fi
     fi
 }
@@ -370,8 +406,13 @@ ensure_env_file() {
         return 0
     fi
     install -d -m 700 -o "$u" -g "$u" "$(dirname "$f")"
-    local topic
-    topic="cervelAI-$(tr -dc 'a-z0-9' </dev/urandom 2>/dev/null | head -c 8)"
+    local topic suffix
+    suffix="$(tr -dc 'a-z0-9' </dev/urandom 2>/dev/null | head -c 16)"
+    if [[ ${#suffix} -ne 16 ]]; then
+        log_err "could not generate ntfy topic suffix (urandom unavailable?) — aborting env file"
+        return 1
+    fi
+    topic="cervelAI-${suffix}"
     cat > "$f" <<EOF
 # cervelAI — shared environment (bash, zsh, ai-run). Mode 600.
 # mise shims PATH: runtimes stay visible even in a non-interactive shell.
@@ -380,7 +421,6 @@ export PATH="\$HOME/.local/share/mise/shims:\$HOME/.local/bin:\$PATH"
 export NTFY_SERVER="https://ntfy.sh"
 export NTFY_TOPIC="${topic}"
 EOF
-    # Persist the GitHub token if one was given.
     if [[ -n "${GITHUB_TOKEN:-}" ]]; then
         printf 'export GITHUB_TOKEN=%q\n' "$GITHUB_TOKEN" >> "$f"
     fi
@@ -418,7 +458,6 @@ prompt_github_token() {
     fi
 }
 
-# _agent_keys <agent> — prints the API key env vars an agent can use.
 _agent_keys() {
     case "$1" in
         claude-code|pi) echo "ANTHROPIC_API_KEY" ;;
@@ -429,7 +468,6 @@ _agent_keys() {
     esac
 }
 
-# prompt_api_keys — asks only for the keys the installed agents can use.
 prompt_api_keys() {
     local u; u="$(_user)"
     local envfile="/home/$u/${ENV_FILE_REL}"

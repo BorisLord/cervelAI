@@ -10,7 +10,6 @@ path_prepend() { [[ ":$PATH:" != *":$1:"* ]] && export PATH="$1:$PATH"; return 0
 path_prepend "$HOME/.local/bin"
 path_prepend "$HOME/bin"
 path_prepend "$HOME/.local/share/npm/bin"
-path_prepend "$HOME/.pi/bin"
 export GOPATH="$HOME/go"; path_prepend "$GOPATH/bin"
 [ -s "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 

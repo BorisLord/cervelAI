@@ -54,7 +54,11 @@ install_runtimes_deno()    { mise_use "deno"    "latest"; }
 install_runtimes_zig()     { mise_use "zig"     "latest"; }
 install_runtimes_java()    { mise_use "java"    "latest"; }
 install_runtimes_kotlin()  { mise_use "kotlin"  "latest"; }
-install_runtimes_dotnet()  { mise_use "dotnet"  "latest"; }
+# dotnet backend is marked experimental in mise — gate the flag here, not globally.
+install_runtimes_dotnet() {
+    run _user_bash "mise settings set experimental true"
+    mise_use "dotnet" "latest"
+}
 install_runtimes_ruby()    { mise_use "ruby"    "latest"; }
 install_runtimes_dart()    { mise_use "dart"    "latest"; }
 install_runtimes_scala()   { mise_use "scala"   "latest"; }
