@@ -164,6 +164,9 @@ OPTIONAL_CATEGORIES=(  # pre-unchecked in the menu
     usage-trackers
     ide-web
     containers
+    db
+    http
+    data
 )
 
 main() {

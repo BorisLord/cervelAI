@@ -15,6 +15,9 @@ declare -gA _MENU_DESC=(
     [usage-trackers]="tokscale (cross-agent) + ccusage + ccstatusline"
     [ide-web]="code-server (VS Code web)"
     [containers]="docker podman distrobox lazydocker"
+    [db]="sqlite3 + psql + redis-cli + usql (universal SQL)"
+    [http]="xh (modern curl)"
+    [data]="duckdb + miller (mlr) - SQL on CSV/Parquet/JSON"
 )
 
 # Derived from setup.sh: ON = ALL_CATEGORIES (pre-checked), OFF = OPTIONAL_CATEGORIES.
