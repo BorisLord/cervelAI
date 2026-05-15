@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# install/containers.sh — docker, podman, distrobox. Opt-in via --custom.
-# NOTE: Docker in an unprivileged LXC needs nesting=1 + keyctl=1 in the pct config.
+# install/containers.sh — docker, podman, distrobox + lazydocker. Opt-in.
+# Needs nesting=1 + keyctl=1 on the LXC — both are cervelAI's defaults.
 
 install_containers_docker() {
     if has_cmd docker; then
@@ -17,7 +17,6 @@ install_containers_docker() {
     run env DEBIAN_FRONTEND=noninteractive apt-get update -qq
     apt_install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
-    # add the user to the docker group
     local u="${CERVELAI_USER:-agent}"
     if id -nG "$u" | grep -qw docker; then
         log_skip "$u already in docker group"
@@ -38,10 +37,11 @@ install_containers_distrobox() {
     apt_install distrobox
 }
 
+install_containers_lazydocker() { mise_aqua "jesseduffield/lazydocker"; }
+
 install_containers_all() {
-    log_warn "Docker/Podman in an unprivileged LXC require 'nesting=1' on the container."
-    log_warn "→ if not set: on the Proxmox host run 'pct set <CTID> --features nesting=1,keyctl=1', then restart the LXC."
     install_containers_docker
     install_containers_podman
     install_containers_distrobox
+    install_containers_lazydocker
 }

@@ -1,14 +1,7 @@
 #!/usr/bin/env bash
-# ai-run — run a command (typically an AI agent) and send an ntfy notification
-# when it exits. "Launch a prompt, go for lunch, come back": run it, detach the
-# tmux session, walk away.
-#
-# Usage: ai-run <cmd> [args...]
+# ai-run <cmd> [args...] — run a command (an AI agent), ntfy-notify on exit.
 #   ai-run claude -p "implement X"
-#   ai-run pi "refactor Y"
-#
-# Config in ~/.config/cervelAI/env: NTFY_SERVER, NTFY_TOPIC.
-# If NTFY_TOPIC is empty the command still runs — just without a notification.
+# Reads NTFY_SERVER / NTFY_TOPIC from ~/.config/cervelAI/env. Empty topic → no notification.
 set -uo pipefail
 
 env_file="$HOME/.config/cervelAI/env"

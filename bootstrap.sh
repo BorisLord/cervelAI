@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 # bootstrap.sh — cervelAI one-liner installer, run as root on the Proxmox host:
 #   bash -c "$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/bootstrap.sh)"
-#
-# Fetches the project (GitHub tarball — no git needed) into a temp dir, then runs
-# phase 1 (cervelAI-lxc.sh), which is interactive. Override: CERVELAI_REPO
-# (default BorisLord/cervelAI), CERVELAI_REF (default main).
+# Fetches the project tarball, then runs phase 1 (cervelAI-lxc.sh).
+# Override: CERVELAI_REPO (default BorisLord/cervelAI), CERVELAI_REF (default main).
 
 set -euo pipefail
 

@@ -15,8 +15,7 @@ done
 
 echo "── shellcheck ──"
 if command -v shellcheck >/dev/null 2>&1; then
-    # SC1090/SC1091 excluded: "can't follow sourced file" — expected, this
-    # project sources runtime-resolved files (env file, /etc/os-release, mise…).
+    # SC1090/SC1091 excluded — this project sources runtime-resolved files.
     shellcheck -e SC1090,SC1091 "${scripts[@]}" || rc=1
     shellcheck -e SC1090,SC1091 -s bash configs/bash/.bashrc configs/bash/.bash_profile || rc=1
 else

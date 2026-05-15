@@ -1,12 +1,8 @@
-# mise — cervelAI baseline.
-# Global defaults, overridden by any per-project .mise.toml.
-# go/rust are not listed (no terminal AI agent needs them) — add with:
-#   mise use -g go@latest rust@latest
-# or via CERVELAI_RUNTIMES=node,python,go,rust at setup time.
-
-[tools]
-node   = "lts"
-python = "latest"
+# mise — cervelAI baseline settings.
+# Settings only: the [tools] section is owned by mise. `mise use -g <tool>`
+# (run by install/runtimes.sh and the install/*.sh scripts) appends to this
+# file; node, python and pnpm always end up here. Per-project .mise.toml
+# overrides as usual.
 
 [settings]
 experimental = true

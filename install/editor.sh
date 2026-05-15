@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# install/editor.sh — terminal editors.
-# CERVELAI_EDITORS=<csv>  (default: "vim,neovim"; "all" = every editor)
-#   vim neovim emacs helix micro none
+# install/editor.sh — terminal editors. CERVELAI_EDITORS=<csv>, "all" = every one.
 
 install_editor_vim()    { apt_install vim; }
 install_editor_neovim() { mise_aqua "neovim/neovim"; }
