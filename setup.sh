@@ -13,28 +13,23 @@
 #   CERVELAI_SELECTED   (default: all)   — CSV category list for nomenu mode
 
 set -uo pipefail
+export LC_ALL=C  # deterministic output; silences perl locale warnings
 
-# ─── paths ────────────────────────────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALL_DIR="${SCRIPT_DIR}/install"
 CONFIGS_DIR="${SCRIPT_DIR}/configs"
 
-# Shared env file: mise shims PATH + API keys + ntfy config. Sourced by
-# ~/.bashrc, ~/.zshenv and ai-run — available in interactive and
-# non-interactive shells. Mode 600.
+# Shared env file (mise PATH + API keys + ntfy), sourced by the shells + ai-run.
 ENV_FILE_REL=".config/cervelAI/env"
 
-# ─── dev_mode ─────────────────────────────────────────────────────────────────
 DEV_MODE="${dev_mode:-}"
 in_dev_mode() { [[ ",${DEV_MODE}," == *",$1,"* ]]; }
 
 in_dev_mode trace && set -x
 DRY_RUN=0; in_dev_mode dryrun && DRY_RUN=1
 NO_MENU=0;  in_dev_mode nomenu  && NO_MENU=1
-# non-blocking failure counter (tool installs) — honest verdict at end of main()
-SETUP_ERRORS=0
+SETUP_ERRORS=0  # non-blocking failure counter; verdict at the end of main()
 
-# ─── logging ──────────────────────────────────────────────────────────────────
 _color() { printf '\033[%sm' "$1"; }
 log_info()  { printf '%s[ INFO ]%s %s\n' "$(_color '1;34')" "$(_color 0)" "$*"; }
 log_ok()    { printf '%s[  OK  ]%s %s\n' "$(_color '1;32')" "$(_color 0)" "$*"; }
@@ -43,26 +38,23 @@ log_warn()  { printf '%s[ WARN ]%s %s\n' "$(_color '1;33')" "$(_color 0)" "$*" >
 log_err()   { printf '%s[ ERR  ]%s %s\n' "$(_color '1;31')" "$(_color 0)" "$*" >&2; }
 log_step()  { printf '\n%s━━━ %s ━━━%s\n' "$(_color '1;36')" "$*" "$(_color 0)"; }
 
-# run <cmd...> — execute (or print in dryrun). A failing command is logged and
-# counted in SETUP_ERRORS; non-blocking here, the verdict lands at the end of
-# main(). Prerequisites (base, user) are blocking — see main().
+# run <cmd...> — execute (print in dryrun). Failures are logged + counted in
+# SETUP_ERRORS; non-blocking, the verdict lands at the end of main().
 run() {
     if (( DRY_RUN )); then
         printf '%s[DRYRUN]%s %s\n' "$(_color '1;35')" "$(_color 0)" "$*"
         return 0
     fi
-    if "$@"; then
-        return 0
+    local rc=0
+    "$@" || rc=$?
+    if (( rc != 0 )); then
+        log_warn "failed ($rc) at ${BASH_SOURCE[1]##*/}:${BASH_LINENO[0]} : $*"
+        SETUP_ERRORS=$(( SETUP_ERRORS + 1 ))
     fi
-    local rc=$?
-    log_warn "failed ($rc): $*"
-    SETUP_ERRORS=$(( SETUP_ERRORS + 1 ))
     return "$rc"
 }
 
-# soft <cmd...> — run a command whose failure is deliberately tolerated (a
-# fallback follows). Does NOT increment SETUP_ERRORS, even if the child went
-# through run(). Returns the child's exit code.
+# soft <cmd...> — run a command whose failure is tolerated; doesn't count in SETUP_ERRORS.
 soft() {
     local before=$SETUP_ERRORS
     "$@"
@@ -71,7 +63,6 @@ soft() {
     return "$rc"
 }
 
-# ─── guards ───────────────────────────────────────────────────────────────────
 require_root() {
     [[ $EUID -eq 0 ]] || { log_err "must run as root"; exit 1; }
 }
@@ -83,7 +74,6 @@ require_debian13() {
     [[ "${VERSION_ID:-}" =~ ^13 ]] || log_warn "expected Debian 13, got $VERSION_ID — continuing anyway"
 }
 
-# idempotence helpers — used by every install/*.sh
 has_cmd() { command -v "$1" &>/dev/null; }
 has_pkg() { dpkg -s "$1" &>/dev/null; }
 
@@ -98,64 +88,64 @@ apt_install() {
     run env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${missing[@]}"
 }
 
-# ─── mise helpers ─────────────────────────────────────────────────────────────
-# mise lives in the agent user's home (installed by install/runtimes.sh).
-# These helpers always invoke it as that user via an interactive login shell so
-# PATH/mise activate are loaded.
-
+# mise lives at /usr/local/bin/mise (system-wide, on the default PATH) so its
+# npm backend and shims — which shell out to a bare `mise` — always resolve it.
+# These helpers run it as the agent user so data/config land in that user's home.
 _user() { printf '%s' "${CERVELAI_USER:-agent}"; }
+# Run a command as the agent user. PATH carries the mise shims explicitly (the
+# dotfiles that'd set it are only deployed later); GITHUB_TOKEN is preserved so
+# mise's aqua/github backends authenticate past the 60-req/h rate limit.
 _user_bash() {
-    sudo -u "$(_user)" -i bash -c "$*"
+    sudo -u "$(_user)" --preserve-env=GITHUB_TOKEN -i bash -c \
+        "export PATH=\"\$HOME/.local/share/mise/shims:\$HOME/.local/bin:\$PATH\"; $*"
 }
 
 mise_present() {
-    [[ -x "/home/$(_user)/.local/bin/mise" ]]
+    [[ -x /usr/local/bin/mise ]]
 }
 
-# mise_use <backend>:<package> [version]
-#   mise_use aqua:BurntSushi/ripgrep
-#   mise_use npm:tokscale  latest
+# mise_use <backend>:<pkg> [version] [cmd_name] — cmd_name when the binary
+# differs from the package (e.g. mise_use npm:opencode-ai latest opencode).
 mise_use() {
-    local pkg="$1" ver="${2:-latest}"
+    local pkg="$1" ver="${2:-latest}" name="${3:-}"
     if ! mise_present; then
         log_warn "mise not present — skip mise_use $pkg (install runtimes first)"
         return 1
     fi
-    # Skip if the tool name (after `/`) is already on PATH for the user shell.
-    local name="${pkg##*/}"; name="${name##*:}"
+    # Skip if already on PATH; name defaults to the package basename.
+    if [[ -z "$name" ]]; then
+        name="${pkg##*/}"; name="${name##*:}"
+    fi
     if _user_bash "command -v $name" &>/dev/null; then
         log_skip "mise: $name already on PATH"
         return 0
     fi
     log_info "mise use -g $pkg@$ver"
-    run _user_bash "\$HOME/.local/bin/mise use -g $pkg@$ver" \
+    run _user_bash "mise use -g $pkg@$ver" \
         || { log_warn "mise install failed for $pkg — fallback to caller"; return 1; }
 }
 
 mise_npm() { mise_use "npm:$1" "${2:-latest}"; }
 mise_aqua() { mise_use "aqua:$1" "${2:-latest}"; }
-mise_cargo() { mise_use "cargo:$1" "${2:-latest}"; }
 
-# ─── connectivity check ───────────────────────────────────────────────────────
+# Tests DNS + TCP via bash's /dev/tcp — curl isn't installed yet at this point.
 check_connectivity() {
-    local host="${1:-https://github.com}"
+    local host="${1:-github.com}" port="${2:-443}"
     if (( DRY_RUN )); then
         log_skip "connectivity check (dryrun)"
         return 0
     fi
-    log_info "checking connectivity to $host"
-    if curl -fsS --max-time 5 -o /dev/null "$host" 2>/dev/null; then
+    log_info "checking connectivity to ${host}:${port}"
+    if timeout 5 bash -c "exec 3<>/dev/tcp/${host}/${port}" 2>/dev/null; then
         log_ok "online"
         return 0
     fi
-    log_err "no connectivity to $host — this script needs internet"
+    log_err "no connectivity to ${host}:${port} — this script needs internet"
     log_err "  - check Proxmox bridge / DHCP"
     log_err "  - check firewall / NAT on host"
-    log_err "  - try: pct exec $(hostname) -- curl -v https://github.com"
     return 1
 }
 
-# ─── parse args ───────────────────────────────────────────────────────────────
 while (( $# )); do
     case "$1" in
         -h|--help) sed -n '2,13p' "$0"; exit 0 ;;
@@ -164,47 +154,42 @@ while (( $# )); do
     shift
 done
 
-# Categories shown in the menu and installed by the Step 4 loop. base (Step 1)
-# and runtimes/mise (Step 3) are infrastructure — always installed.
+# Categories for the menu + install loop. base + runtimes are infrastructure
+# (always installed); menu.sh derives its defaults from these two arrays.
 ALL_CATEGORIES=(
     shell
     search
     editor
     git-tools
-    python-tools
     agents
 )
-# Opt-in categories: pre-unchecked in the menu (or via CERVELAI_SELECTED).
-# Single source of truth — menu.sh derives _MENU_DEFAULT_OFF from this.
-OPTIONAL_CATEGORIES=(
-    node-tools
+OPTIONAL_CATEGORIES=(  # pre-unchecked in the menu
     token-savers
     usage-trackers
     ide-web
     containers
 )
 
-# ─── orchestration ────────────────────────────────────────────────────────────
 main() {
     local selected=() cat err_before
 
     require_root
     require_debian13
     check_connectivity || exit 1
+    prompt_github_token
 
     log_step "cervelAI setup"
 
-    # Load menu.sh in interactive mode (needed for the selection sub-menus).
     if (( ! NO_MENU )); then
         if ! { [ -r /dev/tty ] && [ -w /dev/tty ]; }; then
-            log_err "interactive setup needs a TTY (whiptail) — not available via 'pct exec' without a pty"
+            log_err "interactive setup needs a TTY — not available via 'pct exec' without a pty"
             log_err "→ run via 'pct enter <CTID>', or use dev_mode=nomenu with CERVELAI_SELECTED"
             exit 1
         fi
         source_menu || { log_err "menu.sh required for interactive setup"; exit 1; }
     fi
 
-    # Step 1: base + user — PREREQUISITES, blocking on failure.
+    # base + user are prerequisites — abort the whole run if they fail.
     source_install base || { log_err "install/base.sh not found"; exit 1; }
     err_before=$SETUP_ERRORS
     install_base_all
@@ -214,7 +199,7 @@ main() {
         exit 1
     fi
 
-    # Step 2: resolve which categories and items to install.
+    # Resolve which categories and per-category items to install.
     if (( NO_MENU )); then
         if [[ "${CERVELAI_SELECTED:-all}" == "all" ]]; then
             selected=("${ALL_CATEGORIES[@]}" "${OPTIONAL_CATEGORIES[@]}")
@@ -230,13 +215,11 @@ main() {
     else
         if menu_select selected; then
             log_info "selected: ${selected[*]:-(none)}"
-            # Runtimes sub-menu always runs (mise is always installed).
             local rt_sel=()
             if menu_runtimes_select rt_sel; then
                 CERVELAI_RUNTIMES="$(IFS=,; echo "${rt_sel[*]}")"
                 export CERVELAI_RUNTIMES
             fi
-            # Per-category sub-menus.
             for cat in "${selected[@]}"; do
                 case "$cat" in
                     agents)
@@ -274,12 +257,10 @@ main() {
         fi
     fi
 
-    # Step 3: mise + language runtimes (infrastructure — many tools depend on it).
     log_step "mise + runtimes"
     source_install runtimes
     install_runtimes_all
 
-    # Step 4: install the selected categories.
     for cat in "${selected[@]}"; do
         [[ "$cat" == "base" || "$cat" == "runtimes" ]] && continue
         log_step "category: $cat"
@@ -290,14 +271,9 @@ main() {
         fi
     done
 
-    # Step 5: deploy configs / dotfiles.
     install_configs
-
-    # Step 6: env file (mise shims PATH + ntfy), then API keys.
     ensure_env_file
     prompt_api_keys
-
-    # Step 7: finalize (default shell, motd).
     finalize
 
     log_step "done"
@@ -332,13 +308,11 @@ create_user() {
         run useradd -m -s /bin/bash -G sudo "$u"
         run install -d -m 700 -o "$u" -g "$u" "/home/$u/.ssh"
     fi
-    # sudo NOPASSWD
     local sudoers="/etc/sudoers.d/90-${u}"
     if [[ ! -f "$sudoers" ]]; then
         run bash -c "echo '${u} ALL=(ALL) NOPASSWD:ALL' > '$sudoers' && chmod 440 '$sudoers'"
         log_ok "sudo NOPASSWD configured for $u"
     fi
-    # SSH key if provided
     if [[ -n "${CERVELAI_SSH_KEY:-}" ]]; then
         local ak="/home/$u/.ssh/authorized_keys"
         if ! grep -qF "${CERVELAI_SSH_KEY}" "$ak" 2>/dev/null; then
@@ -354,15 +328,16 @@ install_configs() {
     [[ -d "$CONFIGS_DIR" ]] || { log_warn "configs/ missing, skipping"; return 0; }
     log_step "deploying configs/ → $h"
 
-    # Explicit source (in configs/) → destination (relative to $h) mapping.
-    # Copy, not symlink: a re-run redeploys the repo version so updates propagate.
+    # source (configs/) → dest (relative to $h). Copy not symlink: a re-run
+    # redeploys the repo version. mise/config.toml is absent on purpose —
+    # install_runtimes_mise owns it; re-copying here would clobber [tools].
     local -A files=(
         ["bash/.bashrc"]=".bashrc"
         ["bash/.bash_profile"]=".bash_profile"
         ["zsh/.zshrc"]=".zshrc"
         ["zsh/.zshenv"]=".zshenv"
         ["tmux/.tmux.conf"]=".tmux.conf"
-        ["mise/config.toml"]=".config/mise/config.toml"
+        ["agents/AGENTS.md"]="AGENTS.md"
     )
     local src
     for src in "${!files[@]}"; do
@@ -371,7 +346,6 @@ install_configs() {
         log_ok "${files[$src]}"
     done
 
-    # Executable commands → ~/.local/bin (e.g. ai-run)
     if [[ -d "$CONFIGS_DIR/bin" ]]; then
         local b
         for b in "$CONFIGS_DIR"/bin/*; do
@@ -380,18 +354,10 @@ install_configs() {
             log_ok ".local/bin/$(basename "$b")"
         done
     fi
-
-    # snip filters (YAML dir) → ~/.config/snip/filters/
-    if compgen -G "$CONFIGS_DIR/snip/filters/*" >/dev/null 2>&1; then
-        run install -d -m 755 -o "$u" -g "$u" "$h/.config/snip/filters"
-        run cp -r "$CONFIGS_DIR/snip/filters/." "$h/.config/snip/filters/"
-        run chown -R "$u:$u" "$h/.config/snip"
-    fi
 }
 
-# Creates ~/.config/cervelAI/env (mise shims PATH + ntfy config) if missing.
-# Sourced by ~/.bashrc, ~/.zshenv and ai-run — carries the PATH fix for
-# non-interactive shells (so a detached agent sees the mise runtimes).
+# Creates ~/.config/cervelAI/env (mise PATH + ntfy) if missing — it carries the
+# PATH fix into non-interactive shells so a detached agent sees the runtimes.
 ensure_env_file() {
     local u; u="$(_user)"
     local f="/home/$u/${ENV_FILE_REL}"
@@ -414,12 +380,56 @@ export PATH="\$HOME/.local/share/mise/shims:\$HOME/.local/bin:\$PATH"
 export NTFY_SERVER="https://ntfy.sh"
 export NTFY_TOPIC="${topic}"
 EOF
+    # Persist the GitHub token if one was given.
+    if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+        printf 'export GITHUB_TOKEN=%q\n' "$GITHUB_TOKEN" >> "$f"
+    fi
     chmod 600 "$f"
     chown "$u:$u" "$f"
     log_ok "env file created: $f"
     log_info "ntfy topic: ${topic} — subscribe at https://ntfy.sh/${topic}"
 }
 
+# prompt_github_token — a token lifts the GitHub API rate limit (60→5000 req/h)
+# that mise + agent installers otherwise hit mid-install. Already set or no TTY → skip.
+prompt_github_token() {
+    if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+        log_skip "GITHUB_TOKEN already set — used for mise + GitHub API"
+        export GITHUB_TOKEN
+        return 0
+    fi
+    if [[ "${CERVELAI_NO_PROMPT:-0}" == "1" ]] || (( DRY_RUN )); then
+        log_skip "GITHUB_TOKEN prompt (CERVELAI_NO_PROMPT=1 or dryrun)"
+        return 0
+    fi
+    if ! { [ -r /dev/tty ] && [ -w /dev/tty ]; }; then
+        log_warn "no TTY — skipping GITHUB_TOKEN prompt (installs may hit the GitHub rate limit)"
+        return 0
+    fi
+    log_step "GitHub token (recommended — lifts the GitHub API rate limit during install)"
+    log_info "create one with no scopes at https://github.com/settings/tokens"
+    local val
+    read -r -p "  GITHUB_TOKEN (leave empty to skip): " val < /dev/tty || val=""
+    if [[ -n "$val" ]]; then
+        export GITHUB_TOKEN="$val"
+        log_ok "GITHUB_TOKEN set"
+    else
+        log_skip "GITHUB_TOKEN skipped — installs may hit the GitHub rate limit"
+    fi
+}
+
+# _agent_keys <agent> — prints the API key env vars an agent can use.
+_agent_keys() {
+    case "$1" in
+        claude-code|pi) echo "ANTHROPIC_API_KEY" ;;
+        codex)          echo "OPENAI_API_KEY" ;;
+        gemini-cli)     echo "GEMINI_API_KEY" ;;
+        opencode|aider|crush|goose|continue)
+                        echo "ANTHROPIC_API_KEY OPENAI_API_KEY OPENROUTER_API_KEY" ;;
+    esac
+}
+
+# prompt_api_keys — asks only for the keys the installed agents can use.
 prompt_api_keys() {
     local u; u="$(_user)"
     local envfile="/home/$u/${ENV_FILE_REL}"
@@ -430,30 +440,41 @@ prompt_api_keys() {
     fi
     [[ -e "$envfile" ]] || { log_warn "env file missing — skip API keys"; return 0; }
 
-    # No TTY (launched via 'pct exec' without a pty) → read would fail silently.
+    local agents="${CERVELAI_AGENTS:-}"
+    [[ "$agents" == "all" ]] && agents="claude-code,codex,opencode,pi,aider,crush,gemini-cli,goose,continue"
+    if [[ -z "$agents" ]]; then
+        log_skip "no AI agents installed — skipping API key prompt"
+        return 0
+    fi
+
+    # Union of the keys the installed agents use (deduped, stable order).
+    local -a want=() agent_list kv
+    local a k val
+    IFS=',' read -r -a agent_list <<< "$agents"
+    for a in "${agent_list[@]}"; do
+        a="${a// /}"
+        read -r -a kv <<< "$(_agent_keys "$a")"
+        for k in "${kv[@]}"; do
+            [[ " ${want[*]} " == *" $k "* ]] || want+=("$k")
+        done
+    done
+    (( ${#want[@]} )) || { log_skip "no provider keys to prompt"; return 0; }
+
     if ! { [ -r /dev/tty ] && [ -w /dev/tty ]; }; then
         log_warn "no TTY — skipping API key entry"
         log_warn "→ add them manually to $envfile, or re-run setup.sh via 'pct enter'"
         return 0
     fi
 
-    log_step "API keys (optional, leave empty to skip)"
-    local keys=(
-        "ANTHROPIC_API_KEY"
-        "OPENAI_API_KEY"
-        "GEMINI_API_KEY"
-        "OPENROUTER_API_KEY"
-        "GROQ_API_KEY"
-    )
-    local k val
-    for k in "${keys[@]}"; do
+    log_step "API keys for the agents you installed (optional, leave empty to skip)"
+    for k in "${want[@]}"; do
         if grep -q "^export ${k}=" "$envfile" 2>/dev/null; then
             log_skip "${k} already present"
             continue
         fi
         read -r -p "  ${k}: " val < /dev/tty || val=""
         if [[ -n "$val" ]]; then
-            printf "export %s='%s'\n" "$k" "$val" >> "$envfile"
+            printf 'export %s=%q\n' "$k" "$val" >> "$envfile"
             log_ok "${k} written"
         else
             log_skip "${k} skipped"
@@ -465,7 +486,10 @@ finalize() {
     local u="${CERVELAI_USER:-agent}"
     local desired="${CERVELAI_SHELL:-bash}"
 
-    # Change the default shell only if the user explicitly picked != bash.
+    # `install -d`/`install -D` ran as root leave some parent dirs (notably
+    # ~/.config) root-owned, breaking tools that mkdir under them. Fix ownership.
+    run chown -R "$u:$u" "/home/$u"
+
     if [[ "$desired" != "bash" && "$desired" != "none" ]]; then
         local target; target="$(command -v "$desired" 2>/dev/null || true)"
         if [[ -z "$target" ]]; then
@@ -481,7 +505,6 @@ finalize() {
         fi
     fi
 
-    # MOTD
     local motd="/etc/motd"
     if grep -q "cervelAI" "$motd" 2>/dev/null; then
         log_skip "MOTD already set"
@@ -496,6 +519,7 @@ finalize() {
   Connect:  ssh ${u}@<this-ip>  |  mosh ${u}@<this-ip>
   Env/keys: ~/.config/cervelAI/env
   Notify:   ai-run <cmd>
+  Tools:    cat ~/AGENTS.md
 
 MOTD
         log_ok "MOTD set"
