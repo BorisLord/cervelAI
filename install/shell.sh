@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# install/shell.sh — shell + multiplexer.
+# install/shell.sh — login shell + multiplexer.
 #   CERVELAI_SHELL=bash|zsh|fish|none        (default: bash + bash-it)
 #   CERVELAI_MULTIPLEXER=tmux|zellij|none    (default: tmux)
-# A non-bash default shell is applied by setup.sh's finalize() (chsh).
+# A non-bash default shell is applied by setup.sh:finalize() via chsh.
 
 install_shell_bash() { apt_install bash bash-completion; }
 install_shell_zsh()  { apt_install zsh; }

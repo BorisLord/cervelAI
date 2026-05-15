@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
-# install/git-tools.sh — git forge CLIs + delta + lazygit.
-# CERVELAI_GIT_FORGES=<csv>  (default: "github"; "all" = every forge)
-#   github → gh, gitlab → glab, gitea → tea (also Codeberg/Forgejo), none
-# git-delta and lazygit are always installed (forge-independent).
+# install/git-tools.sh — forge CLIs (CERVELAI_GIT_FORGES=<csv>) + delta, lazygit,
+# gitleaks (always installed). gitleaks: an autonomous agent shouldn't commit secrets.
 
-install_git_tools_gh()      { mise_aqua "cli/cli"; }
-install_git_tools_glab()    { mise_aqua "gitlab-org/cli"; }
-install_git_tools_tea()     { mise_aqua "gitea/tea"; }
-install_git_tools_delta()   { mise_aqua "dandavison/delta"; }
-install_git_tools_lazygit() { mise_aqua "jesseduffield/lazygit"; }
+install_git_tools_gh()       { mise_aqua "cli/cli"; }
+# glab lives on gitlab.com — mise's short name resolves to its gitlab backend.
+# tea has no GitHub/aqua path — it's a Go program on gitea.com, install via go:.
+install_git_tools_glab()     { mise_use "glab"; }
+install_git_tools_tea()      { mise_use "go"; mise_use "go:code.gitea.io/tea"; }
+install_git_tools_delta()    { mise_aqua "dandavison/delta"; }
+install_git_tools_lazygit()  { mise_aqua "jesseduffield/lazygit"; }
+install_git_tools_gitleaks() { mise_aqua "gitleaks/gitleaks"; }
 
 install_git_tools_all() {
     local csv="${CERVELAI_GIT_FORGES:-github}"
@@ -26,4 +27,5 @@ install_git_tools_all() {
     done
     install_git_tools_delta
     install_git_tools_lazygit
+    install_git_tools_gitleaks
 }
