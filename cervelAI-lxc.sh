@@ -122,8 +122,8 @@ DEFAULT_TMPL_STORAGE="$(pvesm status --content vztmpl 2>/dev/null \
 
 prompt_default CTID             "Container ID (CTID):"            "${DEFAULT_CTID:-100}"
 prompt_default HOSTNAME         "Hostname:"                       "cervelai"
-prompt_default VCPU             "vCPU cores:"                     "2"
-prompt_default RAM_MB           "RAM (MB):"                       "4096"
+prompt_default VCPU             "vCPU cores:"                     "4"
+prompt_default RAM_MB           "RAM (MB):"                       "6144"
 prompt_default SWAP_MB          "Swap (MB, 0 to disable):"        "512"
 prompt_default STORAGE          "Proxmox storage for the rootfs:" "${DEFAULT_STORAGE:-local-lvm}"
 prompt_default DISK_GB          "Disk size (GB):"                 "20"
