@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # install/ide-web.sh: code-server (VS Code in browser). Opt-in.
 
-install_ide_web_code_server() {
+install_ide_web_all() {
     if has_cmd code-server; then
         log_skip "code-server already installed"
         return 0
@@ -13,8 +13,4 @@ install_ide_web_code_server() {
     log_info "code-server enabled but not started"
     log_info "start: sudo systemctl start code-server@${u}"
     log_info "config: /home/${u}/.config/code-server/config.yaml"
-}
-
-install_ide_web_all() {
-    install_ide_web_code_server
 }
