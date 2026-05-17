@@ -360,15 +360,13 @@ main() {
     ensure_env_file
     prompt_api_keys
     finalize
-    prompt_final_topgrade
+    run_final_topgrade
 
-    log_step "done"
     if ((SETUP_ERRORS > 0)); then
-        log_warn "$SETUP_ERRORS command(s) failed, see the [WARN] lines above"
-        log_warn "cervelAI partially installed for user=$(_user)"
-        exit 1
+        log_warn "$SETUP_ERRORS command(s) failed during install, see the [WARN] lines above"
     fi
-    log_ok "cervelAI ready at user=$(_user)"
+    print_final_summary
+    ((SETUP_ERRORS == 0))
 }
 
 source_install() {
@@ -609,31 +607,46 @@ prompt_api_keys() {
     done
 }
 
-# Catches apt security updates the Debian template missed; mise/npm tools are no-ops here.
-prompt_final_topgrade() {
-    [[ "${CERVELAI_NO_PROMPT:-0}" == "1" ]] || ((DRY_RUN)) && {
-        log_skip "final topgrade (nomprompt/dryrun)"
-        return 0
-    }
-    { [ -r /dev/tty ] && [ -w /dev/tty ]; } || {
-        log_skip "final topgrade (no TTY)"
+# Mandatory final refresh: catches apt security updates missed by the Debian template.
+# Skip only in dryrun.
+run_final_topgrade() {
+    ((DRY_RUN)) && {
+        log_skip "final topgrade (dryrun)"
         return 0
     }
     log_step "final refresh (topgrade): catches apt security updates"
-    if has_cmd gum; then
-        if gum confirm --default=Yes "Run topgrade now to ensure everything is current?" </dev/tty; then
-            soft _user_bash "topgrade --yes"
-        else
-            log_skip "topgrade skipped (run later: cervelai-menu → update)"
-        fi
-    else
-        local ans
-        read -r -p "  run topgrade now? [Y/n]: " ans </dev/tty || ans=""
-        case "${ans:-Y}" in
-            n | N | no | NO | No) log_skip "topgrade skipped" ;;
-            *) soft _user_bash "topgrade --yes" ;;
-        esac
-    fi
+    soft _user_bash "topgrade --yes"
+}
+
+# Recap of what was installed + how to connect. Last thing printed by main().
+print_final_summary() {
+    local u; u="$(_user)"
+    local ip
+    ip="$(ip -4 -o addr show 2>/dev/null | awk '$2 != "lo" {print $4}' | cut -d/ -f1 | head -1)"
+    log_step "summary"
+    cat <<EOF
+
+  ┌──────────────────────────────────────────────────┐
+  │  cervelAI is ready.                              │
+  └──────────────────────────────────────────────────┘
+
+  User:           $u
+  IP:             ${ip:-<detect: ip a>}
+  Shell:          ${CERVELAI_SHELL:-bash} + ${CERVELAI_MULTIPLEXER:-tmux}
+  Categories:     ${selected[*]:-(none beyond base)}
+  Agents:         ${CERVELAI_AGENTS:-(none)}
+  Editors:        ${CERVELAI_EDITORS:-(none)}
+  Env/keys:       /home/$u/.config/cervelAI/env
+  Notify:         ai-run <cmd>
+  Tools quickref: cat /home/$u/AGENTS.md
+
+  Connect:
+      ssh $u@${ip:-<lxc-ip>}
+      mosh $u@${ip:-<lxc-ip>}
+
+  The cervelai menu greets every interactive login (skip via plain shell).
+
+EOF
 }
 
 finalize() {

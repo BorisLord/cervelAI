@@ -164,9 +164,9 @@ locales via `locale-gen`. Useful only to silence the perl warning when an SSH
 client sends a non-C LANG via SendEnv. Debian's default `C.UTF-8` is enough
 for the LXC itself.
 
-**Final topgrade** (prompted, default `Y`): at the end of install, `setup.sh`
-asks whether to run `topgrade` to catch any apt security updates the Debian
-template missed. Skip with `CERVELAI_NO_PROMPT=1` (or just answer `n`).
+**Final topgrade** (automatic): `setup.sh` runs `topgrade` at the end of install
+to catch apt security updates missed by the Debian template. Always on (skipped
+only in dryrun mode).
 
 ### Menu bypass (runtime)
 
