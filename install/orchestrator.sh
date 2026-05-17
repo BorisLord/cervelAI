@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
-# install/orchestrator.sh: aoe + entry menu. Skips aoe if no AI agent installed.
+# install/orchestrator.sh: aoe + entry menu. Skips aoe if no AI agent installed or no tmux.
 
-# Mirrors `aoe agents` for the bootstrap path (aoe not yet installed).
-_AOE_KNOWN_AGENTS=(
-    claude opencode codex gemini pi aider crush goose vibe
-    cursor copilot droid hermes kiro qwen
+# orchestrator may run without `agents` selected → load _AGENT_BIN ourselves.
+# shellcheck disable=SC1091
+[[ -n "${_AGENT_BIN[*]:-}" ]] || source "${INSTALL_DIR}/agents.sh"
+
+# aoe-known agents not installed by us (detected via file scan if user put them there).
+_AOE_EXTRA_AGENTS=(
+    vibe cursor copilot droid hermes kiro qwen
 )
 
-# 0 if at least one AI agent binary is reachable by the agent user.
 _orch_at_least_one_agent_installed() {
     local u
     u="$(_user)"
@@ -16,12 +18,12 @@ _orch_at_least_one_agent_installed() {
     if has_cmd aoe; then
         sudo -u "$u" env \
             PATH="$home/.local/bin:$home/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin" \
-            aoe agents 2>/dev/null | grep -qE '^[[:space:]]*✓'
+            aoe agents 2>/dev/null | grep -q '✓'
         return $?
     fi
 
     local a p
-    for a in "${_AOE_KNOWN_AGENTS[@]}"; do
+    for a in "${_AGENT_BIN[@]}" "${_AOE_EXTRA_AGENTS[@]}"; do
         for p in "$home/.local/bin/$a" \
             "$home/.local/share/mise/shims/$a" \
             "/usr/local/bin/$a" \
@@ -35,12 +37,12 @@ _orch_at_least_one_agent_installed() {
     return 1
 }
 
-# bin=aoe required: release asset is aoe-linux-amd64.tar.gz, mise would otherwise name the shim aoe-linux-amd64.
+# [bin=aoe]: release asset is aoe-linux-amd64.tar.gz, else mise names the shim aoe-linux-amd64.
 install_orchestrator_aoe() {
     mise_use "github:njbrake/agent-of-empires[bin=aoe]" latest aoe
 }
 
-# /etc/profile.d entry + /etc/skel menu + /root/.bashrc handoff for `pct enter` (interactive non-login).
+# /root/.bashrc handoff covers `pct enter` (interactive non-login skips /etc/profile.d).
 install_orchestrator_entry() {
     local src_profile="${CONFIGS_DIR}/profile.d/cervelai-entry.sh"
     local src_menu="${CONFIGS_DIR}/bin/cervelai-menu"
@@ -69,7 +71,6 @@ case $- in *i*)
     done
 }
 
-# systemd --user `aoe serve` (web LAN dashboard). enable-linger keeps it up without a session.
 install_orchestrator_aoe_serve_systemd() {
     local u
     u="$(_user)"
@@ -83,7 +84,7 @@ install_orchestrator_aoe_serve_systemd() {
 
     log_info "deploying aoe-serve.service (user=$u) + enabling linger"
     run install -D -m 644 -o "$u" -g "$u" "$src" "$unit_dir/aoe-serve.service"
-    # install -D ran as root: fix ownership so systemctl --user finds wants/.
+    # `install -D` as root leaves parents root-owned; systemctl --user needs $u to own wants/.
     run chown -R "$u:$u" "$home/.config/systemd"
     soft run loginctl enable-linger "$u"
     soft run sudo -u "$u" XDG_RUNTIME_DIR="/run/user/$(id -u "$u")" \
@@ -94,6 +95,10 @@ install_orchestrator_aoe_serve_systemd() {
 
 install_orchestrator_all() {
     install_orchestrator_entry
+    if ! has_cmd tmux; then
+        log_skip "no tmux installed, skipping aoe (aoe is tmux-only — pick CERVELAI_MULTIPLEXER=tmux to enable)"
+        return 0
+    fi
     if _orch_at_least_one_agent_installed; then
         install_orchestrator_aoe
         install_orchestrator_aoe_serve_systemd

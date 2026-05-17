@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
-# install/agents.sh: AI agent CLIs. CERVELAI_AGENTS=<csv|all>.
-# All via mise except claude-code (self-updates via its own installer).
+# install/agents.sh: AI agent CLIs (CERVELAI_AGENTS=<csv|all>). claude-code self-updates.
+
+# Single source of truth (package → binary). Read by install/orchestrator.sh's gate too.
+# -g: survives sourcing from setup.sh's dispatch function.
+declare -gA _AGENT_BIN=(
+    ["claude-code"]=claude
+    ["codex"]=codex
+    ["opencode"]=opencode
+    ["pi"]=pi
+    ["aider"]=aider
+    ["crush"]=crush
+    ["gemini-cli"]=gemini
+    ["goose"]=goose
+    ["continue"]=cn
+)
 
 install_agents_claude_code() {
     if _user_bash 'command -v claude' &>/dev/null; then
@@ -17,23 +30,27 @@ install_agents_pi() { mise_use "npm:@earendil-works/pi-coding-agent" latest pi; 
 install_agents_aider() { mise_use "pipx:aider-chat" latest aider; }
 install_agents_crush() { mise_aqua "charmbracelet/crush"; }
 install_agents_gemini_cli() { mise_use "npm:@google/gemini-cli" latest gemini; }
-# block/goose redirects to aaif-goose/goose; aqua still pins block/goose and its
-# attestation check fails on the mismatch, go through github: directly.
+# aqua's block/goose entry attestation-fails on the redirect to aaif-goose/goose; use github: instead.
 install_agents_goose() { mise_use "github:aaif-goose/goose"; }
 install_agents_continue() { mise_use "npm:@continuedev/cli" latest cn; }
 
 install_agents_all() {
     local csv="${CERVELAI_AGENTS:-}"
-    [[ "$csv" == "all" ]] && csv="claude-code,codex,opencode,pi,aider,crush,gemini-cli,goose,continue"
+    if [[ "$csv" == "all" ]]; then
+        csv="$(
+            IFS=,
+            echo "${!_AGENT_BIN[*]}"
+        )"
+    fi
     IFS=',' read -r -a list <<<"$csv"
     for a in "${list[@]}"; do
         a="${a// /}"
-        case "$a" in
-            claude-code | codex | opencode | pi | aider | crush | gemini-cli | goose | continue)
-                "install_agents_${a//-/_}"
-                ;;
-            none | "") log_skip "no agent requested" ;;
-            *) log_warn "unknown agent in CERVELAI_AGENTS: $a (valid: claude-code,codex,opencode,pi,aider,crush,gemini-cli,goose,continue,none)" ;;
-        esac
+        if [[ -n "${_AGENT_BIN[$a]:-}" ]]; then
+            "install_agents_${a//-/_}"
+        elif [[ "$a" == "none" || -z "$a" ]]; then
+            log_skip "no agent requested"
+        else
+            log_warn "unknown agent in CERVELAI_AGENTS: $a (valid: ${!_AGENT_BIN[*]},none)"
+        fi
     done
 }

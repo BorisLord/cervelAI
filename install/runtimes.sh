@@ -1,18 +1,15 @@
 #!/usr/bin/env bash
-# install/runtimes.sh: mise (system-wide) + language runtimes.
-# node, python, pnpm, uv always installed. CERVELAI_RUNTIMES picks the extras.
+# install/runtimes.sh: mise system-wide + language runtimes. node/python/pnpm/uv always.
 
 install_runtimes_mise() {
     if [[ -x /usr/local/bin/mise ]]; then
         log_skip "mise already installed (system-wide)"
     else
-        # System-wide PATH required: mise's npm backend and shims shell out to
-        # bare `mise`, a per-user ~/.local/bin/mise wouldn't be reliable.
+        # system-wide /usr/local/bin/mise: npm backend + shims shell out to bare `mise`.
         log_info "installing mise system-wide to /usr/local/bin/mise"
         run sh -c 'curl -fsSL https://mise.run | MISE_INSTALL_PATH=/usr/local/bin/mise sh'
     fi
-    # [settings] deployed BEFORE any `mise use -g` (which appends [tools] here).
-    # install_configs must not clobber it later.
+    # deploy [settings] BEFORE any `mise use -g` (which appends [tools] in the same file).
     local u
     u="$(_user)"
     local cfg="/home/$u/.config/mise/config.toml"
@@ -24,8 +21,8 @@ install_runtimes_mise() {
 
 install_runtimes_node() { mise_use "node" "lts"; }
 
-# pnpm is an npm: package, but config.toml says "use pnpm for npm:*" (circular).
-# MISE_NPM_PACKAGE_MANAGER=npm forces this single install via npm.
+# config.toml routes npm:* through pnpm, but pnpm itself is an npm:* package (circular).
+# MISE_NPM_PACKAGE_MANAGER=npm breaks the loop for this one install.
 install_runtimes_pnpm() {
     if _user_bash "command -v pnpm" &>/dev/null; then
         log_skip "mise: pnpm already on PATH"
@@ -36,7 +33,6 @@ install_runtimes_pnpm() {
         log_warn "pnpm bootstrap failed, later npm:* installs will too"
 }
 
-# Run AFTER pnpm bootstrap so tsc/tsx flow through pnpm.
 install_runtimes_node_tools() {
     mise_use "npm:typescript" latest tsc
     mise_npm "tsx"
@@ -54,7 +50,7 @@ install_runtimes_deno() { mise_use "deno" "latest"; }
 install_runtimes_zig() { mise_use "zig" "latest"; }
 install_runtimes_java() { mise_use "java" "latest"; }
 install_runtimes_kotlin() { mise_use "kotlin" "latest"; }
-# MISE_EXPERIMENTAL scopes the experimental flag instead of polluting mise's global settings.
+# MISE_EXPERIMENTAL scopes the flag here instead of polluting mise's global settings.
 install_runtimes_dotnet() {
     _user_bash "command -v dotnet" &>/dev/null && {
         log_skip "mise: dotnet already on PATH"
@@ -67,13 +63,19 @@ install_runtimes_dart() { mise_use "dart" "latest"; }
 install_runtimes_scala() { mise_use "scala" "latest"; }
 install_runtimes_lua() { mise_use "lua" "latest"; }
 
-# php and erlang build from source via mise: their dev libraries must be present
-# first or ./configure aborts. Gated: only runs when the runtime is picked.
+# php/erlang build from source via mise: dev libs must be present or ./configure aborts.
 install_runtimes_php() {
     apt_install autoconf bison re2c pkg-config zlib1g-dev libxml2-dev \
         libssl-dev libsqlite3-dev libcurl4-openssl-dev libonig-dev \
         libreadline-dev libzip-dev libgd-dev libicu-dev libpq-dev
-    mise_use "php" "8.4.21" # exact stable: 'latest' fuzzy-matches an RC
+    # 'mise latest php' picks RCs over stables (8.5.6RC3 > 8.5.6). Resolve newest 8.x stable ourselves.
+    local v
+    v="$(_user_bash 'mise ls-remote php' 2>/dev/null | grep -E '^8\.[0-9]+\.[0-9]+$' | tail -1)"
+    if [[ -z "$v" ]]; then
+        log_warn "could not resolve latest stable PHP 8.x, falling back to 'latest'"
+        v="latest"
+    fi
+    mise_use "php" "$v"
 }
 install_runtimes_erlang() {
     apt_install autoconf libssl-dev libncurses-dev

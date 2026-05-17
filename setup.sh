@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
-# setup.sh: cervelAI phase 2 (guest LXC). Run as root in Debian 13.
-#
+# setup.sh: cervelAI phase 2. Run as root on Debian/Ubuntu.
 # Usage:
-#   bash setup.sh                    # interactive, pick tools in a menu
-#   dev_mode=nomenu bash setup.sh    # non-interactive, installs everything
+#   bash setup.sh                    # interactive
+#   dev_mode=nomenu bash setup.sh    # installs everything
 #   dev_mode=trace,dryrun bash setup.sh
-#
-# See README.md for the full env var table (CERVELAI_*).
+# Env vars: see README.md (CERVELAI_*).
 
 set -uo pipefail
-export LC_ALL=C # deterministic output; silences perl locale warnings
+export LC_ALL=C # silences perl locale warnings
+trap 'printf "\n[ ABORT ] interrupted (Ctrl+C), partial install state likely\n" >&2; exit 130' INT TERM
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALL_DIR="${SCRIPT_DIR}/install"
@@ -25,7 +24,7 @@ DRY_RUN=0
 in_dev_mode dryrun && DRY_RUN=1
 NO_MENU=0
 in_dev_mode nomenu && NO_MENU=1
-SETUP_ERRORS=0 # non-blocking failure counter; verdict at the end of main()
+SETUP_ERRORS=0
 
 _color() { printf '\033[%sm' "$1"; }
 log_info() { printf '%s[ INFO ]%s %s\n' "$(_color '1;34')" "$(_color 0)" "$*"; }
@@ -61,7 +60,6 @@ run() {
     return "$rc"
 }
 
-# Run a command without counting its failure in SETUP_ERRORS.
 soft() {
     local before=$SETUP_ERRORS
     "$@"
@@ -77,17 +75,30 @@ require_root() {
     }
 }
 
-require_debian13() {
+require_debian_family() {
     [[ -r /etc/os-release ]] || {
         log_err "/etc/os-release missing"
         exit 1
     }
     . /etc/os-release
-    [[ "${ID:-}" == "debian" ]] || {
-        log_err "not Debian (ID=$ID)"
+    if [[ "${ID:-}" != "debian" && "${ID:-}" != "ubuntu" && "${ID_LIKE:-}" != *"debian"* ]]; then
+        log_err "not a Debian-family distro (ID=${ID:-?}, ID_LIKE=${ID_LIKE:-})"
+        exit 1
+    fi
+    log_info "distro: ${PRETTY_NAME:-$ID $VERSION_ID}"
+}
+
+# /run/systemd/system catches WSL/containers where systemctl exists but init isn't systemd.
+require_systemd() {
+    ((DRY_RUN)) && {
+        log_skip "systemd check (dryrun)"
+        return 0
+    }
+    [[ -d /run/systemd/system ]] || {
+        log_err "systemd not running as init (no /run/systemd/system)"
+        log_err "→ Devuan / sysvinit / WSL without systemd=true are unsupported"
         exit 1
     }
-    [[ "${VERSION_ID:-}" =~ ^13 ]] || log_warn "expected Debian 13, got $VERSION_ID, continuing anyway"
 }
 
 has_cmd() { command -v "$1" &>/dev/null; }
@@ -104,20 +115,15 @@ apt_install() {
     run env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${missing[@]}"
 }
 
-# mise at /usr/local/bin/mise (system-wide) so its npm backend and shims always resolve.
 _user() { printf '%s' "${CERVELAI_USER:-agent}"; }
-# Runs as agent user with mise shims on PATH; preserves GITHUB_TOKEN for mise's GitHub backend.
+# preserve-env=GITHUB_TOKEN lifts mise's GitHub backend rate limit.
 _user_bash() {
     sudo -u "$(_user)" --preserve-env=GITHUB_TOKEN -i bash -c \
         "export PATH=\"\$HOME/.local/share/mise/shims:\$HOME/.local/bin:\$PATH\"; $*"
 }
 
-mise_present() {
-    [[ -x /usr/local/bin/mise ]]
-}
+mise_present() { [[ -x /usr/local/bin/mise ]]; }
 
-# mise_use <backend>:<pkg> [version] [cmd_name]
-# cmd_name is needed when the binary differs from the package name.
 mise_use() {
     local pkg="$1" ver="${2:-latest}" name="${3:-}"
     if ! mise_present; then
@@ -143,7 +149,7 @@ mise_use() {
 mise_npm() { mise_use "npm:$1" "${2:-latest}"; }
 mise_aqua() { mise_use "aqua:$1" "${2:-latest}"; }
 
-# DNS + TCP test via bash's /dev/tcp (curl isn't installed yet).
+# /dev/tcp because curl isn't installed yet at this stage.
 check_connectivity() {
     local host="${1:-github.com}" port="${2:-443}"
     if ((DRY_RUN)); then
@@ -172,29 +178,26 @@ while (($#)); do
     shift
 done
 
-# Categories in menu/install order. base + runtimes + lsp always run, excluded here. Nothing pre-checked.
+# Install order. base/runtimes/lsp always run, excluded.
 CATEGORIES=(
-    shell
-    search
     editor
-    git-tools
     agents
     orchestrator
     token-savers
     usage-trackers
     ide-web
     containers
-    db
-    http
-    data
+    data-stack
     agent-memory
+    ai-tools
 )
 
 main() {
     local selected=() cat err_before
 
     require_root
-    require_debian13
+    require_debian_family
+    require_systemd
     check_connectivity || exit 1
     prompt_github_token
 
@@ -212,7 +215,6 @@ main() {
         }
     fi
 
-    # base + user are prerequisites, abort the whole run if they fail.
     source_install base || {
         log_err "install/base.sh not found"
         exit 1
@@ -239,7 +241,6 @@ main() {
         fi
         log_info "selected: ${selected[*]:-(none)}"
     else
-        # Loop until the summary is confirmed, lets the user redo any selection.
         while :; do
             if menu_select selected; then
                 log_info "selected: ${selected[*]:-(none)}"
@@ -250,6 +251,14 @@ main() {
                         echo "${rt_sel[*]}"
                     )"
                     export CERVELAI_RUNTIMES
+                fi
+                local gf_sel=()
+                if menu_git_forges_select gf_sel && ((${#gf_sel[@]})); then
+                    CERVELAI_GIT_FORGES="$(
+                        IFS=,
+                        echo "${gf_sel[*]}"
+                    )"
+                    export CERVELAI_GIT_FORGES
                 fi
                 for cat in "${selected[@]}"; do
                     case "$cat" in
@@ -273,27 +282,6 @@ main() {
                                 export CERVELAI_EDITORS
                             fi
                             ;;
-                        git-tools)
-                            local gf_sel=()
-                            if menu_git_forges_select gf_sel; then
-                                CERVELAI_GIT_FORGES="$(
-                                    IFS=,
-                                    echo "${gf_sel[*]}"
-                                )"
-                                export CERVELAI_GIT_FORGES
-                            fi
-                            ;;
-                        shell)
-                            local sh_sel="" mx_sel=""
-                            menu_shell_select sh_sel && {
-                                CERVELAI_SHELL="$sh_sel"
-                                export CERVELAI_SHELL
-                            }
-                            menu_multiplexer_select mx_sel && {
-                                CERVELAI_MULTIPLEXER="$mx_sel"
-                                export CERVELAI_MULTIPLEXER
-                            }
-                            ;;
                         token-savers)
                             local ts_sel=""
                             menu_token_saver_select ts_sel && {
@@ -315,9 +303,8 @@ main() {
                 done
                 menu_summary_confirm && break
                 log_info "redoing selection…"
-                unset CERVELAI_RUNTIMES CERVELAI_AGENTS CERVELAI_EDITORS \
-                    CERVELAI_GIT_FORGES CERVELAI_SHELL CERVELAI_MULTIPLEXER \
-                    CERVELAI_TOKEN_SAVER CERVELAI_AGENT_MEMORY
+                unset CERVELAI_RUNTIMES CERVELAI_GIT_FORGES CERVELAI_AGENTS \
+                    CERVELAI_EDITORS CERVELAI_TOKEN_SAVER CERVELAI_AGENT_MEMORY
             else
                 log_warn "menu cancelled, installing nothing beyond base + mise + default runtimes"
                 selected=()
@@ -333,7 +320,12 @@ main() {
     log_step "language servers (LSP)"
     source_install lsp && install_lsp_all
 
-    # Canonical order matters: token-savers must run AFTER agents (its hook init needs the binaries).
+    log_step "shell + search + git-tools (always-installed baseline)"
+    source_install shell && install_shell_all
+    source_install search && install_search_all
+    source_install git-tools && install_git_tools_all
+
+    # token-savers must run AFTER agents (its hook init needs the agent binaries).
     local -a ordered=()
     local s
     for cat in "${CATEGORIES[@]}"; do
@@ -394,7 +386,7 @@ create_user() {
         log_info "creating user $u"
         run useradd -m -s /bin/bash -G sudo "$u"
     fi
-    # `install -d` doesn't -o intermediate dirs; list each level. Idempotent.
+    # `install -d` doesn't chown intermediate dirs; list each level.
     run install -d -m 700 -o "$u" -g "$u" "/home/$u/.ssh"
     run install -d -m 755 -o "$u" -g "$u" "/home/$u/.config"
     run install -d -m 755 -o "$u" -g "$u" "/home/$u/.cache"
@@ -437,7 +429,7 @@ install_configs() {
     }
     log_step "deploying configs/ → $h"
 
-    # mise/config.toml absent on purpose: install_runtimes_mise owns it (avoid clobbering [tools]).
+    # mise/config.toml deliberately omitted: install_runtimes_mise owns it (avoid clobbering [tools]).
     local -A files=(
         ["bash/.bashrc"]=".bashrc"
         ["bash/.bash_profile"]=".bash_profile"
@@ -466,7 +458,6 @@ install_configs() {
     fi
 }
 
-# ~/.config/cervelAI/env: PATH + ntfy, carries mise shims to non-interactive shells.
 ensure_env_file() {
     local u
     u="$(_user)"
@@ -563,7 +554,6 @@ prompt_api_keys() {
         return 0
     fi
 
-    # Union of the keys the installed agents use (deduped, stable order).
     local -a want=() agent_list kv
     local a k val
     IFS=',' read -r -a agent_list <<<"$agents"
@@ -591,7 +581,6 @@ prompt_api_keys() {
             log_skip "${k} already present"
             continue
         fi
-        # gum input --password masks the key (gum guaranteed installed at this point).
         if has_cmd gum; then
             val="$(gum input --password --prompt="  ${k}: " --placeholder="leave empty to skip" </dev/tty)" || val=""
         else
@@ -607,8 +596,7 @@ prompt_api_keys() {
     done
 }
 
-# Mandatory final refresh: catches apt security updates missed by the Debian template.
-# Skip only in dryrun.
+# Catches apt security updates missed by the Debian template snapshot.
 run_final_topgrade() {
     ((DRY_RUN)) && {
         log_skip "final topgrade (dryrun)"
@@ -618,11 +606,12 @@ run_final_topgrade() {
     soft _user_bash "topgrade --yes"
 }
 
-# Recap of what was installed + how to connect. Last thing printed by main().
 print_final_summary() {
-    local u; u="$(_user)"
+    local u
+    u="$(_user)"
     local ip
-    ip="$(ip -4 -o addr show 2>/dev/null | awk '$2 != "lo" {print $4}' | cut -d/ -f1 | head -1)"
+    # default-route src IP: any iface name, skips docker0/podman bridges.
+    ip="$(ip -4 -o route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++)if($i=="src")print $(i+1)}' | head -1)"
     log_step "summary"
     cat <<EOF
 
@@ -636,6 +625,12 @@ print_final_summary() {
   Categories:     ${selected[*]:-(none beyond base)}
   Agents:         ${CERVELAI_AGENTS:-(none)}
   Editors:        ${CERVELAI_EDITORS:-(none)}
+EOF
+    [[ -n "${CERVELAI_GIT_FORGES:-}" ]] && printf '  Git forges:     %s\n' "$CERVELAI_GIT_FORGES"
+    [[ -n "${CERVELAI_TOKEN_SAVER:-}" ]] && printf '  Token-saver:    %s\n' "$CERVELAI_TOKEN_SAVER"
+    [[ -n "${CERVELAI_AGENT_MEMORY:-}" ]] && printf '  Agent memory:   %s\n' "$CERVELAI_AGENT_MEMORY"
+    [[ -n "${CERVELAI_RUNTIMES:-}" ]] && printf '  Runtimes+:      %s\n' "$CERVELAI_RUNTIMES"
+    cat <<EOF
   Env/keys:       /home/$u/.config/cervelAI/env
   Notify:         ai-run <cmd>
   Tools quickref: cat /home/$u/AGENTS.md
@@ -653,7 +648,7 @@ finalize() {
     local u="${CERVELAI_USER:-agent}"
     local desired="${CERVELAI_SHELL:-bash}"
 
-    # `install -d` ran as root leaves parent dirs root-owned; fix recursively.
+    # `install -d` as root leaves parents root-owned; fix recursively.
     run chown -R "$u:$u" "/home/$u"
 
     if [[ "$desired" != "bash" && "$desired" != "none" ]]; then
