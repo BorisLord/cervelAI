@@ -49,7 +49,7 @@ ai-run claude -p "implement feature X"
 | Runtimes (always) | node, python, pnpm, uv. Node ships `tsc` + `tsx`; Python ships `ruff` |
 | Runtimes (opt-in) | go, rust, bun, deno, zig, java, kotlin, dotnet, php, ruby, dart, scala, elixir, erlang, lua |
 | Shell | bash + bash-it / zsh + oh-my-zsh / fish. tmux / zellij. `ai`, `t`, `br`/`zr` aliases |
-| Search / text | rg, fd, sd, fzf, jq, yq, dasel, gron, ast-grep, typos, bat, eza, glow, zoxide, tldr, hyperfine, shfmt |
+| Search / text | rg, fd, sd, fzf, jq, yq, dasel, gron, ast-grep, typos, bat, eza, glow, zoxide, tldr, hyperfine, shfmt, shellcheck, hadolint |
 | Editors | vim, neovim (default); emacs, helix, micro (opt-in) |
 | LSPs (always) | bash-ls, yaml-ls, taplo (TOML), marksman (md), typescript-ls (TS+JS), vscode-json-languageserver, basedpyright |
 | LSPs (runtime-gated) | gopls (go), rust-analyzer (rust), zls (zig), metals (scala), lua-ls (lua), intelephense (php), kotlin-ls, csharp-ls (dotnet), next-ls (elixir), erlang_ls. Built-in: `dart language-server`, `deno lsp`. Java/Ruby: install via editor plugin or `gem install`. |

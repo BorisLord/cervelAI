@@ -6,7 +6,7 @@
 # survive. No commas in the values (gum's --selected splits on commas).
 declare -gA _MENU_DESC=(
     ["shell"]="bash+bash-it | zsh+oh-my-zsh | fish + tmux|zellij (sub-menu)"
-    ["search"]="rg fd sd fzf jq yq dasel gron ast-grep typos bat eza glow zoxide tldr hyperfine shfmt"
+    ["search"]="rg fd sd fzf jq yq dasel gron ast-grep typos bat eza glow zoxide tldr hyperfine shfmt shellcheck hadolint"
     ["editor"]="vim|neovim|emacs|helix|micro (sub-menu)"
     ["git-tools"]="github|gitlab|gitea CLIs + delta + lazygit + gitleaks (sub-menu)"
     ["agents"]="9 AI agent CLIs, pick which in the sub-menu"
@@ -175,7 +175,7 @@ menu_summary_confirm() {
         [[ -n "${CERVELAI_SHELL:-}" ]] && printf '  Shell:         %s + %s\n' "$CERVELAI_SHELL" "${CERVELAI_MULTIPLEXER:-tmux}"
         [[ -n "${CERVELAI_TOKEN_SAVER:-}" ]] && printf '  Token-saver:   %s\n' "$CERVELAI_TOKEN_SAVER"
         [[ -n "${CERVELAI_AGENT_MEMORY:-}" ]] && printf '  Agent memory:  %s\n' "$CERVELAI_AGENT_MEMORY"
-        _menu_in_selected search && printf '  Search:        rg, fd, sd, fzf, jq, yq, bat, eza, shfmt, ...\n'
+        _menu_in_selected search && printf '  Search:        rg, fd, sd, fzf, jq, yq, bat, eza, shfmt, shellcheck, hadolint, ...\n'
         _menu_in_selected orchestrator && printf '  Orchestrator:  aoe (gated on at least one AI agent installed)\n'
         _menu_in_selected db && printf '  DB:            sqlite3, psql, redis-cli, usql\n'
         _menu_in_selected http && printf '  HTTP:          xh\n'
