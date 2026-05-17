@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# install/containers.sh — docker, podman, distrobox + lazydocker. Opt-in.
-# Needs nesting=1 + keyctl=1 on the LXC — both are cervelAI's defaults.
+# install/containers.sh: docker, podman, lazydocker. Opt-in.
+# Needs nesting=1 + keyctl=1 on the LXC (cervelAI's defaults).
 
 install_containers_docker() {
     if has_cmd docker; then
-        log_skip "docker already installed"; return 0
+        log_skip "docker already installed"
+        return 0
     fi
     log_info "installing Docker Engine via official APT repo"
     run install -dm 0755 /etc/apt/keyrings
@@ -22,7 +23,7 @@ install_containers_docker() {
         log_skip "$u already in docker group"
     else
         run usermod -aG docker "$u"
-        log_warn "$u added to docker group — re-login required for effect"
+        log_warn "$u added to docker group, re-login required for effect"
     fi
 }
 
@@ -30,18 +31,10 @@ install_containers_podman() {
     apt_install podman
 }
 
-install_containers_distrobox() {
-    if has_cmd distrobox; then
-        log_skip "distrobox already installed"; return 0
-    fi
-    apt_install distrobox
-}
-
 install_containers_lazydocker() { mise_aqua "jesseduffield/lazydocker"; }
 
 install_containers_all() {
     install_containers_docker
     install_containers_podman
-    install_containers_distrobox
     install_containers_lazydocker
 }

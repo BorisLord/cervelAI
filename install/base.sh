@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install/base.sh — essential LXC packages, gum, locales, sshd.
+# install/base.sh: essential LXC packages, gum, locales, sshd.
 
 install_base_apt_update() {
     log_info "apt update"
@@ -15,20 +15,23 @@ install_base_packages() {
 }
 
 install_base_locales() {
-    if locale -a 2>/dev/null | grep -qi 'en_US.utf8'; then
-        log_skip "locale en_US.UTF-8 already generated"
+    # Extra locales are opt-in (CERVELAI_LOCALES CSV). Silences perl warnings
+    # when an SSH client sends LANG=fr_FR.UTF-8 via SendEnv. locale-gen is idempotent.
+    local csv="${CERVELAI_LOCALES:-}"
+    [[ -z "$csv" ]] && {
+        log_skip "no extra locale (set CERVELAI_LOCALES=<csv>)"
         return 0
-    fi
-    log_info "generating locale en_US.UTF-8"
-    run sed -i 's/^# *en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen
-    run locale-gen >/dev/null
-    run update-locale LANG=en_US.UTF-8
+    }
+    IFS=',' read -r -a list <<<"$csv"
+    log_info "locale-gen ${list[*]}"
+    run locale-gen "${list[@]}" >/dev/null
 }
 
-# gum powers the interactive menus — installed before setup.sh resolves the selection.
+# gum powers the interactive menus, installed before setup.sh resolves selection.
 install_base_gum() {
     if has_cmd gum; then
-        log_skip "gum already installed"; return 0
+        log_skip "gum already installed"
+        return 0
     fi
     log_info "installing gum (Charm)"
     run install -dm 0755 /etc/apt/keyrings
@@ -42,12 +45,11 @@ install_base_gum() {
 }
 
 install_base_sshd() {
-    # Debian 13 ships ssh socket-activated; ssh.socket holding :22 makes a
-    # standalone ssh.service fail to re-bind. Pin the classic always-on model.
+    # Debian 13 ssh.socket holds :22; standalone ssh.service would fail to re-bind.
     soft run systemctl disable --now ssh.socket
     run systemctl enable ssh.service
 
-    # Key-only hardening — only with a key provided, else lock-out.
+    # Key-only hardening: only with a key provided, else lock-out risk.
     local dropin="/etc/ssh/sshd_config.d/10-cervelAI.conf"
     if [[ -n "${CERVELAI_SSH_KEY:-}" ]]; then
         if [[ -f "$dropin" ]]; then
@@ -57,7 +59,7 @@ install_base_sshd() {
             run bash -c "printf 'PasswordAuthentication no\nPermitRootLogin prohibit-password\nKbdInteractiveAuthentication no\n' > '$dropin'"
         fi
     else
-        log_warn "no SSH key provided — password auth left ON (set CERVELAI_SSH_KEY to harden)"
+        log_warn "no SSH key provided, password auth left ON (set CERVELAI_SSH_KEY to harden)"
     fi
 
     run systemctl restart ssh.service

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install/data.sh — local data analysis tools. Opt-in.
+# install/data.sh: local data analysis tools. Opt-in.
 
 install_data_duckdb() { mise_aqua "duckdb/duckdb"; }
 install_data_miller() { mise_use "aqua:johnkerl/miller" latest mlr; }
