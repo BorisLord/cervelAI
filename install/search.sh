@@ -20,5 +20,5 @@ install_search_all() {
     mise_aqua "sharkdp/hyperfine"
     mise_aqua "mvdan/sh"
     mise_aqua "koalaman/shellcheck"
-    mise_aqua "hadolint/hadolint"
+    mise_aqua "ducaale/xh"
 }

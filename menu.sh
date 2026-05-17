@@ -1,34 +1,26 @@
 #!/usr/bin/env bash
-# menu.sh: interactive setup menus, powered by gum. Sourced by setup.sh.
-# Each menu_*_select() writes into a passed-by-name variable (array or scalar).
+# menu.sh: gum-powered setup menus. Sourced by setup.sh. Each menu_*_select writes via nameref.
 
-# Per-category descriptions. -g: sourced from a function, must be global to
-# survive. No commas in the values (gum's --selected splits on commas).
+# -g: sourced from a function (must survive). No commas: gum's --selected splits on commas.
 declare -gA _MENU_DESC=(
-    ["shell"]="bash+bash-it | zsh+oh-my-zsh | fish + tmux|zellij (sub-menu)"
-    ["search"]="rg fd sd fzf jq yq dasel gron ast-grep typos bat eza glow zoxide tldr hyperfine shfmt shellcheck hadolint"
     ["editor"]="vim|neovim|emacs|helix|micro (sub-menu)"
-    ["git-tools"]="github|gitlab|gitea CLIs + delta + lazygit + gitleaks (sub-menu)"
     ["agents"]="9 AI agent CLIs, pick which in the sub-menu"
     ["orchestrator"]="cervelai-entry menu + aoe (Agent of Empires TUI/web) if any agent installed"
     ["token-savers"]="snip | rtk (sub-menu)"
     ["usage-trackers"]="tokscale (cross-agent) + ccusage + ccstatusline"
     ["ide-web"]="code-server (VS Code web)"
-    ["containers"]="docker podman lazydocker"
-    ["db"]="sqlite3 + psql + redis-cli + usql (universal SQL)"
-    ["http"]="xh (modern curl)"
-    ["data"]="duckdb + miller (mlr): SQL on CSV/Parquet/JSON"
+    ["containers"]="docker podman lazydocker hadolint"
+    ["data-stack"]="sqlite3 psql redis-cli usql duckdb mlr (DB clients + data analysis)"
     ["agent-memory"]="memsearch | qmd | engram | claude-mem | mcp-memory-service | agentmemory (sub-menu)"
+    ["ai-tools"]="markitdown fabric mcp-inspector code2prompt mods ttok (LLM helpers)"
 )
 
-# Categories ship as OFF: user picks deliberately. Sourced from setup.sh.
 _MENU_DEFAULT_OFF=("${CATEGORIES[@]}")
 
-# Items pass as "<label>\t<value>" with --label-delimiter: gum shows the label,
-# returns the value. stdin pinned to /dev/tty so gum's TUI works under pct exec.
+# Item format: "<label>\t<value>" with --label-delimiter — gum displays label, returns value.
+# /dev/tty pin: gum TUI works under pct exec without a controlling tty inherited.
 
-# _menu_multi <result_array> <header> <name> <desc> <ON|OFF>...
-# gum choose --no-limit. Fills the array (empty on cancel/none). Always returns 0.
+# _menu_multi <result_array> <header> <name> <desc> <ON|OFF>... — always rc=0, [] on cancel.
 _menu_multi() {
     local -n _mm_out="$1"
     shift
@@ -53,8 +45,7 @@ _menu_multi() {
     return 0
 }
 
-# _menu_single <result_var> <header> <name> <desc> <ON|OFF>...
-# gum choose (radio); the ON entry is the default. Returns 1 on cancel.
+# _menu_single <result_var> <header> <name> <desc> <ON|OFF>... — radio, rc=1 on cancel.
 _menu_single() {
     local -n _ms_out="$1"
     shift
@@ -123,27 +114,6 @@ menu_editors_select() {
         micro "micro" OFF
 }
 
-menu_git_forges_select() {
-    _menu_multi "$1" "Git forge CLIs (delta + lazygit + gitleaks always installed):" \
-        github "GitHub CLI (gh)" ON \
-        gitlab "GitLab CLI (glab)" OFF \
-        gitea "Gitea CLI (tea)" OFF
-}
-
-menu_shell_select() {
-    _menu_single "$1" "Default login shell:" \
-        bash "bash + bash-it" ON \
-        zsh "zsh + oh-my-zsh" OFF \
-        fish "fish" OFF
-}
-
-menu_multiplexer_select() {
-    _menu_single "$1" "Terminal multiplexer:" \
-        tmux "tmux" ON \
-        zellij "zellij" OFF \
-        none "none" OFF
-}
-
 menu_agent_memory_select() {
     _menu_multi "$1" "Agent memory tools (none pre-selected, multi-select):" \
         memsearch "lite: project Markdown memory" OFF \
@@ -161,7 +131,14 @@ menu_token_saver_select() {
         none "none" OFF
 }
 
-# shellcheck disable=SC2154  # selected[] comes from caller's scope (main in setup.sh).
+menu_git_forges_select() {
+    _menu_multi "$1" "Git forge CLIs (delta+lazygit+gitleaks always installed):" \
+        github "GitHub: gh" ON \
+        gitlab "GitLab: glab" OFF \
+        gitea "Gitea/Codeberg/Forgejo: tea" OFF
+}
+
+# shellcheck disable=SC2154  # selected[] lives in caller's scope (main in setup.sh).
 _menu_in_selected() { [[ " ${selected[*]:-} " == *" $1 "* ]]; }
 
 menu_summary_confirm() {
@@ -169,20 +146,18 @@ menu_summary_confirm() {
         printf '\n──── Selection summary ────\n'
         printf '  Categories:    %s\n' "${selected[*]:-(none)}"
         printf '  Runtimes+:     %s\n' "${CERVELAI_RUNTIMES:-(none, node/python/pnpm/uv only)}"
+        printf '  Baseline:      shell (%s+%s) + search CLI + git-tools (%s)\n' \
+            "${CERVELAI_SHELL:-bash}" "${CERVELAI_MULTIPLEXER:-tmux}" "${CERVELAI_GIT_FORGES:-github}"
         [[ -n "${CERVELAI_AGENTS:-}" ]] && printf '  Agents:        %s\n' "$CERVELAI_AGENTS"
         [[ -n "${CERVELAI_EDITORS:-}" ]] && printf '  Editors:       %s\n' "$CERVELAI_EDITORS"
-        [[ -n "${CERVELAI_GIT_FORGES:-}" ]] && printf '  Git forges:    %s\n' "$CERVELAI_GIT_FORGES"
-        [[ -n "${CERVELAI_SHELL:-}" ]] && printf '  Shell:         %s + %s\n' "$CERVELAI_SHELL" "${CERVELAI_MULTIPLEXER:-tmux}"
         [[ -n "${CERVELAI_TOKEN_SAVER:-}" ]] && printf '  Token-saver:   %s\n' "$CERVELAI_TOKEN_SAVER"
         [[ -n "${CERVELAI_AGENT_MEMORY:-}" ]] && printf '  Agent memory:  %s\n' "$CERVELAI_AGENT_MEMORY"
-        _menu_in_selected search && printf '  Search:        rg, fd, sd, fzf, jq, yq, bat, eza, shfmt, shellcheck, hadolint, ...\n'
         _menu_in_selected orchestrator && printf '  Orchestrator:  aoe (gated on at least one AI agent installed)\n'
-        _menu_in_selected db && printf '  DB:            sqlite3, psql, redis-cli, usql\n'
-        _menu_in_selected http && printf '  HTTP:          xh\n'
-        _menu_in_selected data && printf '  Data:          duckdb, mlr (miller)\n'
-        _menu_in_selected containers && printf '  Containers:    docker, podman, lazydocker\n'
+        _menu_in_selected data-stack && printf '  Data stack:    sqlite3, psql, redis-cli, usql, duckdb, mlr\n'
+        _menu_in_selected containers && printf '  Containers:    docker, podman, lazydocker, hadolint\n'
         _menu_in_selected ide-web && printf '  IDE web:       code-server\n'
         _menu_in_selected usage-trackers && printf '  Usage:         tokscale, ccusage, ccstatusline\n'
+        _menu_in_selected ai-tools && printf '  AI tools:      markitdown, fabric, mcp-inspector, code2prompt, mods, ttok\n'
         printf '\n'
     } >/dev/tty
     gum confirm --default=Yes "Install with these choices?" </dev/tty

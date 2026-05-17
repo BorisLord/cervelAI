@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# install/git-tools.sh: forge CLIs (CERVELAI_GIT_FORGES=<csv|all>) + delta,
-# lazygit, gitleaks (always installed: secret scanner before agent commits).
+# install/git-tools.sh: forge CLIs (CERVELAI_GIT_FORGES) + delta/lazygit/gitleaks (always).
 
 install_git_tools_gh() { mise_aqua "cli/cli"; }
-# glab via mise's gitlab backend (short name). tea is Go on gitea.com, no aqua.
-install_git_tools_glab() { mise_use "glab"; }
+# tea: Go module on gitea.com, no aqua entry.
+install_git_tools_glab() { mise_aqua "profclems/glab"; }
 install_git_tools_tea() {
     mise_use "go"
     mise_use "go:code.gitea.io/tea"
