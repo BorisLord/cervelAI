@@ -1,0 +1,54 @@
+name: check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: bash -n + shellcheck + shfmt
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: jdx/mise-action@v4
+        with:
+          tool_versions: |
+            aqua:koalaman/shellcheck latest
+            aqua:mvdan/sh latest
+      - run: bash check.sh
+
+  smoke-menu:
+    name: menu.sh scope (source-in-function)
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v6
+      - run: sudo apt-get update -qq && sudo apt-get install -y gum
+        continue-on-error: true
+      - name: menu source test
+        run: |
+          set -uo pipefail
+          CATEGORIES=(editor agents orchestrator token-savers usage-trackers ide-web containers data-stack agent-memory ai-tools)
+          export CATEGORIES
+          _src() { source menu.sh; }
+          _src
+          [[ -n "${_MENU_DEFAULT_OFF[*]:-}" ]] || exit 1
+          for cat in "${CATEGORIES[@]}"; do
+            [[ -n "${_MENU_DESC[$cat]:-}" ]] || { echo "missing _MENU_DESC[$cat]"; exit 1; }
+          done
+          declare -F menu_select menu_runtimes_select menu_agents_select menu_git_forges_select >/dev/null || exit 1
+          echo "OK"
+
+  smoke-dryrun:
+    name: setup.sh dryrun (real ubuntu-latest VM, systemd PID1)
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: setup.sh dryrun
+        run: sudo dev_mode=dryrun,nomenu CERVELAI_NO_PROMPT=1 CERVELAI_SELECTED=all bash setup.sh
