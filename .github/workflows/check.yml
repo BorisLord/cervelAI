@@ -27,8 +27,6 @@ jobs:
     timeout-minutes: 3
     steps:
       - uses: actions/checkout@v6
-      - run: sudo apt-get update -qq && sudo apt-get install -y gum
-        continue-on-error: true
       - name: menu source test
         run: |
           set -uo pipefail
