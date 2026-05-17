@@ -5,3 +5,8 @@
 *.bak
 plan
 .memsearch
+
+# Secrets — preventive, none currently in the repo
+.env
+.env.*
+!.env.example

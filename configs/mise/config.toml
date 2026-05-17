@@ -1,4 +1,4 @@
-# mise — cervelAI baseline settings.
+# mise: cervelAI baseline settings.
 # Settings only: the [tools] section is owned by mise. `mise use -g <tool>`
 # (run by install/runtimes.sh and the install/*.sh scripts) appends to this
 # file; node, python and pnpm always end up here. Per-project .mise.toml
