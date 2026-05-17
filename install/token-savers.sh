@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-# install/token-savers.sh: CLI-noise filters that cut tokens fed to AI agents.
-# CERVELAI_TOKEN_SAVER=snip|rtk|none (default: snip). Mutually exclusive: their
-# PreToolUse hooks clash, so we install one OR the other, never both.
+# install/token-savers.sh: CLI-noise filters for AI agents.
+# CERVELAI_TOKEN_SAVER=snip|rtk|none. Mutually exclusive: their PreToolUse hooks clash.
 
 install_token_savers_snip() { mise_use "github:edouard-claude/snip"; }
 install_token_savers_rtk() { mise_aqua "rtk-ai/rtk"; }
 
-# Silent for agents snip doesn't know about (opencode/aider/crush/goose/continue).
+# Silently skips agents snip doesn't support (opencode/aider/crush/goose/continue).
 _snip_init_one() {
     local target
     case "$1" in

@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# install/lsp.sh: LSP servers. Universal + always-runtime always; rest gated
-# on the matching runtime being on PATH.
+# install/lsp.sh: LSP servers. Universal always; rest gated on matching runtime.
 
 install_lsp_all() {
     mise_npm "bash-language-server"
@@ -10,7 +9,6 @@ install_lsp_all() {
     mise_npm "typescript-language-server"
     mise_npm "vscode-json-languageserver"
     mise_use "pipx:basedpyright" latest basedpyright
-    # Docker LSPs gated on the `containers` category being selected.
     if [[ " ${selected[*]:-} " == *" containers "* ]]; then
         mise_use "npm:dockerfile-language-server-nodejs" latest docker-langserver
         mise_use "npm:@microsoft/compose-language-service" latest docker-compose-langserver
@@ -25,5 +23,5 @@ install_lsp_all() {
     _user_bash "command -v dotnet" &>/dev/null && mise_use "github:razzmatazz/csharp-language-server" latest csharp-ls
     _user_bash "command -v elixir" &>/dev/null && mise_use "github:elixir-tools/next-ls"
     _user_bash "command -v erl" &>/dev/null && mise_use "github:erlang-ls/erlang_ls"
-    # Skipped: java (jdtls too brittle), ruby (gem install ruby-lsp). Built-in: dart/deno; bun uses ts-ls.
+    # Skip: java (jdtls brittle), ruby (gem install ruby-lsp). Built-in: dart/deno; bun uses ts-ls.
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install/base.sh: essential LXC packages, gum, locales, sshd.
+# install/base.sh: essential packages, gum, locales, sshd.
 
 install_base_apt_update() {
     log_info "apt update"
@@ -14,9 +14,8 @@ install_base_packages() {
         less locales tzdata
 }
 
+# CERVELAI_LOCALES silences perl warnings when SSH sends a non-C LANG via SendEnv.
 install_base_locales() {
-    # Extra locales are opt-in (CERVELAI_LOCALES CSV). Silences perl warnings
-    # when an SSH client sends LANG=fr_FR.UTF-8 via SendEnv. locale-gen is idempotent.
     local csv="${CERVELAI_LOCALES:-}"
     [[ -z "$csv" ]] && {
         log_skip "no extra locale (set CERVELAI_LOCALES=<csv>)"
@@ -27,7 +26,6 @@ install_base_locales() {
     run locale-gen "${list[@]}" >/dev/null
 }
 
-# gum powers the interactive menus, installed before setup.sh resolves selection.
 install_base_gum() {
     if has_cmd gum; then
         log_skip "gum already installed"
@@ -45,11 +43,11 @@ install_base_gum() {
 }
 
 install_base_sshd() {
-    # Debian 13 ssh.socket holds :22; standalone ssh.service would fail to re-bind.
+    # Recent Debian/Ubuntu use ssh.socket; absent on older releases (soft absorbs).
     soft run systemctl disable --now ssh.socket
     run systemctl enable ssh.service
 
-    # Key-only hardening: only with a key provided, else lock-out risk.
+    # Key-only hardening: gated on a key being provided, else lock-out risk.
     local dropin="/etc/ssh/sshd_config.d/10-cervelAI.conf"
     if [[ -n "${CERVELAI_SSH_KEY:-}" ]]; then
         if [[ -f "$dropin" ]]; then

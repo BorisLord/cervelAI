@@ -5,7 +5,6 @@ install_agent_memory_memsearch() { mise_use "pipx:memsearch" latest memsearch; }
 install_agent_memory_qmd() { mise_use "npm:@tobilu/qmd" latest qmd; }
 install_agent_memory_engram() {
     mise_use "github:Gentleman-Programming/engram[bin=engram]" latest engram || return
-    # Register engram MCP for each installed agent (soft: single failure non-fatal).
     local agent bin
     for agent in claude-code:claude opencode:opencode pi:pi gemini-cli:gemini codex:codex; do
         bin="${agent##*:}"
