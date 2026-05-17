@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+# cervelai-menu: launcher invoked by /etc/profile.d/cervelai-entry.sh.
+set -u
+
+# gum theme (mirrors setup.sh).
+export GUM_CHOOSE_HEADER_FOREGROUND="14"
+export GUM_CHOOSE_CURSOR_FOREGROUND="11"
+export GUM_CHOOSE_SELECTED_FOREGROUND="10"
+
+run_resume() {
+    local last
+    # Tab separator: tmux session names may contain spaces.
+    last=$(tmux ls -F '#{session_last_attached}'$'\t''#{session_name}' 2>/dev/null |
+        sort -nr | awk -F'\t' 'NR==1{print $2}')
+    if [[ -n "$last" ]]; then
+        exec tmux attach -t "$last"
+    fi
+    if command -v aoe >/dev/null 2>&1; then
+        exec aoe
+    fi
+    echo "no session to resume, no aoe available, opening a fresh tmux shell"
+    exec tmux new-session -A -s shell
+}
+
+run_agents() {
+    if ! command -v aoe >/dev/null 2>&1; then
+        echo "aoe not installed, falling back to a tmux session named 'agents'"
+        exec tmux new-session -A -s agents
+    fi
+    exec aoe
+}
+
+run_shell() {
+    exec tmux new-session -A -s shell
+}
+
+# Read-only overview; returns to the menu loop.
+run_status() {
+    clear 2>/dev/null
+    printf '═══ cervelai status ═══\n\n'
+
+    printf '── tmux sessions ──\n'
+    tmux ls 2>/dev/null || printf '  (no tmux server running)\n'
+    printf '\n'
+
+    if command -v aoe >/dev/null 2>&1; then
+        local _aoe_sessions _aoe_url
+        printf '── aoe sessions ──\n'
+        _aoe_sessions=$(aoe list 2>/dev/null | head -10)
+        [[ -n "$_aoe_sessions" ]] && printf '%s\n' "$_aoe_sessions" || printf '  (none)\n'
+        printf '\n── aoe dashboard ──\n'
+        _aoe_url=$(aoe url 2>/dev/null)
+        [[ -n "$_aoe_url" ]] && printf '%s\n' "$_aoe_url" || printf '  (aoe-serve.service not running)\n'
+    else
+        printf '── aoe ──\n  (not installed)\n'
+    fi
+    printf '\n'
+
+    printf '── system ──\n'
+    printf '  mem:  %s\n' "$(free -h 2>/dev/null | awk '/^Mem:/{print $3"/"$2}')"
+    printf '  load: %s\n' "$(uptime 2>/dev/null | awk -F'load average: ' '{print $2}')"
+    printf '  disk: %s\n' "$(df -h / 2>/dev/null | awk 'NR==2{print $3"/"$2" ("$5" used)"}')"
+    printf '\n'
+    read -rp '(Enter to return to menu) ' _ </dev/tty
+}
+
+run_update() {
+    if ! command -v topgrade >/dev/null 2>&1; then
+        echo "topgrade not installed; install via mise or run 'apt update && apt upgrade' manually"
+        sleep 2
+        return
+    fi
+    topgrade
+    read -rp '(Enter to return to menu) ' _ </dev/tty
+}
+
+run_plain_shell() {
+    export CERVELAI_NO_MENU=1 # /etc/profile.d skips the menu in the exec'd bash
+    exec bash
+}
+
+# Menu loop: status returns, rest exec away.
+while :; do
+    if command -v gum >/dev/null 2>&1; then
+        choice=$(gum choose --header "cervelai entry" \
+            "resume (last session)" \
+            "agents (aoe)" \
+            "shell (tmux)" \
+            "status" \
+            "update (topgrade)" \
+            "plain shell") || run_plain_shell
+        case "$choice" in
+            "resume (last session)") run_resume ;;
+            "agents (aoe)") run_agents ;;
+            "shell (tmux)") run_shell ;;
+            "status") run_status ;;
+            "update (topgrade)") run_update ;;
+            "plain shell") run_plain_shell ;;
+            *)
+                printf 'unknown choice: %s\n' "$choice"
+                sleep 1
+                ;;
+        esac
+    else
+        cat <<'EOF'
+=== cervelai ===
+  [r] resume (last session)
+  [a] agents (aoe TUI)
+  [s] shell  (tmux scratch)
+  [i] status (info)
+  [u] update (topgrade)
+  [q] plain shell (skip menu)
+EOF
+        read -rp '> ' ans </dev/tty
+        case "$ans" in
+            r | R) run_resume ;;
+            a | A) run_agents ;;
+            s | S) run_shell ;;
+            i | I) run_status ;;
+            u | U) run_update ;;
+            q | Q | '') run_plain_shell ;;
+            *)
+                echo "unknown: $ans"
+                sleep 1
+                ;;
+        esac
+    fi
+done
