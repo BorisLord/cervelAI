@@ -12,12 +12,13 @@
 2. [Quick start](#quick-start)
 3. [First login](#first-login)
 4. [What you get](#what-you-get)
-5. [How it works](#how-it-works)
-6. [Configuration](#configuration)
-7. [BYOK (Bring Your Own Keys)](#byok-bring-your-own-keys)
-8. [Remote access](#remote-access)
-9. [Contributing](#contributing)
-10. [License](#license)
+5. [BYOK (Bring Your Own Keys)](#byok-bring-your-own-keys)
+6. [Remote access](#remote-access)
+7. [How it works](#how-it-works)
+8. [Updates](#updates)
+9. [Advanced](#advanced)
+10. [Contributing](#contributing)
+11. [License](#license)
 
 ## Why cervelAI?
 
@@ -38,30 +39,32 @@ On the Proxmox host, **as root**:
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/bootstrap.sh)"
 ```
 
-Forking? Override `CERVELAI_REPO` / `CERVELAI_REF` (see [Configuration](#configuration)).
-
-Prefer to read before you run? Manual variant:
-
-```bash
-curl -fsSL https://github.com/BorisLord/cervelAI/archive/refs/heads/main.tar.gz | tar -xz
-bash cervelAI-main/cervelAI-lxc.sh
-```
-
-See [How it works](#how-it-works) for the install flow.
-
 ## First login
-
-After the installer finishes, connect to the new LXC:
 
 ```bash
 ssh agent@<lxc-ip>     # IP printed at the end of cervelAI-lxc.sh
 ```
 
-You land on the **cervelai menu** (gum TUI): `resume / agents (aoe) / shell
-(tmux) / status / update / plain shell`. Pick `agents` to launch the aoe
-dashboard, `shell` for a persistent tmux scratch, `plain shell` to skip the
-menu for this session. See [Menu bypass](#menu-bypass-runtime) to disable
-permanently.
+You land on the `cervelai-menu`:
+
+```
+  cervelai entry
+> resume (last session)
+  agents (aoe)
+  shell (tmux)
+  status
+  update (topgrade)
+  plain shell
+```
+
+| Choice | Does what |
+|---|---|
+| `resume` | re-attach to your last tmux session |
+| `agents (aoe)` | aoe TUI: every agent in its own tmux session, status at a glance |
+| `shell (tmux)` | persistent tmux session named `shell` for scratch work |
+| `status` | snapshot of tmux/aoe sessions + mem/load/disk |
+| `update (topgrade)` | `apt` + `mise` + `npm`/`pipx` globals + agents in one shot |
+| `plain shell` | bypass the menu for this session (set `CERVELAI_NO_MENU=1` to disable permanently) |
 
 ## What you get
 
@@ -72,7 +75,7 @@ permanently.
 | **Runtimes (opt-in)** | go, rust, bun, deno, zig, java, kotlin, dotnet, php, ruby, dart, scala, elixir, erlang, lua. |
 | **LSPs (always)** | bash, yaml, taplo (TOML), marksman (md), typescript-ls (TS+JS), vscode-json-ls, basedpyright. |
 | **LSPs (runtime-gated)** | gopls, rust-analyzer, zls, metals, lua-ls, intelephense, kotlin-ls, csharp-ls, next-ls, erlang_ls. Docker LSPs when `containers` is selected. Java/Ruby: BYO. |
-| **CLI tools** | ripgrep, fd, sd, fzf, jq, yq, dasel, gron, ast-grep, typos, bat, eza, glow, zoxide, tldr, hyperfine, shfmt. |
+| **CLI tools** | ripgrep, fd, sd, fzf, jq, yq, dasel, gron, ast-grep, typos, bat, eza, glow, zoxide, tldr, hyperfine, shfmt, shellcheck, hadolint. |
 | **Editors** | vim, neovim (default); emacs, helix, micro (opt-in). |
 | **Git** | gh, glab, tea, git-delta, lazygit, gitleaks. |
 | **Shell** | bash + bash-it (zsh/fish opt-in), tmux. |
@@ -85,94 +88,65 @@ permanently.
 
 ## How it works
 
-Two phases:
+Two phases, idempotent:
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│ Phase 1: cervelAI-lxc.sh — runs on Proxmox host as root          │
-│                                                                  │
-│   prompts for LXC specs (CTID, hostname, vCPU, RAM, ...)         │
-│         │                                                        │
-│         ▼                                                        │
-│   pct create  →  pct start  →  wait for DHCP  →  tar | pct exec  │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌──────────────────────────────────────────────────────────────────┐
-│ Phase 2: setup.sh — runs inside the LXC                          │
-│                                                                  │
-│   gum menu (Categories)                                          │
-│         │                                                        │
-│         ▼                                                        │
-│   install/base.sh → install/runtimes.sh → install/<cat>.sh ...   │
-│         │                                                        │
-│         ▼                                                        │
-│   deploy configs/  →  prompt API keys  →  finalize               │
-│                                                                  │
-└──────────────────────────────────────────────────────────────────┘
+1. **Host** (`cervelAI-lxc.sh`): prompts for LXC specs, `pct create`, waits for DHCP, pushes the repo into the LXC.
+2. **LXC** (`setup.sh`): gum menu → base + runtimes + selected categories → deploys configs → prompts for API keys → final topgrade.
+
+**Layout**: `bootstrap.sh` (curl one-liner) → `cervelAI-lxc.sh` (phase 1) → `setup.sh` + `menu.sh` (phase 2) → `install/*.sh` (one per category) + `configs/` (dotfiles).
+
+## Updates
+
+Re-fetch the latest cervelAI scripts and apply to an existing LXC:
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/bootstrap.sh)" _ --update <CTID>
 ```
 
-Idempotent: re-run anytime, or `bash cervelAI-lxc.sh --update <CTID>` to
-re-push the repo and re-run `setup.sh` on an existing LXC.
+Idempotent: already-installed tools are skipped, only the deltas run.
+Also available from inside the LXC: `cervelai-menu` → `update (topgrade)`
+refreshes apt + mise + agents (but not the cervelAI scripts themselves).
 
-**Repo layout:**
+## Advanced
 
-- `bootstrap.sh`: curl one-liner installer
-- `cervelAI-lxc.sh`: phase 1 (Proxmox host)
-- `setup.sh` + `menu.sh`: phase 2 + interactive gum menus
-- `install/*.sh`: one file per category, opt-in via the menu
-- `configs/`: dotfiles deployed to the LXC
+The menu drives the install. Env vars only matter for forks, CI, or skipping
+prompts. The one you may want set upfront is `GITHUB_TOKEN` (any GitHub PAT,
+no scopes) to dodge the 60 req/h API rate limit during install.
 
-## Configuration
+<details>
+<summary>Headless / CI install</summary>
 
-### Environment variables
+```bash
+dev_mode=nomenu CERVELAI_NO_PROMPT=1 CERVELAI_SELECTED=all bash setup.sh
+```
+</details>
 
-All `CERVELAI_*` overrides recognised by `setup.sh`. Set them before invoking
-(`VAR=x bash setup.sh`) or `export` them in `bootstrap.sh`. Unset = interactive
-prompt or sensible default.
+<details>
+<summary>Full <code>CERVELAI_*</code> env reference</summary>
 
-| Variable | Type | Default | Effect |
-|---|---|---|---|
-| `CERVELAI_USER` | name | `agent` | Non-root user created inside the LXC |
-| `CERVELAI_SSH_KEY` | pubkey | (prompt) | Authorised SSH key + key-only sshd hardening |
-| `CERVELAI_SELECTED` | CSV of categories | (menu) | Skip the category menu (e.g. `shell,search,agents,orchestrator`) |
-| `CERVELAI_SHELL` | `bash\|zsh\|fish\|none` | `bash` (+ bash-it) | Login shell |
-| `CERVELAI_MULTIPLEXER` | `tmux\|zellij\|none` | `tmux` | Terminal multiplexer |
-| `CERVELAI_RUNTIMES` | CSV | (menu) | Extra runtimes beyond node/python/pnpm/uv (e.g. `go,rust,bun`) |
-| `CERVELAI_AGENTS` | CSV | (menu) | AI agents (`claude-code,codex,opencode,pi,aider,crush,gemini-cli,goose,continue,all,none`) |
-| `CERVELAI_AGENT_MEMORY` | CSV | (menu) | Cross-session memory tools (`memsearch,qmd,engram,claude-mem,mcp-memory-service,agentmemory,all,none`) |
-| `CERVELAI_EDITORS` | CSV | (menu) | `vim,neovim,emacs,helix,micro` |
-| `CERVELAI_GIT_FORGES` | CSV | (menu) | `github,gitlab,gitea` |
-| `CERVELAI_TOKEN_SAVER` | `snip\|rtk\|none` | (menu, `snip` in nomenu) | Token-saver CLI |
-| `CERVELAI_NO_PROMPT` | `1` | unset | Skip all interactive prompts (TTY-less / CI use) |
-| `CERVELAI_REPO` | `<owner>/<repo>` | `BorisLord/cervelAI` | Used by `bootstrap.sh` only (fork your own) |
-| `CERVELAI_REF` | git ref | `main` | Branch/tag fetched by `bootstrap.sh` |
+Set before `setup.sh` runs. Unset = interactive prompt or sensible default.
 
-Non-interactive scripting: `dev_mode=nomenu CERVELAI_SELECTED=shell,search,agents bash setup.sh`.
+| Variable | Default | Effect |
+|---|---|---|
+| `CERVELAI_USER` | `agent` | Non-root user created inside the LXC |
+| `CERVELAI_SSH_KEY` | (prompt) | Authorised SSH key + sshd key-only hardening |
+| `CERVELAI_SELECTED` | (menu) | CSV of categories to install |
+| `CERVELAI_SHELL` | `bash` | `bash\|zsh\|fish\|none` |
+| `CERVELAI_MULTIPLEXER` | `tmux` | `tmux\|zellij\|none` |
+| `CERVELAI_RUNTIMES` | (menu) | CSV of extra runtimes (`go,rust,bun,...`) |
+| `CERVELAI_AGENTS` | (menu) | CSV of AI agents |
+| `CERVELAI_AGENT_MEMORY` | (menu) | CSV of cross-session memory tools |
+| `CERVELAI_EDITORS` | (menu) | CSV: `vim,neovim,emacs,helix,micro` |
+| `CERVELAI_GIT_FORGES` | (menu) | CSV: `github,gitlab,gitea` |
+| `CERVELAI_TOKEN_SAVER` | (menu) | `snip\|rtk\|none` |
+| `CERVELAI_LOCALES` | none | Extra locales via `locale-gen` |
+| `CERVELAI_NO_PROMPT` | unset | Skip all interactive prompts |
+| `CERVELAI_NO_MENU` | unset | Skip `cervelai-menu` on login (set in `~/.bashrc` to disable) |
+| `CERVELAI_REPO` | `BorisLord/cervelAI` | `bootstrap.sh` only (forks) |
+| `CERVELAI_REF` | `main` | Branch/tag for `bootstrap.sh` |
 
-To skip the agent orchestrator, omit `orchestrator` from `CERVELAI_SELECTED`.
-
-### Post-install tweaks
-
-**GITHUB_TOKEN** (recommended): `export GITHUB_TOKEN` before running, or let
-`setup.sh` prompt for one. Lifts the GitHub API rate limit (60 to 5000 req/h)
-that `mise` and agent installers otherwise hit mid-install. No scopes needed.
-
-**Extra locales** (`CERVELAI_LOCALES=fr_FR.UTF-8,...`): generates additional
-locales via `locale-gen`. Useful only to silence the perl warning when an SSH
-client sends a non-C LANG via SendEnv. Debian's default `C.UTF-8` is enough
-for the LXC itself.
-
-**Final topgrade** (automatic): `setup.sh` runs `topgrade` at the end of install
-to catch apt security updates missed by the Debian template. Always on (skipped
-only in dryrun mode).
-
-### Menu bypass (runtime)
-
-After install, `cervelai-menu` greets every interactive login. Choose `plain
-shell` to skip it for that session (sets `CERVELAI_NO_MENU=1`), or `export
-CERVELAI_NO_MENU=1` in `~/.bashrc` to bypass it permanently.
+`topgrade` runs automatically at install end. Skipped only in dryrun.
+</details>
 
 ## BYOK (Bring Your Own Keys)
 
@@ -199,13 +173,8 @@ connect is up to you and your infrastructure.
 
 ### From a phone
 
-| OS | App | Notes |
-|---|---|---|
-| Android | **Haven (GlassHaven)** (F-Droid, free) | SSH + Mosh + userspace WireGuard/Tailscale tunnels. |
-| Android | **Termux** (F-Droid) | `pkg install mosh openssh`, then `mosh agent@<lxc-ip>`. |
-| Android | **Termius** | Polished, SSH/Mosh, multi-device sync. Paid (~$10/mo). |
-| iOS / iPadOS | **Blink Shell** | The de facto iPad standard. ~$20/yr. |
-| iOS / iPadOS | **a-Shell** | Free, OSS. No Mosh. |
+Any SSH/Mosh client works. Examples: **Termux** or **Termius** on Android,
+**Blink Shell** on iOS/iPadOS.
 
 ### From a laptop
 
@@ -231,19 +200,7 @@ Configure on your firewall or in the LXC:
 
 ## Contributing
 
-**Issues and pull requests are welcome**, whatever your level. Light guidelines:
-
-- **Run the gates** before opening a PR:
-  ```bash
-  bash check.sh    # bash -n + shellcheck
-  bash smoke.sh    # setup.sh dryrun in a throwaway Debian 13 (needs Docker)
-  ```
-- **Keep KISS in mind**: simplest thing that works. Three similar lines beat a premature abstraction.
-- **Document the WHY in commit messages**, not the WHAT (the diff speaks for itself).
-- **Small focused PRs** merge faster than large refactors. Open an issue first if you're unsure.
-
-Found a bug, want a new AI agent supported, hit a Proxmox / Debian edge case?
-Open an issue: even a one-paragraph report helps.
+PRs and issues welcome. Run `bash check.sh` and `bash smoke.sh` before opening a PR.
 
 ## License
 
