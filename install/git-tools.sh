@@ -18,10 +18,12 @@ install_git_tools_glab() {
         log_warn "could not resolve latest glab version, skipping"
         return 0
     }
-    tmp="$(mktemp -d)"
+    # mktemp -d defaults to mode 700 — apt's sandbox user `_apt` then can't read the .deb.
+    tmp="$(mktemp -d)" && chmod 755 "$tmp"
     deb="$tmp/glab_${v}_linux_amd64.deb"
     log_info "downloading glab ${v} .deb from GitLab"
     run curl -fsSL -o "$deb" "https://gitlab.com/gitlab-org/cli/-/releases/v${v}/downloads/glab_${v}_linux_amd64.deb"
+    chmod 644 "$deb"
     run env DEBIAN_FRONTEND=noninteractive apt-get install -y "$deb"
     rm -rf "$tmp"
 }
