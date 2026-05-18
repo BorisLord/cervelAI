@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# cervelai-logo: print the cervelAI ASCII logo (cyan). Single source of truth.
+printf '\033[1;36m'
+cat <<'LOGO'
+                         _  ___  _____
+                        | |/ _ \|_   _|
+  ___ ___ _ ____   _____| / /_\ \ | |
+ / __/ _ \ '__\ \ / / _ \ |  _  | | |
+| (_|  __/ |   \ V /  __/ | | | |_| |_
+ \___\___|_|    \_/ \___|_\_| |_/\___/
+LOGO
+printf '\033[0m'

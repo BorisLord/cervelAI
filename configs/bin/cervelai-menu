@@ -18,15 +18,15 @@ _mux_attach_last() {
     case "$_MUX" in
         tmux)
             local last
-            last=$(tmux ls -F '#{session_last_attached}'$'\t''#{session_name}' 2>/dev/null |
-                sort -nr | awk -F'\t' 'NR==1{print $2}')
-            [[ -n "$last" ]] && exec tmux attach -t "$last"
+            last=$(tmux ls -F '#{session_last_attached}'$'\t''#{session_name}' 2>/dev/null \
+                | sort -nr | awk -F'\t' 'NR==1{print $2}')
+            [[ -n "$last" ]] && tmux attach -t "$last" && return 0
             ;;
         zellij)
             # zellij has no last-attached notion: takes first in creation order.
             local last
             last=$(zellij list-sessions -s 2>/dev/null | head -1)
-            [[ -n "$last" ]] && exec zellij attach "$last"
+            [[ -n "$last" ]] && zellij attach "$last" && return 0
             ;;
     esac
     return 1
@@ -35,9 +35,9 @@ _mux_attach_last() {
 _mux_new_or_attach() {
     local name="$1"
     case "$_MUX" in
-        tmux) exec tmux new-session -A -s "$name" ;;
-        zellij) exec zellij attach -c "$name" ;;
-        *) exec bash ;;
+        tmux) tmux new-session -A -s "$name" ;;
+        zellij) zellij attach -c "$name" ;;
+        *) bash ;;
     esac
 }
 
@@ -52,18 +52,20 @@ _mux_list() {
 run_resume() {
     _mux_attach_last && return
     if command -v aoe >/dev/null 2>&1; then
-        exec aoe
+        aoe
+        return
     fi
     echo "no session to resume, no aoe available, opening a fresh shell"
     _mux_new_or_attach shell
 }
 
 run_agents() {
-    if ! command -v aoe >/dev/null 2>&1; then
+    if command -v aoe >/dev/null 2>&1; then
+        aoe
+    else
         echo "aoe not installed, falling back to a multiplexer session named 'agents'"
         _mux_new_or_attach agents
     fi
-    exec aoe
 }
 
 run_shell() {
@@ -118,13 +120,30 @@ run_plain_shell() {
 
 _print_cheatsheet() {
     case "$_MUX" in
-        tmux) printf '\n  tmux:    ^B d (detach)  c (new win)  %% " (split V/H)  s (sessions)  [ (scroll, q exit)\n' ;;
-        zellij) printf '\n  zellij:  Ctrl+P d (detach)  Ctrl+N (new tab)  Ctrl+P n (new pane)  Ctrl+S (search)\n' ;;
-        *) printf '\n  shell:   (no multiplexer installed)\n' ;;
+        tmux)
+            printf '\n  tmux  (prefix = Ctrl-B, then:)\n'
+            printf '    d   detach (leave session running in background)\n'
+            printf '    c   new window     |  s   session picker\n'
+            printf '    %%   split left/right  |  "   split top/bottom\n'
+            printf '    [   scroll mode (q to exit)\n'
+            ;;
+        zellij)
+            printf '\n  zellij  (prefix = Ctrl-P, then:)\n'
+            printf '    d   detach        |  n   new pane\n'
+            printf '    Ctrl-N  new tab   |  Ctrl-S  search mode\n'
+            ;;
+        *) printf '\n  shell:  (no multiplexer installed)\n' ;;
     esac
     if command -v aoe >/dev/null 2>&1; then
-        printf '  aoe:     aoe add --cmd <agent>  |  aoe list  |  aoe url (dashboard)  |  aoe agents\n'
+        printf '\n  aoe  (Agent of Empires)\n'
+        printf '    aoe add --cmd "claude"   launch an AI agent in a tmux pane\n'
+        printf '    aoe list                 show running agents\n'
+        printf '    aoe url                  show web dashboard URL\n'
     fi
+    printf '\n  cervel  (this CLI)\n'
+    printf '    cervel menu  (-m)        return to the cervelai entry menu\n'
+    printf '    cervel help  (-h)        re-print this cheatsheet\n'
+    printf '    cervel ls                list installed AI agents\n'
     printf '\n'
 }
 
@@ -135,18 +154,13 @@ else
     AGENTS_LABEL="agents (no aoe, $_MUX fallback)"
 fi
 
-_print_logo() {
-    printf '\033[1;36m'
-    cat <<'LOGO'
-                         _  ___  _____
-                        | |/ _ \|_   _|
-  ___ ___ _ ____   _____| / /_\ \ | |
- / __/ _ \ '__\ \ / / _ \ |  _  | | |
-| (_|  __/ |   \ V /  __/ | | | |_| |_
- \___\___|_|    \_/ \___|_\_| |_/\___/
-LOGO
-    printf '\033[0m'
-}
+_print_logo() { cervelai-logo; }
+
+if [[ "${1:-}" == "--cheatsheet" ]]; then
+    _print_logo
+    _print_cheatsheet
+    exit 0
+fi
 
 _print_logo
 while :; do

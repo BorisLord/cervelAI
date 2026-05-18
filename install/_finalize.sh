@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # install/_finalize.sh: final topgrade + summary + chsh + MOTD.
 
-# GIT_TERMINAL_PROMPT=0 prevents helix grammar fetch from hanging on dead/private repos asking for creds.
+# GIT_TERMINAL_PROMPT=0 keeps any git step from prompting for creds on dead/private repos.
 run_final_topgrade() {
     ((DRY_RUN)) && {
         log_skip "final topgrade (dryrun)"
@@ -18,16 +18,8 @@ print_final_summary() {
     # default-route src IP — skips docker0/podman bridges that eth0 hardcoding would catch.
     ip="$(ip -4 -o route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++)if($i=="src")print $(i+1)}' | head -1)"
     log_step "summary"
-    printf '\n%s' "$(_color '1;36')"
-    cat <<'LOGO'
-                         _  ___  _____
-                        | |/ _ \|_   _|
-  ___ ___ _ ____   _____| / /_\ \ | |
- / __/ _ \ '__\ \ / / _ \ |  _  | | |
-| (_|  __/ |   \ V /  __/ | | | |_| |_
- \___\___|_|    \_/ \___|_\_| |_/\___/
-LOGO
-    printf '%s\n' "$(_color 0)"
+    bash "$CONFIGS_DIR/bin/cervelai-logo"
+    printf '\n'
     cat <<EOF
   cervelAI is ready.
 
@@ -102,14 +94,10 @@ finalize() {
     elif ((DRY_RUN)); then
         log_info "(dryrun) would write $motd"
     else
-        cat >"$motd" <<MOTD
-
-                         _  ___  _____
-                        | |/ _ \|_   _|
-  ___ ___ _ ____   _____| / /_\ \ | |
- / __/ _ \ '__\ \ / / _ \ |  _  | | |
-| (_|  __/ |   \ V /  __/ | | | |_| |_
- \___\___|_|    \_/ \___|_\_| |_/\___/
+        {
+            printf '\n'
+            bash "$CONFIGS_DIR/bin/cervelai-logo"
+            cat <<MOTD
 
   ready for AI coding agents
 
@@ -120,6 +108,7 @@ finalize() {
   Tools:    cat ~/AGENTS.md
 
 MOTD
+        } >"$motd"
         log_ok "MOTD set"
     fi
 }
