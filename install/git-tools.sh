@@ -13,6 +13,10 @@ install_git_tools_glab() {
         return 0
     fi
     local v deb tmp
+    if ((DRY_RUN)); then
+        log_info "(dryrun) would resolve+install latest glab .deb from GitLab"
+        return 0
+    fi
     v="$(curl -fsSL https://gitlab.com/api/v4/projects/gitlab-org%2Fcli/releases | grep -oP '"tag_name":"v\K[0-9.]+' | head -1)"
     [[ -z "$v" ]] && {
         log_warn "could not resolve latest glab version, skipping"

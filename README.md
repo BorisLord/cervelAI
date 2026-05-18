@@ -17,7 +17,7 @@
 
 **Run them in parallel** via `aoe` (tmux + web dashboard) · **Save 70–90 % tokens** with `snip` / `rtk` · **Cross-session memory** (6 backends) · **Access from anywhere** (SSH + Mosh, phone-friendly)
 
-**Make it your own stack** — 19 opt-in categories à la carte (runtimes, editors, containers, k8s, cloud, data, blockchain, ...), sensible defaults pre-selected, no bloat.
+**Make it your own stack** — 18 opt-in categories à la carte (runtimes, editors, containers, k8s, cloud, data, blockchain, ...), sensible defaults pre-selected, no bloat.
 
 **All managed by `mise`, all precompiled** — no compile-from-source, no waiting on cargo/go, one `topgrade` updates everything.
 
@@ -105,7 +105,7 @@ You land on the `cervelai-menu`:
 
 </details>
 
-### Opt-in categories (19) — multi-select via menu
+### Opt-in categories (18) — multi-select via menu
 
 <details>
 <summary><b>AI &amp; assistance</b> — agents · token-savers · agent-memory · usage-trackers · ai-tools</summary>
@@ -133,7 +133,7 @@ You land on the `cervelai-menu`:
 <summary><b>Workspace</b> — editor · ide-web</summary>
 
 **`editor`**
-- vim, neovim, emacs, helix, micro
+- vim, neovim, emacs, micro
 
 **`ide-web`** (one-shot)
 - code-server (browser-based VS Code, installed + systemd unit, not auto-started)

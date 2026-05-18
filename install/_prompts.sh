@@ -19,7 +19,12 @@ prompt_github_token() {
     log_step "GitHub token (recommended, lifts the GitHub API rate limit during install)"
     log_info "create one with no scopes at https://github.com/settings/tokens"
     local val
-    read -r -p "  GITHUB_TOKEN (leave empty to skip): " val </dev/tty || val=""
+    if has_cmd gum; then
+        val="$(gum input --password --prompt="  GITHUB_TOKEN (leave empty to skip): " </dev/tty)" || val=""
+    else
+        read -r -s -p "  GITHUB_TOKEN (leave empty to skip): " val </dev/tty || val=""
+        printf '\n'
+    fi
     if [[ -n "$val" ]]; then
         export GITHUB_TOKEN="$val"
         log_ok "GITHUB_TOKEN set"
