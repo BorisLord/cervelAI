@@ -1,25 +1,36 @@
-# cervelAI
+<div align="center">
 
-[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![platform](https://img.shields.io/badge/platform-Proxmox%20LXC%20%7C%20Debian%20%7C%20Ubuntu-orange)](#supported-environments)
-[![systemd](https://img.shields.io/badge/init-systemd-red)](https://systemd.io/)
+```
+                         _  ___  _____ 
+                        | |/ _ \|_   _|
+  ___ ___ _ ____   _____| / /_\ \ | |  
+ / __/ _ \ '__\ \ / / _ \ |  _  | | |  
+| (_|  __/ |   \ V /  __/ | | | |_| |_ 
+ \___\___|_|    \_/ \___|_\_| |_/\___/ 
+                                       
+                                        
+```
 
-> Self-hosted dev environment for terminal AI coding agents (Claude Code, Codex, opencode, Gemini CLI, Aider, Pi.dev, Goose, Crush, Continue), accessible by SSH and Mosh from your laptop, your phone, anywhere. Deploy as a Proxmox LXC, or install directly on any Debian/Ubuntu host (cloud VM, bare-metal, derivative).
+*Pronounced like the French **« cervelet »** (cerebellum) — `/sɛʁ.və.lɛ/`*
 
-## Contents
+### Your AI coding agents, self-hosted. Anywhere, any device.
 
-1. [Why cervelAI?](#why-cervelai)
-2. [Quick start](#quick-start)
-3. [Supported environments](#supported-environments)
-4. [First login](#first-login)
-5. [What you get](#what-you-get)
-6. [BYOK (Bring Your Own Keys)](#byok-bring-your-own-keys)
-7. [Remote access](#remote-access)
-8. [How it works](#how-it-works)
-9. [Updates](#updates)
-10. [Advanced](#advanced)
-11. [Contributing](#contributing)
-12. [License](#license)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Bash](https://img.shields.io/badge/shell-bash-89e051?logo=gnubash&logoColor=white)](https://www.gnu.org/software/bash/)
+
+</div>
+
+---
+
+**12 terminal AI agents** — Claude Code · Codex · opencode · Gemini CLI · Pi.dev · Crush · Goose · Continue · Qwen Code · Mistral Vibe · DeepSeek TUI · Grok CLI
+
+**Run them in parallel** via `aoe` (tmux + web dashboard) · **Save 70–90 % tokens** with `snip` / `rtk` · **Cross-session memory** (6 backends) · **Access from anywhere** (SSH + Mosh, phone-friendly)
+
+**Make it your own stack** — 19 opt-in categories à la carte (runtimes, editors, containers, k8s, cloud, data, blockchain, ...), sensible defaults pre-selected, no bloat.
+
+**All managed by `mise`, all precompiled** — no compile-from-source, no waiting on cargo/go, one `topgrade` updates everything.
+
+**Deploy on** Proxmox LXC · Debian/Ubuntu cloud VM · bare-metal — same install scripts.
 
 ## Why cervelAI?
 
@@ -29,12 +40,6 @@ A personal AI coding workstation that delivers four concrete value props out of 
 - **Runs agents in parallel** : `aoe` orchestrator + tmux supervise N agents at once with real-time status (running / waiting / idle / error), with a web dashboard reachable from your phone
 - **Persists context across sessions** : 6 memory backends (lite : `memsearch`, `qmd`, `engram` ; heavy : `claude-mem`, `mcp-memory-service`, `agentmemory`) so agents remember previous decisions
 - **Works from anywhere** : SSH + Mosh, mobile clients, persistent tmux/aoe sessions survive disconnects
-
-Plus the basics : 9 terminal agents (BYOK any provider), `mise`-managed runtimes + LSPs, modern CLI stack, optional Docker/code-server/DB/data tools, idempotent installer.
-
-Two deploy modes, same install scripts :
-- **Proxmox LXC** : isolated unprivileged container, ~5 min provision, minimal overhead
-- **Direct install** : Debian/Ubuntu cloud VM or bare-metal, no virt layer
 
 **One person, one workspace, KISS.** Self-hosted, your hardware, your keys, no lock-in. Not built for enterprise multi-tenancy or to replace Coder / Gitpod / Codespaces.
 
@@ -56,28 +61,11 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/
 Choice:
 ```
 
-Force a mode non-interactively (CI, scripting):
-
-```bash
-# Proxmox host, create an LXC
-bash -c "$(curl -fsSL .../bootstrap.sh)" _ --lxc
-
-# Cloud VM / bare-metal, install in place
-bash -c "$(curl -fsSL .../bootstrap.sh)" _ --no-lxc
-```
-
-Option `[1]` only works on a Proxmox host (`pct` required); it errors clearly otherwise.
+Non-interactive (CI, scripting): pass `--lxc` (Proxmox host, requires `pct`) or `--no-lxc` (install in place) to the bootstrap one-liner above.
 
 ## Supported environments
 
-| What | Status | Notes |
-|---|---|---|
-| **Debian 12+** | Primary target | All current and future releases |
-| **Ubuntu 22.04+** | First-class | Including Kubuntu/Xubuntu/Lubuntu |
-| **Debian derivatives** (LMDE, Kali, Parrot, MX-with-systemd, Raspberry Pi OS, …) | Supported via `ID_LIKE=debian` | Pi OS: ARM64 mostly works, a few aqua/mise tools may lack ARM builds |
-| **Ubuntu derivatives** (Mint, Pop!_OS, elementary, Zorin, KDE Neon, …) | Supported via `ID_LIKE=ubuntu` | Docker repo auto-routed to `linux/ubuntu` |
-| **Proxmox host** | Used as deploy target (creates LXC) | Or pick option `[2]` to install on the host itself |
-| **Not supported** | Devuan, MX-on-sysvinit, Tails, WSL-without-systemd | Hard requirement: systemd as PID 1 |
+Debian 12+, Ubuntu 22.04+, and any Debian/Ubuntu derivative with systemd as PID 1 (resolved via `ID_LIKE`). Tested on Proxmox LXC and cloud VMs (Hetzner, OVH).
 
 `setup.sh` aborts early if `/run/systemd/system` is missing or the distro isn't Debian-family.
 
@@ -91,46 +79,159 @@ ssh agent@<host-ip>     # IP printed at the end of install
 
 You land on the `cervelai-menu`:
 
-```
-  cervelai entry
-> resume (last session)
-  agents (aoe)
-  shell (tmux)
-  status
-  update (topgrade)
-  plain shell
-```
-
 | Choice | Does what |
 |---|---|
-| `resume` | re-attach to your last multiplexer session |
+| `resume (last session)` | re-attach to your last multiplexer session |
 | `agents (aoe)` | aoe TUI: every agent in its own tmux session, status at a glance |
-| `shell (<mux>)` | persistent session named `shell` for scratch work (label reflects `CERVELAI_MULTIPLEXER`) |
+| `shell (<mux>)` | persistent session named `shell` for scratch work |
 | `status` | snapshot of multiplexer/aoe sessions + mem/load/disk |
-| `update (topgrade)` | `apt` + `mise` + `npm`/`pipx` globals + agents in one shot |
+| `update (topgrade)` | runs `topgrade` (apt + mise + bash-it/oh-my-zsh + Claude Code) |
 | `plain shell` | bypass the menu for this session (set `CERVELAI_NO_MENU=1` to disable permanently) |
 
 ## What you get
 
-| Category | Content |
+<details>
+<summary><b>Mandatory</b> — always installed (no prompt)</summary>
+
+| Block | Content |
 |---|---|
-| **AI agent CLIs** | claude (Anthropic), codex (OpenAI), opencode, pi.dev, aider, crush, gemini-cli, goose, continue. `mise upgrade` keeps them current. |
-| **Runtimes (always)** | node, python, pnpm, uv (with tsc, tsx, ruff). |
-| **Runtimes (opt-in)** | go, rust, bun, deno, zig, java, kotlin, dotnet, php, ruby, dart, scala, elixir, erlang, lua. |
-| **LSPs (always)** | bash, yaml, taplo (TOML), marksman (md), typescript-ls (TS+JS), vscode-json-ls, basedpyright. |
-| **LSPs (runtime-gated)** | gopls, rust-analyzer, zls, metals, lua-ls, intelephense, kotlin-ls, csharp-ls, next-ls, erlang_ls. Docker LSPs when `containers` is selected. Java/Ruby: BYO. |
-| **Modern CLI** (always) | ripgrep, fd, sd, fzf, jq, yq, dasel, gron, ast-grep, typos, bat, eza, glow, zoxide, tldr, hyperfine, shfmt, shellcheck, xh. AI & human friendly. |
-| **Editors** (opt-in) | vim, neovim, emacs, helix, micro. |
-| **Git** (always) | delta + lazygit + gitleaks + your choice of forge CLI(s) at install: GitHub (`gh`), GitLab (`glab`), Gitea/Codeberg/Forgejo (`tea`). Default: `gh`. |
-| **Shell** (always) | bash + bash-it + tmux (`CERVELAI_SHELL=zsh\|fish`, `CERVELAI_MULTIPLEXER=zellij\|none`). |
-| **Backbone** | `mise` (polyglot version manager), `gum` (TUI prompts), full `~/.bashrc` / `~/.zshrc` / `~/.tmux.conf`. |
-| **Remote** | SSH + Mosh, optional key-only sshd hardening. |
-| **Agent orchestration** | `aoe` (Agent of Empires) TUI/web dashboard, one tmux session per AI agent. **Requires tmux**; skipped if `CERVELAI_MULTIPLEXER=zellij\|none` or no AI agent installed. |
-| **Notifications** | `ai-run <cmd>`: ntfy push when the command exits. |
-| **Updates** | `topgrade`: apt + mise + npm/pipx globals + bash-it/oh-my-zsh + Claude Code, one shot. |
-| **Opt-in extras** | code-server, Docker/Podman + lazydocker, token savers (snip/rtk), usage trackers (tokscale, ccusage, ccstatusline), data-stack (sqlite/psql/redis/usql + duckdb/miller). |
-| **Opt-in agent memory** | lite: memsearch, qmd, engram. heavy: claude-mem, mcp-memory-service, agentmemory. |
-| **Opt-in AI tools** | `markitdown` (PDF/DOCX/PPT → MD), `fabric` (curated prompt patterns), `mcp-inspector` (debug MCP), `code2prompt` (pack repo → LLM text), `mods` (LLM in bash pipes), `ttok` (count tokens before send). |
+| Base | apt packages, gum (TUI), mosh, `agent` user, locale en_US.UTF-8 |
+| mise + topgrade | system-wide polyglot version manager + one-shot update tool |
+| Runtimes core | node lts, pnpm, tsc, tsx, python, ruff, uv |
+| LSPs universal | bash, yaml, taplo (TOML), marksman (md), typescript-ls, vscode-json-ls, basedpyright |
+| LSPs runtime-gated | gopls, rust-analyzer, zls, lua-ls, kotlin-ls, ruby-lsp (if matching runtime present) |
+| Search-core | ripgrep, fd, fzf, jq, yq, dasel, gron, ast-grep, bat, delta |
+| Git | gh (GitHub CLI) |
+
+</details>
+
+<details>
+<summary><b>Workspace setup</b> — 2 always-asked prompts (single-select)</summary>
+
+**Login shell** — bash · bash-it · zsh · zsh-omz · fish
+
+**Terminal multiplexer** — tmux+aoe · zellij · none
+
+</details>
+
+### Opt-in categories (19) — multi-select via menu
+
+<details>
+<summary><b>AI &amp; assistance</b> — agents · token-savers · agent-memory · usage-trackers · ai-tools</summary>
+
+**`agents`** — AI agent CLIs
+- claude-code, codex, opencode, pi, crush, gemini-cli, goose, continue, qwen-code, mistral-vibe, deepseek-tui, grok-cli
+
+**`token-savers`** (single-select)
+- snip — YAML pipelines, 60-90% token savings
+- rtk — Rust binary, 100+ commands built-in
+- none
+
+**`agent-memory`**
+- memsearch, qmd, engram, claude-mem, mcp-memory-service, agentmemory
+
+**`usage-trackers`** (one-shot, all installed)
+- tokscale, ccusage, ccstatusline
+
+**`ai-tools`**
+- code2prompt, fabric, llm, ttok, aichat, markitdown, mcp-inspector, shell-gpt, gptscript
+
+</details>
+
+<details>
+<summary><b>Workspace</b> — editor · ide-web</summary>
+
+**`editor`**
+- vim, neovim, emacs, helix, micro
+
+**`ide-web`** (one-shot)
+- code-server (browser-based VS Code, installed + systemd unit, not auto-started)
+
+</details>
+
+<details>
+<summary><b>Languages &amp; build</b> — runtimes · workflow-tools</summary>
+
+**`runtimes`** — extras (node/python always installed)
+- go, rust, bun, deno, zig, java, kotlin, dotnet, dart, scala, lua, ruby, julia, haskell
+
+**`workflow-tools`** (one-shot, all installed)
+- act (GitHub Actions local), just (task runner), watchexec (file watcher)
+
+</details>
+
+<details>
+<summary><b>DevOps &amp; Infra</b> — containers · k8s-stack · iac-stack · cloud-stack</summary>
+
+**`containers`**
+- docker, lazydocker, hadolint, podman, dive
+
+**`k8s-stack`**
+- kubectl, k9s, helm, kubectx, kubens, kustomize, kind, stern
+
+**`iac-stack`** (one-shot, all installed)
+- opentofu, pulumi
+
+**`cloud-stack`**
+- aws, flyctl, cloudflared, supabase, doctl, hcloud, scaleway, gcloud, azure
+
+</details>
+
+<details>
+<summary><b>Data</b> — data-stack</summary>
+
+**`data-stack`**
+- sqlite3, pgcli, duckdb, postgresql-client, redis-tools, usql, mlr, mycli, litecli, lazysql
+
+</details>
+
+<details>
+<summary><b>Productivity &amp; polish</b> — cli-extras</summary>
+
+**`cli-extras`** — modern CLI extras (search-core already mandatory)
+- eza, zoxide, tldr, yazi, glow, sd, hyperfine, shfmt, shellcheck, xh, typos
+
+</details>
+
+<details>
+<summary><b>Security</b> — security-tools</summary>
+
+**`security-tools`**
+- sops (encrypt YAML/JSON/.env with age/KMS)
+- age (modern file encryption CLI)
+- kingfisher (AI-aware secret scanner — Anthropic/OpenAI/Gemini/...)
+- varlock (AI-safe .env: schemas for agents, secrets for humans)
+- dotenvx (encrypted .env files)
+- infisical (centralized secret manager CLI)
+- teller (multi-backend secret fetcher)
+- trivy (CVE/IaC/secrets/SBOM scanner)
+- gitleaks (committed-secret scanner)
+- syft (SBOM generator)
+- cosign (sign/verify images + artifacts)
+
+</details>
+
+<details>
+<summary><b>Niche</b> — git-forges · blockchain</summary>
+
+**`git-forges`** (gh + delta already mandatory)
+- lazygit, gitlab (glab)
+
+**`blockchain`**
+- evm (Ethereum: solc + foundry + LSP + slither + solhint)
+- solana (agave validator/CLI + anchor)
+- move (Sui + Aptos, ~1 GB)
+- cosmos (Cosmos SDK: gaiad + ignite)
+- near (near-cli-rs)
+- cairo (Starknet: scarb + starkli)
+
+</details>
+
+Run the install, then `mise ls` on the host shows exactly what was installed — that's the source of truth, not a manually-maintained list that drifts.
+
+### Backbone
+- Full `~/.bashrc`, `~/.zshrc`, `~/.tmux.conf` deployed (configs/)
+- `ai-run <cmd>` wrapper: ntfy push when command exits (topic in `~/.config/cervelAI/env`)
 
 ## How it works
 
@@ -144,28 +245,22 @@ You land on the `cervelai-menu`:
 1. `setup.sh` runs in place (no container, no extra layer).
 
 **`setup.sh`** (both modes):
-- Distro + systemd checks → base packages → gum category menu → selected `install/<cat>.sh` → deploy `configs/` → prompt API keys → final `topgrade` → ready-to-use summary.
-
-Idempotent: re-run anytime. Already-installed tools are skipped.
+- Distro/systemd checks → base packages → gum prompts (shell, multiplexer, categories + sub-menus) → mandatory baseline (mise, runtimes core, LSPs, search-core, gh) → selected `install/<cat>.sh` → aoe (if applicable) → deploy `configs/` → prompt API keys → final `topgrade` → summary.
 
 **Layout**: `bootstrap.sh` → `cervelAI-lxc.sh` (LXC mode only) → `setup.sh` + `menu.sh` → `install/*.sh` (one per category) + `configs/` (dotfiles).
 
+Idempotent: re-runs skip already-installed tools.
+
 ## Updates
 
-**LXC mode** (re-push scripts + re-run setup, from the Proxmox host):
+Re-run the bootstrap to refresh scripts + tools (LXC mode adds `--update <CTID>`):
+
 ```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/bootstrap.sh)" _ --no-lxc
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/bootstrap.sh)" _ --lxc --update <CTID>
 ```
 
-**Direct mode** (re-run setup on the target host, in place):
-```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/bootstrap.sh)" _ --no-lxc
-```
-
-Idempotent in both cases: already-installed tools are skipped.
-
-**Tool-only refresh** (without re-fetching cervelAI scripts): inside the host,
-`cervelai-menu` → `update (topgrade)` runs `apt` + `mise` + `npm`/`pipx` globals + bash-it/oh-my-zsh.
+Or **tool-only refresh** (no script re-fetch): inside the host, `cervelai-menu` → `update (topgrade)` runs `apt` + `mise` (all backends) + bash-it/oh-my-zsh.
 
 ## Advanced
 
@@ -184,27 +279,25 @@ dev_mode=nomenu CERVELAI_NO_PROMPT=1 CERVELAI_SELECTED=all bash setup.sh
 <details>
 <summary>Full <code>CERVELAI_*</code> env reference</summary>
 
-Set before `setup.sh` runs. Unset = interactive prompt or sensible default.
+The menu fills every `CERVELAI_*` automatically. Set them by hand only for CI / headless / fork overrides.
 
 | Variable | Default | Effect |
 |---|---|---|
+| `CERVELAI_NO_PROMPT` | unset | Skip interactive prompts (CI) |
+| `CERVELAI_SELECTED` | (menu) | CSV of opt-in categories (or `all`) |
+| `CERVELAI_SSH_KEY` | (prompt) | Pubkey added to `agent`, plus sshd key-only hardening |
 | `CERVELAI_USER` | `agent` | Non-root user created on the host |
-| `CERVELAI_SSH_KEY` | (prompt) | Authorised SSH key + sshd key-only hardening |
-| `CERVELAI_SELECTED` | (menu) | CSV of opt-in categories to install |
-| `CERVELAI_SHELL` | `bash` | Always-installed: `bash\|zsh\|fish\|none` |
-| `CERVELAI_MULTIPLEXER` | `tmux` | Always-installed: `tmux\|zellij\|none` |
-| `CERVELAI_GIT_FORGES` | `github` | Always-installed: `github,gitlab,gitea,none` |
-| `CERVELAI_RUNTIMES` | (menu) | CSV of extra runtimes (`go,rust,bun,...`) |
-| `CERVELAI_AGENTS` | (menu) | CSV of AI agents |
-| `CERVELAI_AGENT_MEMORY` | (menu) | CSV of cross-session memory tools |
-| `CERVELAI_EDITORS` | (menu) | CSV: `vim,neovim,emacs,helix,micro` |
-| `CERVELAI_TOKEN_SAVER` | (menu) | `snip\|rtk\|none` |
 | `CERVELAI_LOCALES` | none | Extra locales via `locale-gen` |
-| `CERVELAI_NO_PROMPT` | unset | Skip all interactive prompts |
-| `CERVELAI_NO_MENU` | unset | Skip `cervelai-menu` on login (set in `~/.bashrc` to disable) |
-| `CERVELAI_TEMPLATE_PATTERN` | `debian-[0-9]+-standard` | LXC mode only: regex for `pveam available` template selection (e.g. `ubuntu-24.04-standard`) |
-| `CERVELAI_REPO` | `BorisLord/cervelAI` | `bootstrap.sh` only (forks) |
-| `CERVELAI_REF` | `main` | Branch/tag for `bootstrap.sh` |
+| `GITHUB_TOKEN` | (prompt) | Lifts the GitHub API rate limit during install |
+| `CERVELAI_SHELL` | `bash` | `bash\|bash-it\|zsh\|zsh-omz\|fish\|none` |
+| `CERVELAI_MULTIPLEXER` | `tmux+aoe` | `tmux+aoe\|zellij\|none` |
+| `CERVELAI_AGENTS` / `_EDITORS` / `_RUNTIMES` / `_AGENT_MEMORY` / `_AI_TOOLS` | (menu) | CSV per sub-menu |
+| `CERVELAI_CONTAINERS` / `_K8S_STACK` / `_DATA_STACK` | (menu) | CSV per sub-menu |
+| `CERVELAI_CLOUD_STACK` / `_BLOCKCHAIN` / `_CLI_EXTRAS` / `_SECURITY_TOOLS` / `_GIT_FORGES` | (menu) | CSV per sub-menu |
+| `CERVELAI_TOKEN_SAVER` | (menu) | `snip\|rtk\|none` |
+| `CERVELAI_NO_MENU` | unset | Skip `cervelai-menu` on login |
+| `CERVELAI_TEMPLATE_PATTERN` | `debian-[0-9]+-standard` | LXC mode only: pveam regex |
+| `CERVELAI_REPO` / `CERVELAI_REF` | `BorisLord/cervelAI` / `main` | `bootstrap.sh` only (forks) |
 
 `topgrade` runs automatically at install end. Skipped only in dryrun.
 </details>
@@ -214,13 +307,19 @@ Set before `setup.sh` runs. Unset = interactive prompt or sensible default.
 After install, an interactive prompt collects API keys, but **only the ones the
 agents you installed can actually use** (no agents selected: no prompt):
 
-- `ANTHROPIC_API_KEY`: Claude Code, Pi, any multi-provider agent
-- `OPENAI_API_KEY`: Codex, any multi-provider agent
-- `GEMINI_API_KEY`: Gemini CLI
-- `OPENROUTER_API_KEY`: multi-provider agents (opencode, Aider, Crush, Goose, Continue)
+| Key | Agents needing it |
+|---|---|
+| `ANTHROPIC_API_KEY` | Claude Code, Pi, any multi-provider agent |
+| `OPENAI_API_KEY` | Codex, any multi-provider agent |
+| `GEMINI_API_KEY` | Gemini CLI |
+| `OPENROUTER_API_KEY` | Multi-provider agents (opencode, Crush, Goose, Continue) |
+| `MISTRAL_API_KEY` | Mistral Vibe |
+| `DEEPSEEK_API_KEY` | DeepSeek TUI |
+| `DASHSCOPE_API_KEY` | Qwen Code (Alibaba) |
+| `XAI_API_KEY` | Grok CLI |
 
-The multi-provider agents (opencode, Aider, Crush, Goose, Continue) accept any
-one of `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `OPENROUTER_API_KEY`; pick the
+Multi-provider agents (opencode, Crush, Goose, Continue) accept any of
+`ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `OPENROUTER_API_KEY` — pick the
 provider you want each agent to use.
 
 Written to `~agent/.config/cervelAI/env` (mode 600), sourced by bash, zsh and
@@ -247,10 +346,10 @@ mosh --ssh="ssh -J jump.example.com" agent@<host-ip>   # via ProxyJump
 
 ### aoe web dashboard
 
-When the `orchestrator` category is selected and at least one AI agent is
-installed, `aoe-serve.service` (systemd user, linger enabled) exposes the aoe
-dashboard at `http://<host-ip>:8081` over the LAN. Use it from your phone or
-laptop browser to watch agents in real time.
+When `multiplexer=tmux+aoe` (default) and at least one AI agent is installed,
+`aoe-serve.service` (systemd user, linger enabled) exposes the aoe dashboard at
+`http://<host-ip>:8081` over the LAN. Use it from your phone or laptop browser
+to watch agents in real time.
 
 ### Networking beyond the LAN
 
