@@ -33,13 +33,13 @@ fi
 command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
 
 [ -f /usr/share/doc/fzf/examples/key-bindings.zsh ] && source /usr/share/doc/fzf/examples/key-bindings.zsh
-[ -f /usr/share/doc/fzf/examples/completion.zsh ]   && source /usr/share/doc/fzf/examples/completion.zsh
+[ -f /usr/share/doc/fzf/examples/completion.zsh ] && source /usr/share/doc/fzf/examples/completion.zsh
 
 HISTSIZE=10000
 SAVEHIST=20000
 HISTFILE="$HOME/.zsh_history"
 setopt SHARE_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_SPACE HIST_REDUCE_BLANKS \
-       EXTENDED_HISTORY INC_APPEND_HISTORY
+    EXTENDED_HISTORY INC_APPEND_HISTORY
 
 autoload -Uz compinit && compinit -i
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
@@ -51,20 +51,16 @@ command -v batcat &>/dev/null && ! command -v bat &>/dev/null && alias bat='batc
 alias t='tmux new -A -s main'
 alias zr='source ~/.zshrc'
 
-ai() {
+cervel() {
     case "${1:-}" in
-        claude|cc)   shift; command claude "$@" ;;
-        codex|cx)    shift; command codex "$@" ;;
-        opencode|oc) shift; command opencode "$@" ;;
-        pi)          shift; command pi "$@" ;;
-        aider)       shift; command aider "$@" ;;
-        crush)       shift; command crush "$@" ;;
-        gemini|gem)  shift; command gemini "$@" ;;
-        goose)       shift; command goose "$@" ;;
-        continue|cn) shift; command cn "$@" ;;
-        ""|list|ls)
-            printf 'Available agents:\n  claude codex opencode pi aider crush gemini goose cn\n'
+        menu | -m) exec cervelai-menu ;;
+        help | -h) cervelai-menu --cheatsheet ;;
+        ls)
+            local a
+            for a in claude codex opencode pi aider crush gemini goose cn qwen vibe deepseek grok; do
+                command -v "$a" >/dev/null 2>&1 && printf '  %s\n' "$a"
+            done
             ;;
-        *) printf 'unknown agent: %s\n' "$1"; return 1 ;;
+        *) printf 'usage: cervel {menu|-m | help|-h | ls}\n' >&2 ;;
     esac
 }

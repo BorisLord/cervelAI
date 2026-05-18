@@ -1,16 +1,23 @@
+# shellcheck shell=bash
 # .bashrc — cervelAI (the VM's default shell).
 # The optional zsh shell has its own config in ../zsh/.
 
 # Interactive-only — non-interactive runs go through ai-run, which loads the env itself.
 case $- in *i*) ;; *) return ;; esac
 
+# shellcheck source=/dev/null
 [ -r "$HOME/.config/cervelAI/env" ] && . "$HOME/.config/cervelAI/env"
 
-path_prepend() { [[ ":$PATH:" != *":$1:"* ]] && export PATH="$1:$PATH"; return 0; }
+path_prepend() {
+    [[ ":$PATH:" != *":$1:"* ]] && export PATH="$1:$PATH"
+    return 0
+}
 path_prepend "$HOME/.local/bin"
 path_prepend "$HOME/bin"
 path_prepend "$HOME/.local/share/npm/bin"
-export GOPATH="$HOME/go"; path_prepend "$GOPATH/bin"
+export GOPATH="$HOME/go"
+path_prepend "$GOPATH/bin"
+# shellcheck source=/dev/null
 [ -s "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
 command -v mise >/dev/null 2>&1 && eval "$(mise activate bash)"
@@ -27,7 +34,9 @@ HISTFILESIZE=20000
 HISTCONTROL=ignoreboth
 shopt -s histappend checkwinsize
 
+# shellcheck source=/dev/null
 [ -f /usr/share/doc/fzf/examples/key-bindings.bash ] && . /usr/share/doc/fzf/examples/key-bindings.bash
+# shellcheck source=/dev/null
 [ -f /usr/share/bash-completion/completions/fzf ] && . /usr/share/bash-completion/completions/fzf
 
 command -v fdfind &>/dev/null && ! command -v fd &>/dev/null && alias fd='fdfind'
@@ -35,18 +44,16 @@ command -v batcat &>/dev/null && ! command -v bat &>/dev/null && alias bat='batc
 alias t='tmux new -A -s main'
 alias br='source ~/.bashrc'
 
-ai() {
+cervel() {
     case "${1:-}" in
-        claude|cc)   shift; command claude "$@" ;;
-        codex|cx)    shift; command codex "$@" ;;
-        opencode|oc) shift; command opencode "$@" ;;
-        pi)          shift; command pi "$@" ;;
-        aider)       shift; command aider "$@" ;;
-        crush)       shift; command crush "$@" ;;
-        gemini|gem)  shift; command gemini "$@" ;;
-        goose)       shift; command goose "$@" ;;
-        continue|cn) shift; command cn "$@" ;;
-        ""|list|ls)  printf 'agents: claude codex opencode pi aider crush gemini goose cn\n' ;;
-        *)           printf 'unknown agent: %s\n' "$1" >&2; return 1 ;;
+        menu | -m) exec cervelai-menu ;;
+        help | -h) cervelai-menu --cheatsheet ;;
+        ls)
+            local a
+            for a in claude codex opencode pi aider crush gemini goose cn qwen vibe deepseek grok; do
+                command -v "$a" >/dev/null 2>&1 && printf '  %s\n' "$a"
+            done
+            ;;
+        *) printf 'usage: cervel {menu|-m | help|-h | ls}\n' >&2 ;;
     esac
 }
