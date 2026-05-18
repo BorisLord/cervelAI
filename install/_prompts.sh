@@ -19,12 +19,9 @@ prompt_github_token() {
     log_step "GitHub token (recommended, lifts the GitHub API rate limit during install)"
     log_info "create one with no scopes at https://github.com/settings/tokens"
     local val
-    if has_cmd gum; then
-        val="$(gum input --password --prompt="  GITHUB_TOKEN (leave empty to skip): " </dev/tty)" || val=""
-    else
-        read -r -s -p "  GITHUB_TOKEN (leave empty to skip): " val </dev/tty || val=""
-        printf '\n'
-    fi
+    # read -r -s instead of gum --password: gum truncates long pastes wider than the terminal.
+    read -r -s -p "  GITHUB_TOKEN (leave empty to skip): " val </dev/tty || val=""
+    printf '\n'
     if [[ -n "$val" ]]; then
         export GITHUB_TOKEN="$val"
         log_ok "GITHUB_TOKEN received (${#val} chars), saved to ~/.config/cervelAI/env"
@@ -96,12 +93,8 @@ prompt_api_keys() {
             log_skip "${k} already present"
             continue
         fi
-        if has_cmd gum; then
-            val="$(gum input --password --prompt="  ${k}: " --placeholder="leave empty to skip" </dev/tty)" || val=""
-        else
-            read -r -s -p "  ${k}: " val </dev/tty || val=""
-            printf '\n'
-        fi
+        read -r -s -p "  ${k} (leave empty to skip): " val </dev/tty || val=""
+        printf '\n'
         if [[ -n "$val" ]]; then
             printf 'export %s=%q\n' "$k" "$val" >>"$envfile"
             log_ok "${k} received (${#val} chars), saved to ~/.config/cervelAI/env"
