@@ -135,6 +135,20 @@ else
     AGENTS_LABEL="agents (no aoe, $_MUX fallback)"
 fi
 
+_print_logo() {
+    printf '\033[1;36m'
+    cat <<'LOGO'
+                         _  ___  _____
+                        | |/ _ \|_   _|
+  ___ ___ _ ____   _____| / /_\ \ | |
+ / __/ _ \ '__\ \ / / _ \ |  _  | | |
+| (_|  __/ |   \ V /  __/ | | | |_| |_
+ \___\___|_|    \_/ \___|_\_| |_/\___/
+LOGO
+    printf '\033[0m'
+}
+
+_print_logo
 while :; do
     _print_cheatsheet
     if command -v gum >/dev/null 2>&1; then
