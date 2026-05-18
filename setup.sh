@@ -119,12 +119,13 @@ apt_install() {
 
 _user() { printf '%s' "${CERVELAI_USER:-agent}"; }
 # preserve-env=GITHUB_TOKEN lifts mise's GitHub backend rate limit.
-# HOME forced explicitly because some sudoers (GitHub CI) keep HOME in env_keep even with -i.
+# HOME + XDG_* forced because GitHub runners' sudoers keep them in env_keep even with -i,
+# and mise prefers XDG_CONFIG_HOME over $HOME/.config.
 _user_bash() {
     local u
     u="$(_user)"
     sudo -u "$u" --preserve-env=GITHUB_TOKEN -i bash -c \
-        "export HOME=\"/home/$u\"; export PNPM_HOME=\"\$HOME/.local/share/pnpm\"; export PATH=\"\$HOME/.local/share/mise/shims:\$HOME/.local/bin:\$PNPM_HOME:\$PATH\"; $*"
+        "export HOME=\"/home/$u\"; export XDG_CONFIG_HOME=\"\$HOME/.config\"; export XDG_DATA_HOME=\"\$HOME/.local/share\"; export XDG_STATE_HOME=\"\$HOME/.local/state\"; export XDG_CACHE_HOME=\"\$HOME/.cache\"; export PNPM_HOME=\"\$HOME/.local/share/pnpm\"; export PATH=\"\$HOME/.local/share/mise/shims:\$HOME/.local/bin:\$PNPM_HOME:\$PATH\"; $*"
 }
 
 mise_present() { [[ -x /usr/local/bin/mise ]]; }
