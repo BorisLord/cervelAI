@@ -19,6 +19,6 @@ install_lsp_all() {
     _user_bash "command -v lua" &>/dev/null && mise_aqua "LuaLS/lua-language-server"
     _user_bash "command -v kotlin" &>/dev/null && mise_use "github:fwcd/kotlin-language-server"
     # ruby-lsp via gem (no mise backend). Idempotent.
-    _user_bash "command -v ruby" &>/dev/null \
-        && soft _user_bash "gem install --user-install --silent ruby-lsp"
+    _user_bash "command -v ruby" &>/dev/null &&
+        soft _user_bash "gem install --user-install --silent ruby-lsp"
 }

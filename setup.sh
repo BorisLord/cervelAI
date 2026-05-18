@@ -142,8 +142,8 @@ mise_use() {
         return 0
     fi
     log_info "mise use -g $pkg@$ver"
-    run _user_bash "mise use -g $pkg@$ver" \
-        || {
+    run _user_bash "mise use -g $pkg@$ver" ||
+        {
             log_warn "mise install failed for $pkg, fallback to caller"
             return 1
         }

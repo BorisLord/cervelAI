@@ -45,8 +45,8 @@ _menu_multi() {
     done
     local out
     if out="$(gum choose --no-limit --height=20 --header="$header" \
-        --label-delimiter=$'\t' "${sel[@]}" -- "${labels[@]}" </dev/tty)" \
-        && [[ -n "$out" ]]; then
+        --label-delimiter=$'\t' "${sel[@]}" -- "${labels[@]}" </dev/tty)" &&
+        [[ -n "$out" ]]; then
         mapfile -t _mm_out <<<"$out"
     else
         _mm_out=()
@@ -70,8 +70,8 @@ _menu_single() {
     done
     local out
     out="$(gum choose --height=12 --header="$header" \
-        --label-delimiter=$'\t' --selected="$def_label" -- "${labels[@]}" </dev/tty)" \
-        || return 1
+        --label-delimiter=$'\t' --selected="$def_label" -- "${labels[@]}" </dev/tty)" ||
+        return 1
     _ms_out="$out"
     return 0
 }

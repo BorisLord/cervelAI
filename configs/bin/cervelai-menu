@@ -18,8 +18,8 @@ _mux_attach_last() {
     case "$_MUX" in
         tmux)
             local last
-            last=$(tmux ls -F '#{session_last_attached}'$'\t''#{session_name}' 2>/dev/null \
-                | sort -nr | awk -F'\t' 'NR==1{print $2}')
+            last=$(tmux ls -F '#{session_last_attached}'$'\t''#{session_name}' 2>/dev/null |
+                sort -nr | awk -F'\t' 'NR==1{print $2}')
             [[ -n "$last" ]] && tmux attach -t "$last" && return 0
             ;;
         zellij)
