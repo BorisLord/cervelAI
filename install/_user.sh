@@ -87,7 +87,13 @@ ensure_env_file() {
     u="$(_user)"
     local f="/home/$u/${ENV_FILE_REL}"
     if [[ -e "$f" ]]; then
-        log_skip "env file already exists: $f"
+        # Covers re-runs where the first install ran without a token.
+        if [[ -n "${GITHUB_TOKEN:-}" ]] && ! grep -q '^export GITHUB_TOKEN=' "$f"; then
+            printf 'export GITHUB_TOKEN=%q\n' "$GITHUB_TOKEN" >>"$f"
+            log_ok "appended GITHUB_TOKEN to existing env file: $f"
+        else
+            log_skip "env file already exists: $f"
+        fi
         return 0
     fi
     if ((DRY_RUN)); then
@@ -103,12 +109,11 @@ ensure_env_file() {
     fi
     topic="cervelAI-${suffix}"
     cat >"$f" <<EOF
-# cervelAI, shared environment (bash, zsh, ai-run). Mode 600.
-# mise shims PATH: runtimes stay visible even in a non-interactive shell.
-# PNPM_HOME: where pnpm puts global bins; topgrade's pnpm step needs it in PATH.
+# cervelAI shared environment (bash, zsh, ai-run). Mode 600.
+# mise shims first so runtimes stay visible in non-interactive shells.
+# PNPM_HOME/bin needed: pnpm 11+ puts global bins there, not in PNPM_HOME.
 export PNPM_HOME="\$HOME/.local/share/pnpm"
-export PATH="\$HOME/.local/share/mise/shims:\$HOME/.local/bin:\$PNPM_HOME:\$PATH"
-# ntfy, ai-run notifications (change the topic if you want)
+export PATH="\$HOME/.local/share/mise/shims:\$HOME/.local/bin:\$PNPM_HOME:\$PNPM_HOME/bin:\$PATH"
 export NTFY_SERVER="https://ntfy.sh"
 export NTFY_TOPIC="${topic}"
 EOF

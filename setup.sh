@@ -119,9 +119,10 @@ apt_install() {
 
 _user() { printf '%s' "${CERVELAI_USER:-agent}"; }
 # preserve-env=GITHUB_TOKEN lifts mise's GitHub backend rate limit.
+# NPM_CONFIG_MINIMUM_RELEASE_AGE=0 bypasses pnpm 11.x's policy bug during fresh installs.
 _user_bash() {
     sudo -u "$(_user)" --preserve-env=GITHUB_TOKEN -i bash -c \
-        "export PNPM_HOME=\"\$HOME/.local/share/pnpm\"; export PATH=\"\$HOME/.local/share/mise/shims:\$HOME/.local/bin:\$PNPM_HOME:\$PATH\"; $*"
+        "export PNPM_HOME=\"\$HOME/.local/share/pnpm\"; export PATH=\"\$HOME/.local/share/mise/shims:\$HOME/.local/bin:\$PNPM_HOME:\$PNPM_HOME/bin:\$PATH\"; export NPM_CONFIG_MINIMUM_RELEASE_AGE=0; $*"
 }
 
 mise_present() { [[ -x /usr/local/bin/mise ]]; }
@@ -141,8 +142,8 @@ mise_use() {
         return 0
     fi
     log_info "mise use -g $pkg@$ver"
-    run _user_bash "mise use -g $pkg@$ver" ||
-        {
+    run _user_bash "mise use -g $pkg@$ver" \
+        || {
             log_warn "mise install failed for $pkg, fallback to caller"
             return 1
         }
@@ -300,7 +301,7 @@ main() {
                             ;;
                         editor)
                             local ed_sel=()
-                            if menu_editors_select ed_sel; then
+                            if menu_editor_select ed_sel; then
                                 CERVELAI_EDITORS="$(
                                     IFS=,
                                     echo "${ed_sel[*]}"
@@ -310,7 +311,7 @@ main() {
                             ;;
                         token-savers)
                             local ts_sel=""
-                            menu_token_saver_select ts_sel && {
+                            menu_token_savers_select ts_sel && {
                                 CERVELAI_TOKEN_SAVER="$ts_sel"
                                 export CERVELAI_TOKEN_SAVER
                             }
