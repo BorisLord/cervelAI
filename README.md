@@ -1,12 +1,6 @@
 <div align="center">
-<pre>
-                         _  ___  _____
-                        | |/ _ \|_   _|
-  ___ ___ _ ____   _____| / /_\ \ | |
- / __/ _ \ '__\ \ / / _ \ |  _  | | |
-| (_|  __/ |   \ V /  __/ | | | |_| |_
- \___\___|_|    \_/ \___|_\_| |_/\___/
-</pre>
+
+<img src="assets/logo.svg" alt="cervelAI" width="480">
 
 *Pronounced like the French **« cervelet »** (cerebellum) — `/sɛʁ.və.lɛ/`*
 
