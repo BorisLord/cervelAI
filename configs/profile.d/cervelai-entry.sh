@@ -9,6 +9,10 @@
 [ -n "$TMUX" ] && return 0
 [ -n "$ZELLIJ" ] && return 0
 [ -n "$AOE_SESSION" ] && return 0
+# Skip in sub-shells (topgrade's bash-it step, manual `bash`, etc.) — only fire on the top login.
+# SHLVL is set by bash/dash/ash on Debian (POSIX doesn't mandate it); profile.d is sourced by these.
+# shellcheck disable=SC3028
+[ "${SHLVL:-1}" -gt 1 ] && return 0
 
 if [ "$(id -u)" = "0" ]; then
     id -u agent >/dev/null 2>&1 && exec su - agent
@@ -19,6 +23,10 @@ fi
 for d in "$HOME/.local/bin" "$HOME/.local/share/mise/shims"; do
     [ -d "$d" ] && export PATH="$d:$PATH"
 done
+
+# Env file (GITHUB_TOKEN, NTFY_*, PNPM_HOME) — needed because exec below skips .bashrc.
+# shellcheck source=/dev/null
+[ -r "$HOME/.config/cervelAI/env" ] && . "$HOME/.config/cervelAI/env"
 
 [ -x "$HOME/.local/bin/cervelai-menu" ] || return 0
 exec "$HOME/.local/bin/cervelai-menu"
