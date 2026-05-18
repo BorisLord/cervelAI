@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint:
-    name: bash -n + shellcheck + shfmt
+    name: lint
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -21,7 +21,7 @@ jobs:
       - run: bash check.sh
 
   smoke-menu:
-    name: menu.sh scope (source-in-function)
+    name: smoke-menu
     needs: lint
     runs-on: ubuntu-latest
     timeout-minutes: 3
@@ -30,7 +30,7 @@ jobs:
       - name: menu source test
         run: |
           set -uo pipefail
-          CATEGORIES=(editor agents orchestrator token-savers usage-trackers ide-web containers data-stack agent-memory ai-tools)
+          CATEGORIES=(agents token-savers agent-memory usage-trackers ai-tools editor ide-web runtimes workflow-tools containers k8s-stack iac-stack cloud-stack data-stack cli-extras security-tools git-forges blockchain)
           export CATEGORIES
           _src() { source menu.sh; }
           _src
@@ -38,11 +38,18 @@ jobs:
           for cat in "${CATEGORIES[@]}"; do
             [[ -n "${_MENU_DESC[$cat]:-}" ]] || { echo "missing _MENU_DESC[$cat]"; exit 1; }
           done
-          declare -F menu_select menu_runtimes_select menu_agents_select menu_git_forges_select >/dev/null || exit 1
+          declare -F \
+            menu_select menu_shell_select menu_multiplexer_select \
+            menu_runtimes_select menu_agents_select menu_agent_memory_select \
+            menu_ai_tools_select menu_editors_select menu_token_saver_select \
+            menu_containers_select menu_k8s_stack_select menu_data_stack_select \
+            menu_cloud_stack_select menu_blockchain_select \
+            menu_cli_extras_select menu_security_tools_select \
+            menu_git_forges_select >/dev/null || exit 1
           echo "OK"
 
   smoke-dryrun:
-    name: setup.sh dryrun (real ubuntu-latest VM, systemd PID1)
+    name: smoke-dryrun
     needs: lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
