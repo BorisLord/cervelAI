@@ -9,7 +9,7 @@ declare -gA _MENU_DESC=(
     ["agent-memory"]="cross-session memory: memsearch/qmd/engram/claude-mem/... (sub)"
     ["usage-trackers"]="token/cost trackers: tokscale + ccusage + ccstatusline"
     ["ai-tools"]="LLM helpers: code2prompt/fabric/llm/markitdown/... (sub)"
-    ["editor"]="vim/neovim/emacs/helix/micro (sub)"
+    ["editor"]="vim/neovim/emacs/micro (sub)"
     ["ide-web"]="code-server (VS Code in browser)"
     ["runtimes"]="extra runtimes: go/rust/bun/deno/zig/java/.../haskell (sub)"
     ["workflow-tools"]="act + just + watchexec (dev-loop helpers)"
@@ -45,8 +45,8 @@ _menu_multi() {
     done
     local out
     if out="$(gum choose --no-limit --height=20 --header="$header" \
-        --label-delimiter=$'\t' "${sel[@]}" -- "${labels[@]}" </dev/tty)" &&
-        [[ -n "$out" ]]; then
+        --label-delimiter=$'\t' "${sel[@]}" -- "${labels[@]}" </dev/tty)" \
+        && [[ -n "$out" ]]; then
         mapfile -t _mm_out <<<"$out"
     else
         _mm_out=()
@@ -70,8 +70,8 @@ _menu_single() {
     done
     local out
     out="$(gum choose --height=12 --header="$header" \
-        --label-delimiter=$'\t' --selected="$def_label" -- "${labels[@]}" </dev/tty)" ||
-        return 1
+        --label-delimiter=$'\t' --selected="$def_label" -- "${labels[@]}" </dev/tty)" \
+        || return 1
     _ms_out="$out"
     return 0
 }
@@ -136,12 +136,11 @@ menu_agents_select() {
         grok-cli "Grok CLI (xAI)" OFF
 }
 
-menu_editors_select() {
+menu_editor_select() {
     _menu_multi "$1" "Terminal editors:" \
         vim "Vim" OFF \
         neovim "Neovim — modern standard, Lua config" ON \
         emacs "Emacs (emacs-nox)" OFF \
-        helix "Helix — post-modern modal editor, built-in LSP" OFF \
         micro "micro — intuitive editor (no modes)" OFF
 }
 
@@ -155,7 +154,7 @@ menu_agent_memory_select() {
         agentmemory "heavy: MCP tools + viewer + REST API" OFF
 }
 
-menu_token_saver_select() {
+menu_token_savers_select() {
     _menu_single "$1" "CLI token-saver (filters shell output before reaching agents):" \
         snip "snip: YAML pipelines, 60-90% token savings" ON \
         rtk "rtk: Rust binary, 100+ commands built-in" OFF \
