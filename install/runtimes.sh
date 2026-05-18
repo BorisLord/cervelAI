@@ -28,8 +28,8 @@ install_runtimes_pnpm() {
         log_skip "mise: pnpm already on PATH"
         return 0
     fi
-    log_info "mise use -g npm:pnpm (bootstrap via MISE_NPM_PACKAGE_MANAGER=npm)"
-    run _user_bash "MISE_NPM_PACKAGE_MANAGER=npm mise use -g npm:pnpm@latest" ||
+    log_info "mise use -g npm:pnpm@11.1.2 (bootstrap via MISE_NPM_PACKAGE_MANAGER=npm)"
+    run _user_bash "MISE_NPM_PACKAGE_MANAGER=npm mise use -g npm:pnpm@11.1.2" ||
         log_warn "pnpm bootstrap failed, later npm:* installs will too"
 }
 
