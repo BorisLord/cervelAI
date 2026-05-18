@@ -11,7 +11,7 @@ echo "── smoke: menu.sh scope (source-in-function) ──"
 if (
     set -uo pipefail
     # Mirror CATEGORIES from setup.sh: catches a new cat missing from menu.sh's _MENU_DESC.
-    CATEGORIES=(editor agents orchestrator token-savers usage-trackers ide-web containers data-stack agent-memory ai-tools)
+    CATEGORIES=(agents token-savers agent-memory usage-trackers ai-tools editor ide-web runtimes workflow-tools containers k8s-stack iac-stack cloud-stack data-stack cli-extras security-tools git-forges blockchain)
     _src() { source menu.sh; }
     _src
     [[ -n "${_MENU_DEFAULT_OFF[*]:-}" ]] || exit 1
@@ -21,7 +21,15 @@ if (
             exit 1
         }
     done
-    declare -F menu_select menu_runtimes_select menu_agents_select >/dev/null || exit 1
+    declare -F \
+        menu_select \
+        menu_shell_select menu_multiplexer_select \
+        menu_runtimes_select menu_agents_select menu_editors_select \
+        menu_token_saver_select menu_agent_memory_select menu_ai_tools_select \
+        menu_data_stack_select menu_containers_select menu_k8s_stack_select \
+        menu_cloud_stack_select menu_blockchain_select \
+        menu_cli_extras_select menu_security_tools_select menu_git_forges_select \
+        >/dev/null || exit 1
 ); then
     echo "smoke OK : menu.sh survives source-in-function"
 else

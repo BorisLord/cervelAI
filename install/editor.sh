@@ -4,11 +4,16 @@
 install_editor_vim() { apt_install vim; }
 install_editor_neovim() { mise_aqua "neovim/neovim"; }
 install_editor_emacs() { apt_install emacs-nox; }
-install_editor_helix() { mise_aqua "helix-editor/helix"; }
-install_editor_micro() { apt_install micro; }
+install_editor_micro() { mise_aqua "micro-editor/micro"; }
+# Helix grammars: 245 tree-sitter repo clones. GIT_TERMINAL_PROMPT=0 avoids creds prompts
+# on dead repos (e.g. gotmpl 404'd upstream). soft: partial fetch doesn't fail setup.
+install_editor_helix() {
+    mise_aqua "helix-editor/helix" || return
+    soft _user_bash "GIT_TERMINAL_PROMPT=0 hx --grammar fetch"
+}
 
 install_editor_all() {
-    local csv="${CERVELAI_EDITORS:-vim,neovim}"
+    local csv="${CERVELAI_EDITORS:-none}"
     [[ "$csv" == "all" ]] && csv="vim,neovim,emacs,helix,micro"
     IFS=',' read -r -a list <<<"$csv"
     for e in "${list[@]}"; do

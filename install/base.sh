@@ -2,8 +2,13 @@
 # install/base.sh: essential packages, gum, locales, sshd.
 
 install_base_apt_update() {
-    log_info "apt update"
+    log_info "apt update + upgrade (hybrid topgrade: base first, full topgrade at the end)"
     run env DEBIAN_FRONTEND=noninteractive apt-get update -qq
+    # confdef+confold: keep existing config files on conflicts (no interactive prompt).
+    run env DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
+        -o Dpkg::Options::=--force-confdef \
+        -o Dpkg::Options::=--force-confold
+    run env DEBIAN_FRONTEND=noninteractive apt-get autoremove -y
 }
 
 install_base_packages() {
@@ -11,7 +16,8 @@ install_base_packages() {
         curl wget git build-essential ca-certificates gnupg lsb-release \
         sudo unzip xz-utils zstd \
         openssh-server mosh \
-        less locales tzdata
+        less locales tzdata \
+        xclip
 }
 
 # CERVELAI_LOCALES silences perl warnings when SSH sends a non-C LANG via SendEnv.

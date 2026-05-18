@@ -9,3 +9,7 @@
 # store dedupes). pnpm itself bootstraps with MISE_NPM_PACKAGE_MANAGER=npm in
 # install/runtimes.sh to break the circular dep.
 package_manager = "pnpm"
+
+# Ruby defaults to source compile until mise 2026.8; force precompiled until then.
+[settings.ruby]
+compile = false

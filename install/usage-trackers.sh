@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install/usage-trackers.sh: token/cost trackers for AI agents. All via mise:npm.
+# install/usage-trackers.sh: token/cost trackers for AI agents.
 # tokscale (cross-agent), ccusage + ccstatusline (Claude Code / Codex).
 
 install_usage_trackers_all() {

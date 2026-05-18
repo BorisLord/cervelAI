@@ -5,7 +5,6 @@
 install_token_savers_snip() { mise_use "github:edouard-claude/snip"; }
 install_token_savers_rtk() { mise_aqua "rtk-ai/rtk"; }
 
-# Silently skips agents snip doesn't support (opencode/aider/crush/goose/continue).
 _snip_init_one() {
     local target
     case "$1" in
@@ -33,7 +32,7 @@ _rtk_init_one() {
 
 _init_token_saver() {
     local tool="$1" agents="${CERVELAI_AGENTS:-}"
-    [[ "$agents" == "all" ]] && agents="claude-code,codex,opencode,pi,aider,crush,gemini-cli,goose,continue"
+    [[ "$agents" == "all" ]] && agents="claude-code,codex,opencode,pi,crush,gemini-cli,goose,continue,qwen-code,mistral-vibe,deepseek-tui,grok-cli"
     [[ -z "$agents" ]] && {
         log_skip "$tool init: no AI agents installed"
         return 0

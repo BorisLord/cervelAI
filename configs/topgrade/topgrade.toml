@@ -1,0 +1,12 @@
+# cervelAI topgrade config.
+# Skip step types covered by mise (mise upgrade handles them via its backends),
+# and tools that recursively fetch flaky upstream repos.
+[misc]
+assume_yes = true
+disable = [
+    "pnpm",  # mise:npm backend uses pnpm internally; `pnpm root -g` is unrelated
+    "node",  # idem: mise drives node version
+    "pip3",  # mise:pipx backend covers it
+    "yarn",  # not used
+    "helix", # `hx --grammar fetch` clones 245 tree-sitter repos; some 404 upstream
+]

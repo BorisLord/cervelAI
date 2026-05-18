@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# install/containers.sh: docker, podman, lazydocker, hadolint. Opt-in.
-# Needs nesting=1 + keyctl=1 on the LXC (cervelAI's defaults).
+# install/containers.sh: container runtimes + tooling. CERVELAI_CONTAINERS=<csv|all>.
+# LXC needs nesting=1 + keyctl=1 (cervelAI's defaults).
 
-install_containers_all() {
-    local u="${CERVELAI_USER:-agent}"
-
-    # Docker official APT repo (fresher than Debian's docker.io). Per-distro URL.
+install_containers_docker() {
+    local u
+    u="$(_user)"
     if has_cmd docker; then
         log_skip "docker already installed"
     else
+        # Docker's own APT repo — fresher than Debian's docker.io package.
         local distro_id
         # shellcheck disable=SC1091
         . /etc/os-release
@@ -35,15 +35,32 @@ install_containers_all() {
             > /etc/apt/sources.list.d/docker.list"
         run env DEBIAN_FRONTEND=noninteractive apt-get update -qq
         apt_install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-        if id -nG "$u" | grep -qw docker; then
-            log_skip "$u already in docker group"
-        else
-            run usermod -aG docker "$u"
-            log_warn "$u added to docker group, re-login required for effect"
-        fi
     fi
+    if id -nG "$u" | grep -qw docker; then
+        log_skip "$u already in docker group"
+    else
+        run usermod -aG docker "$u"
+        log_warn "$u added to docker group, re-login required for effect"
+    fi
+}
 
-    apt_install podman
-    mise_aqua "jesseduffield/lazydocker"
-    mise_aqua "hadolint/hadolint"
+install_containers_podman() { apt_install podman; }
+install_containers_lazydocker() { mise_aqua "jesseduffield/lazydocker"; }
+install_containers_hadolint() { mise_aqua "hadolint/hadolint"; }
+install_containers_dive() { mise_aqua "wagoodman/dive"; }
+
+install_containers_all() {
+    local csv="${CERVELAI_CONTAINERS:-}"
+    [[ "$csv" == "all" ]] && csv="docker,podman,lazydocker,hadolint,dive"
+    IFS=',' read -r -a list <<<"$csv"
+    for c in "${list[@]}"; do
+        c="${c// /}"
+        case "$c" in
+            docker | podman | lazydocker | hadolint | dive)
+                "install_containers_$c"
+                ;;
+            none | "") log_skip "no containers tool requested" ;;
+            *) log_warn "unknown containers in CERVELAI_CONTAINERS: $c (valid: docker,podman,lazydocker,hadolint,dive,none)" ;;
+        esac
+    done
 }

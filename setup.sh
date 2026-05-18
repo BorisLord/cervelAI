@@ -12,8 +12,10 @@ trap 'printf "\n[ ABORT ] interrupted (Ctrl+C), partial install state likely\n" 
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALL_DIR="${SCRIPT_DIR}/install"
+# shellcheck disable=SC2034  # used by install/_user.sh and install/_finalize.sh
 CONFIGS_DIR="${SCRIPT_DIR}/configs"
 
+# shellcheck disable=SC2034  # used by install/_user.sh, install/_finalize.sh, install/_prompts.sh
 ENV_FILE_REL=".config/cervelAI/env"
 
 DEV_MODE="${dev_mode:-}"
@@ -119,7 +121,7 @@ _user() { printf '%s' "${CERVELAI_USER:-agent}"; }
 # preserve-env=GITHUB_TOKEN lifts mise's GitHub backend rate limit.
 _user_bash() {
     sudo -u "$(_user)" --preserve-env=GITHUB_TOKEN -i bash -c \
-        "export PATH=\"\$HOME/.local/share/mise/shims:\$HOME/.local/bin:\$PATH\"; $*"
+        "export PNPM_HOME=\"\$HOME/.local/share/pnpm\"; export PATH=\"\$HOME/.local/share/mise/shims:\$HOME/.local/bin:\$PNPM_HOME:\$PATH\"; $*"
 }
 
 mise_present() { [[ -x /usr/local/bin/mise ]]; }
@@ -178,19 +180,34 @@ while (($#)); do
     shift
 done
 
-# Install order. base/runtimes/lsp always run, excluded.
+# Opt-in only — mandatory baseline (base, runtimes core, lsp, search-core, gh) is called directly in main().
 CATEGORIES=(
-    editor
     agents
-    orchestrator
     token-savers
-    usage-trackers
-    ide-web
-    containers
-    data-stack
     agent-memory
+    usage-trackers
     ai-tools
+    editor
+    ide-web
+    runtimes
+    workflow-tools
+    containers
+    k8s-stack
+    iac-stack
+    cloud-stack
+    data-stack
+    cli-extras
+    security-tools
+    git-forges
+    blockchain
 )
+
+# shellcheck disable=SC1091
+source "${INSTALL_DIR}/_user.sh"
+# shellcheck disable=SC1091
+source "${INSTALL_DIR}/_prompts.sh"
+# shellcheck disable=SC1091
+source "${INSTALL_DIR}/_finalize.sh"
 
 main() {
     local selected=() cat err_before
@@ -235,31 +252,40 @@ main() {
             : "${CERVELAI_GIT_FORGES:=all}"
             : "${CERVELAI_RUNTIMES:=all}"
             : "${CERVELAI_AGENT_MEMORY:=all}"
-            export CERVELAI_AGENTS CERVELAI_EDITORS CERVELAI_GIT_FORGES CERVELAI_RUNTIMES CERVELAI_AGENT_MEMORY
+            : "${CERVELAI_AI_TOOLS:=all}"
+            : "${CERVELAI_CLOUD_STACK:=all}"
+            : "${CERVELAI_BLOCKCHAIN:=all}"
+            : "${CERVELAI_DATA_STACK:=all}"
+            : "${CERVELAI_CONTAINERS:=all}"
+            : "${CERVELAI_K8S_STACK:=all}"
+            : "${CERVELAI_CLI_EXTRAS:=all}"
+            : "${CERVELAI_SECURITY_TOOLS:=all}"
+            : "${CERVELAI_TOKEN_SAVER:=snip}"
+            : "${CERVELAI_MULTIPLEXER:=tmux+aoe}"
+            export CERVELAI_AGENTS CERVELAI_EDITORS CERVELAI_GIT_FORGES CERVELAI_RUNTIMES \
+                CERVELAI_AGENT_MEMORY CERVELAI_AI_TOOLS CERVELAI_CLOUD_STACK CERVELAI_BLOCKCHAIN \
+                CERVELAI_DATA_STACK CERVELAI_CONTAINERS CERVELAI_K8S_STACK \
+                CERVELAI_CLI_EXTRAS CERVELAI_SECURITY_TOOLS CERVELAI_TOKEN_SAVER \
+                CERVELAI_MULTIPLEXER
         else
             IFS=',' read -r -a selected <<<"$CERVELAI_SELECTED"
         fi
         log_info "selected: ${selected[*]:-(none)}"
     else
+        # Always-asked workspace prompts (single-select) — even if user picks zero categories.
+        local sh_sel="" mp_sel=""
+        if menu_shell_select sh_sel; then
+            CERVELAI_SHELL="$sh_sel"
+            export CERVELAI_SHELL
+        fi
+        if menu_multiplexer_select mp_sel; then
+            CERVELAI_MULTIPLEXER="$mp_sel"
+            export CERVELAI_MULTIPLEXER
+        fi
+
         while :; do
             if menu_select selected; then
                 log_info "selected: ${selected[*]:-(none)}"
-                local rt_sel=()
-                if menu_runtimes_select rt_sel; then
-                    CERVELAI_RUNTIMES="$(
-                        IFS=,
-                        echo "${rt_sel[*]}"
-                    )"
-                    export CERVELAI_RUNTIMES
-                fi
-                local gf_sel=()
-                if menu_git_forges_select gf_sel && ((${#gf_sel[@]})); then
-                    CERVELAI_GIT_FORGES="$(
-                        IFS=,
-                        echo "${gf_sel[*]}"
-                    )"
-                    export CERVELAI_GIT_FORGES
-                fi
                 for cat in "${selected[@]}"; do
                     case "$cat" in
                         agents)
@@ -299,33 +325,144 @@ main() {
                                 export CERVELAI_AGENT_MEMORY
                             fi
                             ;;
+                        ai-tools)
+                            local at_sel=()
+                            if menu_ai_tools_select at_sel; then
+                                CERVELAI_AI_TOOLS="$(
+                                    IFS=,
+                                    echo "${at_sel[*]}"
+                                )"
+                                export CERVELAI_AI_TOOLS
+                            fi
+                            ;;
+                        runtimes)
+                            local rt_sel=()
+                            if menu_runtimes_select rt_sel; then
+                                CERVELAI_RUNTIMES="$(
+                                    IFS=,
+                                    echo "${rt_sel[*]}"
+                                )"
+                                export CERVELAI_RUNTIMES
+                            fi
+                            ;;
+                        containers)
+                            local ct_sel=()
+                            if menu_containers_select ct_sel && ((${#ct_sel[@]})); then
+                                CERVELAI_CONTAINERS="$(
+                                    IFS=,
+                                    echo "${ct_sel[*]}"
+                                )"
+                                export CERVELAI_CONTAINERS
+                            fi
+                            ;;
+                        k8s-stack)
+                            local k8_sel=()
+                            if menu_k8s_stack_select k8_sel && ((${#k8_sel[@]})); then
+                                CERVELAI_K8S_STACK="$(
+                                    IFS=,
+                                    echo "${k8_sel[*]}"
+                                )"
+                                export CERVELAI_K8S_STACK
+                            fi
+                            ;;
+                        data-stack)
+                            local ds_sel=()
+                            if menu_data_stack_select ds_sel && ((${#ds_sel[@]})); then
+                                CERVELAI_DATA_STACK="$(
+                                    IFS=,
+                                    echo "${ds_sel[*]}"
+                                )"
+                                export CERVELAI_DATA_STACK
+                            fi
+                            ;;
+                        cloud-stack)
+                            local cs_sel=()
+                            if menu_cloud_stack_select cs_sel && ((${#cs_sel[@]})); then
+                                CERVELAI_CLOUD_STACK="$(
+                                    IFS=,
+                                    echo "${cs_sel[*]}"
+                                )"
+                                export CERVELAI_CLOUD_STACK
+                            fi
+                            ;;
+                        blockchain)
+                            local bc_sel=()
+                            if menu_blockchain_select bc_sel && ((${#bc_sel[@]})); then
+                                CERVELAI_BLOCKCHAIN="$(
+                                    IFS=,
+                                    echo "${bc_sel[*]}"
+                                )"
+                                export CERVELAI_BLOCKCHAIN
+                            fi
+                            ;;
+                        cli-extras)
+                            local ce_sel=()
+                            if menu_cli_extras_select ce_sel && ((${#ce_sel[@]})); then
+                                CERVELAI_CLI_EXTRAS="$(
+                                    IFS=,
+                                    echo "${ce_sel[*]}"
+                                )"
+                                export CERVELAI_CLI_EXTRAS
+                            fi
+                            ;;
+                        security-tools)
+                            local st_sel=()
+                            if menu_security_tools_select st_sel && ((${#st_sel[@]})); then
+                                CERVELAI_SECURITY_TOOLS="$(
+                                    IFS=,
+                                    echo "${st_sel[*]}"
+                                )"
+                                export CERVELAI_SECURITY_TOOLS
+                            fi
+                            ;;
+                        git-forges)
+                            local gf_sel=()
+                            if menu_git_forges_select gf_sel && ((${#gf_sel[@]})); then
+                                CERVELAI_GIT_FORGES="$(
+                                    IFS=,
+                                    echo "${gf_sel[*]}"
+                                )"
+                                export CERVELAI_GIT_FORGES
+                            fi
+                            ;;
                     esac
                 done
                 menu_summary_confirm && break
                 log_info "redoing selection…"
                 unset CERVELAI_RUNTIMES CERVELAI_GIT_FORGES CERVELAI_AGENTS \
-                    CERVELAI_EDITORS CERVELAI_TOKEN_SAVER CERVELAI_AGENT_MEMORY
+                    CERVELAI_EDITORS CERVELAI_TOKEN_SAVER CERVELAI_AGENT_MEMORY \
+                    CERVELAI_AI_TOOLS CERVELAI_CLOUD_STACK CERVELAI_BLOCKCHAIN \
+                    CERVELAI_DATA_STACK CERVELAI_CONTAINERS CERVELAI_K8S_STACK \
+                    CERVELAI_CLI_EXTRAS CERVELAI_SECURITY_TOOLS
             else
-                log_warn "menu cancelled, installing nothing beyond base + mise + default runtimes"
+                log_warn "menu cancelled, installing only mandatory baseline"
                 selected=()
                 break
             fi
         done
     fi
 
-    log_step "mise + runtimes"
+    # --- Mandatory baseline (runs regardless of category selection) ---
+
+    log_step "mise + runtimes core (node/python/pnpm/uv)"
     source_install runtimes
-    install_runtimes_all
+    install_runtimes_mandatory
 
     log_step "language servers (LSP)"
     source_install lsp && install_lsp_all
 
-    log_step "shell + search + git-tools (always-installed baseline)"
-    source_install shell && install_shell_all
+    log_step "search-core (AI-critical: rg/fd/jq/yq/bat/...)"
     source_install search && install_search_all
-    source_install git-tools && install_git_tools_all
 
-    # token-savers must run AFTER agents (its hook init needs the agent binaries).
+    log_step "git core (gh + delta)"
+    source_install git-tools && install_git_tools_core
+
+    log_step "shell + multiplexer"
+    source_install shell && install_shell_all
+
+    # --- Opt-in categories ---
+
+    # token-savers must run AFTER agents (hooks init reads agent binaries); CATEGORIES order enforces this.
     local -a ordered=()
     local s
     for cat in "${CATEGORIES[@]}"; do
@@ -339,7 +476,6 @@ main() {
     selected=("${ordered[@]}")
 
     for cat in "${selected[@]}"; do
-        [[ "$cat" == "base" || "$cat" == "runtimes" ]] && continue
         log_step "category: $cat"
         if source_install "$cat"; then
             "install_${cat//-/_}_all"
@@ -347,6 +483,10 @@ main() {
             log_warn "no install script for category: $cat"
         fi
     done
+
+    # aoe gated on ≥1 agent installed — must run AFTER agents category.
+    log_step "aoe orchestrator (post-dispatch)"
+    install_shell_aoe_post_dispatch
 
     install_configs
     ensure_env_file
@@ -376,317 +516,6 @@ source_menu() {
     }
     # shellcheck disable=SC1090
     source "$f"
-}
-
-create_user() {
-    local u="${CERVELAI_USER:-agent}"
-    if id "$u" &>/dev/null; then
-        log_skip "user $u already exists"
-    else
-        log_info "creating user $u"
-        run useradd -m -s /bin/bash -G sudo "$u"
-    fi
-    # `install -d` doesn't chown intermediate dirs; list each level.
-    run install -d -m 700 -o "$u" -g "$u" "/home/$u/.ssh"
-    run install -d -m 755 -o "$u" -g "$u" "/home/$u/.config"
-    run install -d -m 755 -o "$u" -g "$u" "/home/$u/.cache"
-    run install -d -m 755 -o "$u" -g "$u" "/home/$u/.local"
-    run install -d -m 755 -o "$u" -g "$u" "/home/$u/.local/bin"
-    run install -d -m 755 -o "$u" -g "$u" "/home/$u/.local/share"
-    run install -d -m 755 -o "$u" -g "$u" "/home/$u/.local/state"
-    local sudoers="/etc/sudoers.d/90-${u}"
-    if [[ ! -f "$sudoers" ]]; then
-        if ((DRY_RUN)); then
-            log_info "(dryrun) would write $sudoers"
-        else
-            printf '%s ALL=(ALL) NOPASSWD:ALL\n' "$u" >"$sudoers"
-            chmod 440 "$sudoers"
-            log_ok "sudo NOPASSWD configured for $u"
-        fi
-    fi
-    if [[ -n "${CERVELAI_SSH_KEY:-}" ]]; then
-        local ak="/home/$u/.ssh/authorized_keys"
-        if ! grep -qF "${CERVELAI_SSH_KEY}" "$ak" 2>/dev/null; then
-            if ((DRY_RUN)); then
-                log_info "(dryrun) would append SSH key to $ak"
-            else
-                printf '%s\n' "${CERVELAI_SSH_KEY}" >>"$ak"
-                chmod 600 "$ak"
-                chown "$u:$u" "$ak"
-                log_ok "SSH key added for $u"
-            fi
-        fi
-    fi
-}
-
-install_configs() {
-    local u
-    u="$(_user)"
-    local h="/home/$u"
-    [[ -d "$CONFIGS_DIR" ]] || {
-        log_warn "configs/ missing, skipping"
-        return 0
-    }
-    log_step "deploying configs/ → $h"
-
-    # mise/config.toml deliberately omitted: install_runtimes_mise owns it (avoid clobbering [tools]).
-    local -A files=(
-        ["bash/.bashrc"]=".bashrc"
-        ["bash/.bash_profile"]=".bash_profile"
-        ["zsh/.zshrc"]=".zshrc"
-        ["zsh/.zshenv"]=".zshenv"
-        ["tmux/.tmux.conf"]=".tmux.conf"
-        ["agents/AGENTS.md"]="AGENTS.md"
-    )
-    local src
-    for src in "${!files[@]}"; do
-        [[ -r "$CONFIGS_DIR/$src" ]] || {
-            log_skip "configs/$src missing"
-            continue
-        }
-        run install -D -m 644 -o "$u" -g "$u" "$CONFIGS_DIR/$src" "$h/${files[$src]}"
-        log_ok "${files[$src]}"
-    done
-
-    if [[ -d "$CONFIGS_DIR/bin" ]]; then
-        local b
-        for b in "$CONFIGS_DIR"/bin/*; do
-            [[ -f "$b" ]] || continue
-            run install -D -m 755 -o "$u" -g "$u" "$b" "$h/.local/bin/$(basename "$b")"
-            log_ok ".local/bin/$(basename "$b")"
-        done
-    fi
-}
-
-ensure_env_file() {
-    local u
-    u="$(_user)"
-    local f="/home/$u/${ENV_FILE_REL}"
-    if [[ -e "$f" ]]; then
-        log_skip "env file already exists: $f"
-        return 0
-    fi
-    if ((DRY_RUN)); then
-        log_info "(dryrun) would create $f"
-        return 0
-    fi
-    install -d -m 700 -o "$u" -g "$u" "$(dirname "$f")"
-    local topic suffix
-    suffix="$(tr -dc 'a-z0-9' </dev/urandom 2>/dev/null | head -c 16)"
-    if [[ ${#suffix} -ne 16 ]]; then
-        log_err "could not generate ntfy topic suffix (urandom unavailable?), aborting env file"
-        return 1
-    fi
-    topic="cervelAI-${suffix}"
-    cat >"$f" <<EOF
-# cervelAI, shared environment (bash, zsh, ai-run). Mode 600.
-# mise shims PATH: runtimes stay visible even in a non-interactive shell.
-export PATH="\$HOME/.local/share/mise/shims:\$HOME/.local/bin:\$PATH"
-# ntfy, ai-run notifications (change the topic if you want)
-export NTFY_SERVER="https://ntfy.sh"
-export NTFY_TOPIC="${topic}"
-EOF
-    if [[ -n "${GITHUB_TOKEN:-}" ]]; then
-        printf 'export GITHUB_TOKEN=%q\n' "$GITHUB_TOKEN" >>"$f"
-    fi
-    chmod 600 "$f"
-    chown "$u:$u" "$f"
-    log_ok "env file created: $f"
-    log_info "ntfy topic: ${topic}, subscribe at https://ntfy.sh/${topic}"
-}
-
-# GITHUB_TOKEN lifts the 60→5000 req/h rate limit that mise + installers hit mid-run.
-prompt_github_token() {
-    if [[ -n "${GITHUB_TOKEN:-}" ]]; then
-        log_skip "GITHUB_TOKEN already set, used for mise + GitHub API"
-        export GITHUB_TOKEN
-        return 0
-    fi
-    if [[ "${CERVELAI_NO_PROMPT:-0}" == "1" ]] || ((DRY_RUN)); then
-        log_skip "GITHUB_TOKEN prompt (CERVELAI_NO_PROMPT=1 or dryrun)"
-        return 0
-    fi
-    if ! { [ -r /dev/tty ] && [ -w /dev/tty ]; }; then
-        log_warn "no TTY, skipping GITHUB_TOKEN prompt (installs may hit the GitHub rate limit)"
-        return 0
-    fi
-    log_step "GitHub token (recommended, lifts the GitHub API rate limit during install)"
-    log_info "create one with no scopes at https://github.com/settings/tokens"
-    local val
-    read -r -p "  GITHUB_TOKEN (leave empty to skip): " val </dev/tty || val=""
-    if [[ -n "$val" ]]; then
-        export GITHUB_TOKEN="$val"
-        log_ok "GITHUB_TOKEN set"
-    else
-        log_skip "GITHUB_TOKEN skipped, installs may hit the GitHub rate limit"
-    fi
-}
-
-_agent_keys() {
-    case "$1" in
-        claude-code | pi) echo "ANTHROPIC_API_KEY" ;;
-        codex) echo "OPENAI_API_KEY" ;;
-        gemini-cli) echo "GEMINI_API_KEY" ;;
-        opencode | aider | crush | goose | continue)
-            echo "ANTHROPIC_API_KEY OPENAI_API_KEY OPENROUTER_API_KEY"
-            ;;
-    esac
-}
-
-prompt_api_keys() {
-    local u
-    u="$(_user)"
-    local envfile="/home/$u/${ENV_FILE_REL}"
-
-    if [[ "${CERVELAI_NO_PROMPT:-0}" == "1" ]] || ((DRY_RUN)); then
-        log_skip "API keys prompt (CERVELAI_NO_PROMPT=1 or dryrun)"
-        return 0
-    fi
-    [[ -e "$envfile" ]] || {
-        log_warn "env file missing, skip API keys"
-        return 0
-    }
-
-    local agents="${CERVELAI_AGENTS:-}"
-    [[ "$agents" == "all" ]] && agents="claude-code,codex,opencode,pi,aider,crush,gemini-cli,goose,continue"
-    if [[ -z "$agents" ]]; then
-        log_skip "no AI agents installed, skipping API key prompt"
-        return 0
-    fi
-
-    local -a want=() agent_list kv
-    local a k val
-    IFS=',' read -r -a agent_list <<<"$agents"
-    for a in "${agent_list[@]}"; do
-        a="${a// /}"
-        read -r -a kv <<<"$(_agent_keys "$a")"
-        for k in "${kv[@]}"; do
-            [[ " ${want[*]} " == *" $k "* ]] || want+=("$k")
-        done
-    done
-    ((${#want[@]})) || {
-        log_skip "no provider keys to prompt"
-        return 0
-    }
-
-    if ! { [ -r /dev/tty ] && [ -w /dev/tty ]; }; then
-        log_warn "no TTY, skipping API key entry"
-        log_warn "→ add them manually to $envfile, or re-run setup.sh via 'pct enter'"
-        return 0
-    fi
-
-    log_step "API keys for the agents you installed (optional, leave empty to skip)"
-    for k in "${want[@]}"; do
-        if grep -q "^export ${k}=" "$envfile" 2>/dev/null; then
-            log_skip "${k} already present"
-            continue
-        fi
-        if has_cmd gum; then
-            val="$(gum input --password --prompt="  ${k}: " --placeholder="leave empty to skip" </dev/tty)" || val=""
-        else
-            read -r -s -p "  ${k}: " val </dev/tty || val=""
-            printf '\n'
-        fi
-        if [[ -n "$val" ]]; then
-            printf 'export %s=%q\n' "$k" "$val" >>"$envfile"
-            log_ok "${k} written"
-        else
-            log_skip "${k} skipped"
-        fi
-    done
-}
-
-# Catches apt security updates missed by the Debian template snapshot.
-run_final_topgrade() {
-    ((DRY_RUN)) && {
-        log_skip "final topgrade (dryrun)"
-        return 0
-    }
-    log_step "final refresh (topgrade): catches apt security updates"
-    soft _user_bash "topgrade --yes"
-}
-
-print_final_summary() {
-    local u
-    u="$(_user)"
-    local ip
-    # default-route src IP: any iface name, skips docker0/podman bridges.
-    ip="$(ip -4 -o route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++)if($i=="src")print $(i+1)}' | head -1)"
-    log_step "summary"
-    cat <<EOF
-
-  ┌──────────────────────────────────────────────────┐
-  │  cervelAI is ready.                              │
-  └──────────────────────────────────────────────────┘
-
-  User:           $u
-  IP:             ${ip:-<detect: ip a>}
-  Shell:          ${CERVELAI_SHELL:-bash} + ${CERVELAI_MULTIPLEXER:-tmux}
-  Categories:     ${selected[*]:-(none beyond base)}
-  Agents:         ${CERVELAI_AGENTS:-(none)}
-  Editors:        ${CERVELAI_EDITORS:-(none)}
-EOF
-    [[ -n "${CERVELAI_GIT_FORGES:-}" ]] && printf '  Git forges:     %s\n' "$CERVELAI_GIT_FORGES"
-    [[ -n "${CERVELAI_TOKEN_SAVER:-}" ]] && printf '  Token-saver:    %s\n' "$CERVELAI_TOKEN_SAVER"
-    [[ -n "${CERVELAI_AGENT_MEMORY:-}" ]] && printf '  Agent memory:   %s\n' "$CERVELAI_AGENT_MEMORY"
-    [[ -n "${CERVELAI_RUNTIMES:-}" ]] && printf '  Runtimes+:      %s\n' "$CERVELAI_RUNTIMES"
-    cat <<EOF
-  Env/keys:       /home/$u/.config/cervelAI/env
-  Notify:         ai-run <cmd>
-  Tools quickref: cat /home/$u/AGENTS.md
-
-  Connect:
-      ssh $u@${ip:-<lxc-ip>}
-      mosh $u@${ip:-<lxc-ip>}
-
-  The cervelai menu greets every interactive login (skip via plain shell).
-
-EOF
-}
-
-finalize() {
-    local u="${CERVELAI_USER:-agent}"
-    local desired="${CERVELAI_SHELL:-bash}"
-
-    # `install -d` as root leaves parents root-owned; fix recursively.
-    run chown -R "$u:$u" "/home/$u"
-
-    if [[ "$desired" != "bash" && "$desired" != "none" ]]; then
-        local target
-        target="$(command -v "$desired" 2>/dev/null || true)"
-        if [[ -z "$target" ]]; then
-            log_warn "default shell $desired requested but not installed, skipping chsh"
-        else
-            local cur
-            cur="$(getent passwd "$u" | cut -d: -f7)"
-            if [[ "$cur" == "$target" ]]; then
-                log_skip "$desired already default for $u"
-            else
-                run chsh -s "$target" "$u"
-                log_ok "default shell $desired set for $u"
-            fi
-        fi
-    fi
-
-    local motd="/etc/motd"
-    if grep -q "cervelAI" "$motd" 2>/dev/null; then
-        log_skip "MOTD already set"
-    elif ((DRY_RUN)); then
-        log_info "(dryrun) would write $motd"
-    else
-        cat >"$motd" <<MOTD
-
-  cervelAI, LXC ready for AI coding agents
-
-  Shell:    ${desired}    Multiplexer: ${CERVELAI_MULTIPLEXER:-tmux}
-  Connect:  ssh ${u}@<this-ip>  |  mosh ${u}@<this-ip>
-  Env/keys: ~/.config/cervelAI/env
-  Notify:   ai-run <cmd>
-  Tools:    cat ~/AGENTS.md
-
-MOTD
-        log_ok "MOTD set"
-    fi
 }
 
 main "$@"
