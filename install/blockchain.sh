@@ -17,8 +17,10 @@ install_blockchain_solana() {
 }
 
 install_blockchain_move() {
-    mise_use "github:MystenLabs/sui" latest sui
-    mise_use "github:aptos-labs/aptos-core" latest aptos
+    # Pinned: sui repo tags 3 lines (mainnet-v*/testnet-v*/devnet-v*), mise picks the latest testnet otherwise.
+    mise_use "github:MystenLabs/sui" "mainnet-v1.71.1" sui
+    # Pinned: aptos-core tags aptos-cli-v* AND aptos-node-v* (different binaries), mise picks node otherwise.
+    mise_use "github:aptos-labs/aptos-core" "aptos-cli-v9.2.0" aptos
 }
 
 # Go required: custom Cosmos modules are Go packages.

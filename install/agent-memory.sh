@@ -4,7 +4,8 @@
 install_agent_memory_memsearch() { mise_use "pipx:memsearch" latest memsearch; }
 install_agent_memory_qmd() { mise_use "npm:@tobilu/qmd" latest qmd; }
 install_agent_memory_engram() {
-    mise_use "github:Gentleman-Programming/engram[bin=engram]" latest engram || return
+    # Pinned to 1.x — upstream also tags pi-v* (Pi.dev integration, no binary assets) that mise's "latest" picks up.
+    mise_use "github:Gentleman-Programming/engram[bin=engram]" "1" engram || return
     local agent bin
     for agent in claude-code:claude opencode:opencode pi:pi gemini-cli:gemini codex:codex; do
         bin="${agent##*:}"
