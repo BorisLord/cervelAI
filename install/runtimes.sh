@@ -20,7 +20,11 @@ install_runtimes_mise() {
     soft run _user_bash "mise trust $cfg"
 }
 
-install_runtimes_node() { mise_use "node" "lts"; }
+install_runtimes_node() {
+    mise_use "node" "lts"
+    # Pin corepack default to pnpm 11.1.2 (11.1.3 has ERR_PNPM_RESOLUTION_POLICY_VIOLATIONS_UNHANDLED).
+    soft _user_bash "rm -rf ~/.cache/node/corepack/v1/pnpm && corepack prepare pnpm@11.1.2 --activate"
+}
 
 # Bootstrap chicken-and-egg: config.toml routes npm:* through pnpm, but pnpm itself is npm:*.
 install_runtimes_pnpm() {
@@ -29,8 +33,8 @@ install_runtimes_pnpm() {
         return 0
     fi
     log_info "mise use -g npm:pnpm@11.1.2 (bootstrap via MISE_NPM_PACKAGE_MANAGER=npm)"
-    run _user_bash "MISE_NPM_PACKAGE_MANAGER=npm mise use -g npm:pnpm@11.1.2" ||
-        log_warn "pnpm bootstrap failed, later npm:* installs will too"
+    run _user_bash "NPM_CONFIG_MINIMUM_RELEASE_AGE=0 MISE_NPM_PACKAGE_MANAGER=npm mise use -g npm:pnpm@11.1.2" \
+        || log_warn "pnpm bootstrap failed, later npm:* installs will too"
 }
 
 install_runtimes_node_tools() {
