@@ -27,7 +27,7 @@ prompt_github_token() {
     fi
     if [[ -n "$val" ]]; then
         export GITHUB_TOKEN="$val"
-        log_ok "GITHUB_TOKEN set"
+        log_ok "GITHUB_TOKEN received (${#val} chars), saved to ~/.config/cervelAI/env"
     else
         log_skip "GITHUB_TOKEN skipped, installs may hit the GitHub rate limit"
     fi
@@ -104,7 +104,7 @@ prompt_api_keys() {
         fi
         if [[ -n "$val" ]]; then
             printf 'export %s=%q\n' "$k" "$val" >>"$envfile"
-            log_ok "${k} written"
+            log_ok "${k} received (${#val} chars), saved to ~/.config/cervelAI/env"
         else
             log_skip "${k} skipped"
         fi
