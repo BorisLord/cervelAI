@@ -28,7 +28,7 @@ typescript, json, basedpyright). Everything else is opt-in per category — run
 ## Setup
 
 - Shared env (PATH, API keys, ntfy topic) sourced automatically from
-  `~/.config/cervelAI/env` by bash, zsh, and `ai-run`.
+  `~/.config/cervelAI/env` by bash, zsh, and `cervel-run`.
 - Some tools are opt-in. Run `command -v <tool>` before relying on a binary.
 
 ## Build / test / lint
@@ -43,11 +43,11 @@ Generic linters/formatters always available:
 
 ## Long-running commands
 
-Wrap any agent run > 30 s with `ai-run` — pushes ntfy when the command exits
+Wrap any agent run > 30 s with `cervel-run` — pushes ntfy when the command exits
 (topic in `~/.config/cervelAI/env`):
 
 ```bash
-ai-run claude -p "implement feature X"
+cervel-run claude -p "implement feature X"
 ```
 
 ## Update everything
@@ -67,7 +67,7 @@ so** instead of suggesting they install something. Examples:
 
 - Asked "how do I search files?" → use `rg` (always installed), not `grep -r`.
 - Asked "convert this PDF to markdown" → check `command -v markitdown` first.
-- Asked "I need to run this overnight" → suggest wrapping with `ai-run`.
+- Asked "I need to run this overnight" → suggest wrapping with `cervel-run`.
 - Asked "diff these images / inspect Docker image" → `dive` if `containers` is installed.
 - Asked "secrets in this repo?" → `gitleaks` / `trivy` if `security-tools` is installed.
 - Asked something cross-cutting (multi-model chat, format conversion, prompt

@@ -222,7 +222,7 @@ Run the install, then `mise ls` on the host shows exactly what was installed —
 
 ### Backbone
 - Full `~/.bashrc`, `~/.zshrc`, `~/.tmux.conf` deployed (configs/)
-- `ai-run <cmd>` wrapper: ntfy push when command exits (topic in `~/.config/cervelAI/env`)
+- `cervel-run <cmd>` wrapper: ntfy push when command exits (topic in `~/.config/cervelAI/env`)
 
 ## How it works
 
@@ -314,7 +314,7 @@ Multi-provider agents (opencode, Crush, Goose, Continue) accept any of
 provider you want each agent to use.
 
 Written to `~agent/.config/cervelAI/env` (mode 600), sourced by bash, zsh and
-`ai-run`. Skippable if you'd rather manage keys with 1password-cli, vault or
+`cervel-run`. Skippable if you'd rather manage keys with 1password-cli, vault or
 `direnv` later.
 
 ## Remote access

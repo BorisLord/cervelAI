@@ -44,7 +44,7 @@ EOF
     [[ -n "${CERVELAI_SECURITY_TOOLS:-}" ]] && printf '  Security:       %s\n' "$CERVELAI_SECURITY_TOOLS"
     cat <<EOF
   Env/keys:       /home/$u/.config/cervelAI/env
-  Notify:         ai-run <cmd>
+  Notify:         cervel-run <cmd>
   Tools quickref: cat /home/$u/AGENTS.md
 
   Connect:
@@ -104,7 +104,7 @@ finalize() {
   Shell:    ${desired}    Multiplexer: ${CERVELAI_MULTIPLEXER:-tmux+aoe}
   Connect:  ssh ${u}@<this-ip>  |  mosh ${u}@<this-ip>
   Env/keys: ~/.config/cervelAI/env
-  Notify:   ai-run <cmd>
+  Notify:   cervel-run <cmd>
   Tools:    cat ~/AGENTS.md
 
 MOTD

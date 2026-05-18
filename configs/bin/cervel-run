@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# ai-run <cmd> [args...]: run a command (an AI agent), ntfy-notify on exit.
-#   ai-run claude -p "implement X"
+# cervel-run <cmd> [args...]: run a command (an AI agent), ntfy-notify on exit.
+#   cervel-run claude -p "implement X"
 # Reads NTFY_SERVER / NTFY_TOPIC from ~/.config/cervelAI/env. Empty topic: no notification.
 set -uo pipefail
 
@@ -9,7 +9,7 @@ env_file="$HOME/.config/cervelAI/env"
 [ -r "$env_file" ] && . "$env_file"
 
 [ "$#" -eq 0 ] && {
-    echo "usage: ai-run <cmd> [args...]" >&2
+    echo "usage: cervel-run <cmd> [args...]" >&2
     exit 2
 }
 
@@ -26,10 +26,10 @@ dur=$(($(date +%s) - start))
 
 if [ -n "$ntfy_topic" ]; then
     if [ "$rc" -eq 0 ]; then
-        title="ai-run OK ($host)"
+        title="cervel-run OK ($host)"
         prio="default"
     else
-        title="ai-run FAILED rc=$rc ($host)"
+        title="cervel-run FAILED rc=$rc ($host)"
         prio="high"
     fi
     curl -fsS -m 10 \
@@ -37,9 +37,9 @@ if [ -n "$ntfy_topic" ]; then
         -H "Priority: $prio" \
         -d "$cmd  (${dur}s)" \
         "$ntfy_server/$ntfy_topic" >/dev/null 2>&1 ||
-        echo "ai-run: ntfy notification failed (network?)" >&2
+        echo "cervel-run: ntfy notification failed (network?)" >&2
 else
-    echo "ai-run: NTFY_TOPIC empty in $env_file, no notification" >&2
+    echo "cervel-run: NTFY_TOPIC empty in $env_file, no notification" >&2
 fi
 
 exit "$rc"

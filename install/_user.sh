@@ -109,7 +109,7 @@ ensure_env_file() {
     fi
     topic="cervelAI-${suffix}"
     cat >"$f" <<EOF
-# cervelAI shared environment (bash, zsh, ai-run). Mode 600.
+# cervelAI shared environment (bash, zsh, cervel-run). Mode 600.
 # mise shims first so runtimes stay visible in non-interactive shells.
 # PNPM_HOME/bin needed: pnpm 11+ puts global bins there, not in PNPM_HOME.
 export PNPM_HOME="\$HOME/.local/share/pnpm"
