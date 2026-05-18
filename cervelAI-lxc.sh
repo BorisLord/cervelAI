@@ -46,8 +46,8 @@ push_and_setup() {
     else
         # pct has no recursive push: tar | pct exec tar -x.
         tar -C "$SCRIPT_DIR" --exclude=.git --exclude=.gitkeep \
-            --exclude=.memsearch --exclude=plan -cf - . |
-            pct exec "$_ctid" -- tar -C "$PUSH_DIR" -xf -
+            --exclude=.memsearch --exclude=plan -cf - . \
+            | pct exec "$_ctid" -- tar -C "$PUSH_DIR" -xf -
     fi
     log_ok "files pushed to $PUSH_DIR inside LXC"
 
@@ -61,8 +61,8 @@ push_and_setup() {
         "CERVELAI_USER=${_ct_user}" \
         "CERVELAI_SSH_KEY=${_ssh_key}" \
         "${_gh_env[@]}" \
-        bash "${PUSH_DIR}/setup.sh" ||
-        {
+        bash "${PUSH_DIR}/setup.sh" \
+        || {
             log_err "setup.sh failed inside the LXC, see the errors above"
             exit 1
         }
@@ -108,8 +108,8 @@ while (($#)); do
 done
 
 if [[ -n "$UPDATE_CTID" ]]; then
-    pct status "$UPDATE_CTID" &>/dev/null ||
-        {
+    pct status "$UPDATE_CTID" &>/dev/null \
+        || {
             log_err "CTID $UPDATE_CTID does not exist"
             exit 1
         }
@@ -130,17 +130,17 @@ prompt_default() {
 log_step "cervelAI LXC provisioning"
 
 log_info "storage available for the container rootfs:"
-pvesm status --content rootdir 2>/dev/null |
-    awk 'NR>1 {printf "         %-18s %-9s %8.1f GiB free\n", $1, $2, $6/1024/1024}'
+pvesm status --content rootdir 2>/dev/null \
+    | awk 'NR>1 {printf "         %-18s %-9s %8.1f GiB free\n", $1, $2, $6/1024/1024}'
 
 DEFAULT_CTID="$(pvesh get /cluster/nextid 2>/dev/null || true)"
 # Prefer copy-on-write pools (btrfs/zfs) for rootfs; fall back to any active.
-DEFAULT_STORAGE="$(pvesm status --content rootdir 2>/dev/null |
-    awk 'NR>1 && $3=="active" && $2 ~ /^(btrfs|zfspool)$/ {print $1; exit}')"
-[[ -z "$DEFAULT_STORAGE" ]] && DEFAULT_STORAGE="$(pvesm status --content rootdir 2>/dev/null |
-    awk 'NR>1 && $3=="active" {print $1; exit}')"
-DEFAULT_TMPL_STORAGE="$(pvesm status --content vztmpl 2>/dev/null |
-    awk 'NR>1 && $3=="active" {print $1; exit}')"
+DEFAULT_STORAGE="$(pvesm status --content rootdir 2>/dev/null \
+    | awk 'NR>1 && $3=="active" && $2 ~ /^(btrfs|zfspool)$/ {print $1; exit}')"
+[[ -z "$DEFAULT_STORAGE" ]] && DEFAULT_STORAGE="$(pvesm status --content rootdir 2>/dev/null \
+    | awk 'NR>1 && $3=="active" {print $1; exit}')"
+DEFAULT_TMPL_STORAGE="$(pvesm status --content vztmpl 2>/dev/null \
+    | awk 'NR>1 && $3=="active" {print $1; exit}')"
 
 prompt_default CTID "Container ID (CTID):" "${DEFAULT_CTID:-100}"
 prompt_default HOSTNAME "Hostname:" "cervelai"
@@ -165,8 +165,8 @@ fi
 
 log_step "selecting Debian template (latest matching CERVELAI_TEMPLATE_PATTERN)"
 TEMPLATE_PATTERN="${CERVELAI_TEMPLATE_PATTERN:-debian-[0-9]+-standard}"
-TEMPLATE_NAME=$(pveam available --section system 2>/dev/null |
-    awk -v pat="$TEMPLATE_PATTERN" '$0 ~ pat {print $2}' | sort -V | tail -1)
+TEMPLATE_NAME=$(pveam available --section system 2>/dev/null \
+    | awk -v pat="$TEMPLATE_PATTERN" '$0 ~ pat {print $2}' | sort -V | tail -1)
 
 if [[ -z "$TEMPLATE_NAME" ]]; then
     log_err "no template matching '$TEMPLATE_PATTERN' available via pveam, run 'pveam update' first?"
@@ -200,8 +200,8 @@ run pct create "$CTID" "$TEMPLATE_PATH" \
     --unprivileged 1 \
     --onboot 1 \
     --start 1 \
-    --ostype debian ||
-    {
+    --ostype debian \
+    || {
         log_err "pct create failed, check the parameters above and re-run"
         exit 1
     }
@@ -211,8 +211,8 @@ log_ok "LXC $CTID created and started"
 log_step "waiting for LXC IP (DHCP)"
 LXC_IP=""
 for _ in {1..60}; do
-    LXC_IP=$(pct exec "$CTID" -- ip -4 -o addr show eth0 2>/dev/null |
-        awk '{print $4}' | cut -d/ -f1 | head -1 || true)
+    LXC_IP=$(pct exec "$CTID" -- ip -4 -o addr show eth0 2>/dev/null \
+        | awk '{print $4}' | cut -d/ -f1 | head -1 || true)
     [[ -n "$LXC_IP" ]] && break
     sleep 1
 done

@@ -47,7 +47,7 @@ _orch_load_agent_bin() {
     [[ -n "${_AGENT_BIN[*]:-}" ]] || source "${INSTALL_DIR}/agents.sh"
 }
 
-# Extra agents aoe recognizes — detected via file scan if pre-installed by user.
+# aoe-recognized agents not installed via `agents` category — only detected if user pre-installed.
 _AOE_EXTRA_AGENTS=(
     cursor copilot droid hermes kiro
 )
@@ -141,13 +141,12 @@ install_shell_aoe_serve_systemd() {
     soft run sudo -u "$u" XDG_RUNTIME_DIR="$xdg" systemctl --user enable --now aoe-serve.service
 }
 
-# tmux + entry-menu install early. aoe (gated on ≥1 agent) deferred to install_shell_aoe_post_dispatch.
+# aoe install is deferred to install_shell_aoe_post_dispatch (gated on ≥1 agent installed).
 install_shell_multiplexer_tmux_aoe() {
     install_shell_tmux
     install_shell_entry_menu
 }
 
-# Called from setup.sh AFTER the opt-in categories loop (so agents are already installed).
 install_shell_aoe_post_dispatch() {
     [[ "${CERVELAI_MULTIPLEXER:-tmux+aoe}" == "tmux+aoe" ]] || return 0
     _orch_load_agent_bin

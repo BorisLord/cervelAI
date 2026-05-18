@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# install/search.sh: AI-critical search/parsing CLIs (mandatory). Human-facing extras
-# (eza, zoxide, glow, ...) are in install/cli-extras.sh as opt-in.
+# install/search.sh: AI-critical search/parsing CLIs (mandatory). Human extras in install/cli-extras.sh.
 
 install_search_all() {
     mise_aqua "BurntSushi/ripgrep"

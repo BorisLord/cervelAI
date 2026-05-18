@@ -5,6 +5,7 @@
 set -uo pipefail
 
 env_file="$HOME/.config/cervelAI/env"
+# shellcheck source=/dev/null
 [ -r "$env_file" ] && . "$env_file"
 
 [ "$#" -eq 0 ] && {
@@ -35,8 +36,8 @@ if [ -n "$ntfy_topic" ]; then
         -H "Title: $title" \
         -H "Priority: $prio" \
         -d "$cmd  (${dur}s)" \
-        "$ntfy_server/$ntfy_topic" >/dev/null 2>&1 ||
-        echo "ai-run: ntfy notification failed (network?)" >&2
+        "$ntfy_server/$ntfy_topic" >/dev/null 2>&1 \
+        || echo "ai-run: ntfy notification failed (network?)" >&2
 else
     echo "ai-run: NTFY_TOPIC empty in $env_file, no notification" >&2
 fi

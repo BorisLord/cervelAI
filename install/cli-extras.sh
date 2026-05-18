@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# install/cli-extras.sh: human-facing modern CLI tools. CERVELAI_CLI_EXTRAS=<csv|all>.
-# Split from search.sh — search-core stays mandatory (AI uses it), these are nice-to-have.
+# install/cli-extras.sh: human-facing CLI extras. CERVELAI_CLI_EXTRAS=<csv|all>. Search-core stays in install/search.sh (mandatory, AI uses it).
 
 install_cli_extras_sd() { mise_aqua "chmln/sd"; }
 install_cli_extras_eza() { mise_aqua "eza-community/eza"; }
