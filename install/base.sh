@@ -2,7 +2,7 @@
 # install/base.sh: essential packages, gum, locales, sshd.
 
 install_base_apt_update() {
-    log_info "apt update + upgrade (hybrid topgrade: base first, full topgrade at the end)"
+    log_info "apt update + upgrade"
     run env DEBIAN_FRONTEND=noninteractive apt-get update -qq
     # confdef+confold: keep existing config files on conflicts (no interactive prompt).
     run env DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \

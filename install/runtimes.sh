@@ -16,6 +16,8 @@ install_runtimes_mise() {
         run install -D -m 644 -o "$u" -g "$u" "$CONFIGS_DIR/mise/config.toml" "$cfg"
         log_ok "mise config deployed (settings only)"
     fi
+    # mise refuses untrusted configs in non-interactive contexts (interactive logins auto-trust).
+    soft run _user_bash "mise trust $cfg"
 }
 
 install_runtimes_node() { mise_use "node" "lts"; }
