@@ -73,15 +73,6 @@ install_configs() {
         log_ok "${files[$src]}"
     done
 
-    if [[ -d "$CONFIGS_DIR/bin" ]]; then
-        local b
-        for b in "$CONFIGS_DIR"/bin/*; do
-            [[ -f "$b" ]] || continue
-            run install -D -m 755 -o "$u" -g "$u" "$b" "$h/.local/bin/$(basename "$b")"
-            log_ok ".local/bin/$(basename "$b")"
-        done
-    fi
-
     # Internal helpers (logo, menu, run) — out of PATH, dispatched via the `cervel` shell function.
     if [[ -d "$CONFIGS_DIR/libexec" ]]; then
         local b

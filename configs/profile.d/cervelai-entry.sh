@@ -22,5 +22,8 @@ fi
 # shellcheck source=/dev/null
 [ -r "$HOME/.config/cervelAI/env" ] && . "$HOME/.config/cervelAI/env"
 
-command -v tmux >/dev/null 2>&1 || return 0
-exec tmux new-session -A -s shell
+if command -v tmux >/dev/null 2>&1; then
+    exec tmux new-session -A -s shell
+elif command -v zellij >/dev/null 2>&1; then
+    exec zellij attach -c shell
+fi
