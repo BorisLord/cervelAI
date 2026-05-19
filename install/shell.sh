@@ -181,7 +181,7 @@ install_shell_all() {
     case "${CERVELAI_MULTIPLEXER:-tmux+aoe}" in
         tmux+aoe) install_shell_multiplexer_tmux_aoe ;;
         zellij) install_shell_zellij ;;
-        none) log_skip "multiplexer: none (no entry menu, direct shell login)" ;;
+        none) log_skip "multiplexer: none (direct shell login, no persistence)" ;;
         *)
             log_warn "unknown CERVELAI_MULTIPLEXER=${CERVELAI_MULTIPLEXER} (valid: tmux+aoe,zellij,none), defaulting to tmux+aoe"
             install_shell_multiplexer_tmux_aoe

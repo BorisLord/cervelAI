@@ -19,17 +19,6 @@ install_agent_memory_mcp_memory_service() { mise_use "pipx:mcp-memory-service" l
 install_agent_memory_agentmemory() { mise_use "npm:@agentmemory/agentmemory" latest agentmemory; }
 
 install_agent_memory_all() {
-    local csv="${CERVELAI_AGENT_MEMORY:-}"
-    [[ "$csv" == "all" ]] && csv="memsearch,qmd,engram,claude-mem,mcp-memory-service,agentmemory"
-    IFS=',' read -r -a list <<<"$csv"
-    for m in "${list[@]}"; do
-        m="${m// /}"
-        case "$m" in
-            memsearch | qmd | engram | claude-mem | mcp-memory-service | agentmemory)
-                "install_agent_memory_${m//-/_}"
-                ;;
-            none | "") log_skip "no agent-memory tool requested" ;;
-            *) log_warn "unknown agent-memory in CERVELAI_AGENT_MEMORY: $m (valid: memsearch,qmd,engram,claude-mem,mcp-memory-service,agentmemory,none)" ;;
-        esac
-    done
+    _dispatch_csv agent-memory CERVELAI_AGENT_MEMORY \
+        "memsearch,qmd,engram,claude-mem,mcp-memory-service,agentmemory"
 }

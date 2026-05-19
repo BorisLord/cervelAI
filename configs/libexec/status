@@ -55,7 +55,7 @@ printf '\n'
 
 printf '── AI agents installed ──\n'
 _found=()
-for a in claude codex opencode pi crush gemini goose cn qwen vibe deepseek grok; do
+for a in claude codex opencode pi copilot crush gemini goose cn qwen vibe deepseek grok; do
     command -v "$a" >/dev/null 2>&1 && _found+=("$a")
 done
 if ((${#_found[@]} > 0)); then

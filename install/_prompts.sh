@@ -60,7 +60,7 @@ prompt_api_keys() {
     }
 
     local agents="${CERVELAI_AGENTS:-}"
-    [[ "$agents" == "all" ]] && agents="claude-code,codex,opencode,pi,crush,gemini-cli,goose,continue,qwen-code,mistral-vibe,deepseek-tui,grok-cli"
+    [[ "$agents" == "all" ]] && agents="claude-code,codex,opencode,pi,copilot-cli,crush,gemini-cli,goose,continue,qwen-code,mistral-vibe,deepseek-tui,grok-cli"
     if [[ -z "$agents" ]]; then
         log_skip "no AI agents installed, skipping API key prompt"
         return 0

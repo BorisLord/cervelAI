@@ -42,17 +42,5 @@ install_blockchain_cairo() {
 }
 
 install_blockchain_all() {
-    local csv="${CERVELAI_BLOCKCHAIN:-}"
-    [[ "$csv" == "all" ]] && csv="evm,solana,move,cosmos,near,cairo"
-    IFS=',' read -r -a list <<<"$csv"
-    for b in "${list[@]}"; do
-        b="${b// /}"
-        case "$b" in
-            evm | solana | move | cosmos | near | cairo)
-                "install_blockchain_$b"
-                ;;
-            none | "") log_skip "no blockchain bundle requested" ;;
-            *) log_warn "unknown bundle in CERVELAI_BLOCKCHAIN: $b (valid: evm,solana,move,cosmos,near,cairo,none)" ;;
-        esac
-    done
+    _dispatch_csv blockchain CERVELAI_BLOCKCHAIN "evm,solana,move,cosmos,near,cairo"
 }

@@ -62,7 +62,7 @@ cervel() {
             ;;
         ls)
             local a
-            for a in claude codex opencode pi crush gemini goose cn qwen vibe deepseek grok; do
+            for a in claude codex opencode pi copilot crush gemini goose cn qwen vibe deepseek grok; do
                 command -v "$a" >/dev/null 2>&1 && printf '  %s\n' "$a"
             done
             ;;

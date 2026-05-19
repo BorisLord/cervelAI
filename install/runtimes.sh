@@ -64,6 +64,8 @@ install_runtimes_python() {
 install_runtimes_uv() { mise_aqua "astral-sh/uv"; }
 install_runtimes_go() { mise_use "go" "latest"; }
 install_runtimes_rust() { mise_use "rust" "latest"; }
+# apt (not mise): C/C++ toolchain lives in /usr namespace with build-essential.
+install_runtimes_c_cpp() { apt_install cmake gdb pkg-config clangd; }
 install_runtimes_bun() { mise_use "bun" "latest"; }
 install_runtimes_deno() { mise_use "deno" "latest"; }
 install_runtimes_zig() { mise_use "zig" "latest"; }
@@ -113,14 +115,14 @@ install_runtimes_mandatory() {
 
 install_runtimes_all() {
     local csv="${CERVELAI_RUNTIMES:-}"
-    [[ "$csv" == "all" ]] && csv="go,rust,bun,deno,zig,java,kotlin,dotnet,dart,scala,lua,ruby,julia,haskell"
+    [[ "$csv" == "all" ]] && csv="c-cpp,go,rust,bun,deno,zig,java,kotlin,dotnet,dart,scala,lua,ruby,julia,haskell"
     IFS=',' read -r -a list <<<"$csv"
     for r in "${list[@]}"; do
         r="${r// /}"
         case "$r" in
             node | python | pnpm | uv | none | "") ;;
-            go | rust | bun | deno | zig | java | kotlin | dotnet | dart | scala | lua | ruby | julia | haskell)
-                "install_runtimes_$r"
+            c-cpp | go | rust | bun | deno | zig | java | kotlin | dotnet | dart | scala | lua | ruby | julia | haskell)
+                "install_runtimes_${r//-/_}"
                 ;;
             *) log_warn "unknown runtime in CERVELAI_RUNTIMES: $r (see install/runtimes.sh for the valid list)" ;;
         esac

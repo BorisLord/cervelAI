@@ -21,17 +21,6 @@ install_cloud_stack_azure() {
 }
 
 install_cloud_stack_all() {
-    local csv="${CERVELAI_CLOUD_STACK:-}"
-    [[ "$csv" == "all" ]] && csv="aws,flyctl,cloudflared,supabase,doctl,hcloud,scaleway,gcloud,azure"
-    IFS=',' read -r -a list <<<"$csv"
-    for c in "${list[@]}"; do
-        c="${c// /}"
-        case "$c" in
-            aws | flyctl | cloudflared | supabase | doctl | hcloud | scaleway | gcloud | azure)
-                "install_cloud_stack_$c"
-                ;;
-            none | "") log_skip "no cloud CLI requested" ;;
-            *) log_warn "unknown cloud CLI in CERVELAI_CLOUD_STACK: $c (valid: aws,flyctl,cloudflared,supabase,doctl,hcloud,scaleway,gcloud,azure,none)" ;;
-        esac
-    done
+    _dispatch_csv cloud-stack CERVELAI_CLOUD_STACK \
+        "aws,flyctl,cloudflared,supabase,doctl,hcloud,scaleway,gcloud,azure"
 }

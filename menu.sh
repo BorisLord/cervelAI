@@ -95,15 +95,16 @@ menu_shell_select() {
 
 menu_multiplexer_select() {
     _menu_single "$1" "Terminal multiplexer:" \
-        tmux+aoe "tmux + aoe (Agent of Empires) + login menu — AI workflow" ON \
-        zellij "zellij (modern Rust multiplexer, no entry menu)" OFF \
+        tmux+aoe "tmux + aoe (Agent of Empires) — AI workflow, auto-attach on login" ON \
+        zellij "zellij (modern Rust multiplexer)" OFF \
         none "none (direct shell login, no persistence)" OFF
 }
 
 # --- Sub-menus (multi-select) ---
 
 menu_runtimes_select() {
-    _menu_multi "$1" "Extra runtimes (node/python/pnpm/uv always installed):" \
+    _menu_multi "$1" "Extra runtimes (node/python/pnpm/uv + gcc/g++/make always installed):" \
+        c-cpp "C/C++ dev tooling: cmake, gdb, pkg-config, clangd LSP" OFF \
         go "Backend, DevOps, CLI (kubectl, traefik, Charm)" OFF \
         rust "Modern dev tools, systems perf" OFF \
         bun "Fast JS/TS runtime (opencode uses it)" OFF \
@@ -122,18 +123,19 @@ menu_runtimes_select() {
 
 menu_agents_select() {
     _menu_multi "$1" "AI agent CLIs:" \
-        claude-code "Claude Code (Anthropic) — most used" ON \
-        codex "Codex CLI (OpenAI)" ON \
-        opencode "opencode (multi-provider TUI)" ON \
-        pi "Pi.dev (Earendil)" ON \
-        crush "Crush (Charm) — multi-model TUI" OFF \
-        gemini-cli "Gemini CLI (Google)" OFF \
-        goose "Goose — extensible agent (AAIF/Linux Foundation)" OFF \
-        continue "Continue — AI checks for PRs (CI mode)" OFF \
-        qwen-code "Qwen-Code (Alibaba, fork Gemini CLI)" OFF \
-        mistral-vibe "Mistral Vibe (Devstral 2, EU)" OFF \
-        deepseek-tui "DeepSeek TUI (Rust, 1M ctx)" OFF \
-        grok-cli "Grok CLI (xAI)" OFF
+        claude-code "Claude Code" ON \
+        codex "Codex" ON \
+        opencode "opencode" ON \
+        pi "Pi" ON \
+        copilot-cli "Copilot CLI" OFF \
+        crush "Crush" OFF \
+        gemini-cli "Gemini CLI" OFF \
+        goose "Goose" OFF \
+        continue "Continue" OFF \
+        qwen-code "Qwen-Code" OFF \
+        mistral-vibe "Mistral Vibe" OFF \
+        deepseek-tui "DeepSeek TUI" OFF \
+        grok-cli "Grok CLI" OFF
 }
 
 menu_editor_select() {
@@ -166,12 +168,14 @@ menu_ai_tools_select() {
         code2prompt "Pack a repo as LLM-ready prompt context" ON \
         fabric "Reusable AI prompt library (Patterns) + CLI" ON \
         llm "Universal multi-model CLI (simonw, SQLite logs)" ON \
+        agents "Sync AGENTS.md + skills + MCP across CLIs (canonical)" ON \
         ttok "Count tokens in stdin/file (pre-flight cost estimator)" OFF \
         aichat "Multi-provider chat REPL + RAG + tools (Rust)" OFF \
         markitdown "Convert PDF/DOCX/PPT/HTML → Markdown (MS)" OFF \
         mcp-inspector "MCP server tester/debugger" OFF \
         shell-gpt "NL → shell/code/chat REPL (sgpt)" OFF \
-        gptscript "Framework: LLM ↔ tools/APIs/files (Acorn)" OFF
+        gptscript "Framework: LLM ↔ tools/APIs/files (Acorn)" OFF \
+        promptfoo "Eval/test LLM prompts (regressions, A/B, metrics)" OFF
 }
 
 menu_cloud_stack_select() {
@@ -278,10 +282,10 @@ menu_summary_confirm() {
         printf '  Multiplexer:   %s\n' "${CERVELAI_MULTIPLEXER:-tmux+aoe}"
         printf '  Categories:    %s\n' "${selected[*]:-(none beyond mandatory)}"
         [[ -n "${CERVELAI_AGENTS:-}" ]] && printf '  Agents:        %s\n' "$CERVELAI_AGENTS"
-        [[ -n "${CERVELAI_TOKEN_SAVER:-}" ]] && printf '  Token-saver:   %s\n' "$CERVELAI_TOKEN_SAVER"
+        [[ -n "${CERVELAI_TOKEN_SAVERS:-}" ]] && printf '  Token-saver:   %s\n' "$CERVELAI_TOKEN_SAVERS"
         [[ -n "${CERVELAI_AGENT_MEMORY:-}" ]] && printf '  Agent memory:  %s\n' "$CERVELAI_AGENT_MEMORY"
         [[ -n "${CERVELAI_AI_TOOLS:-}" ]] && printf '  AI tools:      %s\n' "$CERVELAI_AI_TOOLS"
-        [[ -n "${CERVELAI_EDITORS:-}" ]] && printf '  Editors:       %s\n' "$CERVELAI_EDITORS"
+        [[ -n "${CERVELAI_EDITOR:-}" ]] && printf '  Editors:       %s\n' "$CERVELAI_EDITOR"
         [[ -n "${CERVELAI_RUNTIMES:-}" ]] && printf '  Runtimes+:     %s\n' "$CERVELAI_RUNTIMES"
         [[ -n "${CERVELAI_DATA_STACK:-}" ]] && printf '  Data:          %s\n' "$CERVELAI_DATA_STACK"
         [[ -n "${CERVELAI_CONTAINERS:-}" ]] && printf '  Containers:    %s\n' "$CERVELAI_CONTAINERS"

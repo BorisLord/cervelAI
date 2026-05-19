@@ -153,6 +153,27 @@ mise_use() {
 mise_npm() { mise_use "npm:$1" "${2:-latest}"; }
 mise_aqua() { mise_use "aqua:$1" "${2:-latest}"; }
 
+# Dispatch a CSV (or "all" → expand to $all) to install_<cat>_<choice> functions.
+# Single source of truth for valid list, expand-all, skip-none, warn-unknown.
+# Usage: _dispatch_csv <category> <env-var-name> <full-list-csv>
+_dispatch_csv() {
+    local cat="$1" envname="$2" all="$3"
+    local csv="${!envname:-}"
+    [[ "$csv" == "all" ]] && csv="$all"
+    IFS=',' read -r -a list <<<"$csv"
+    local x
+    for x in "${list[@]}"; do
+        x="${x// /}"
+        if [[ -z "$x" || "$x" == "none" ]]; then
+            log_skip "no $cat requested"
+        elif [[ ",${all}," == *",$x,"* ]]; then
+            "install_${cat//-/_}_${x//-/_}"
+        else
+            log_warn "unknown $cat in $envname: $x (valid: $all,none)"
+        fi
+    done
+}
+
 # /dev/tcp because curl isn't installed yet at this stage.
 check_connectivity() {
     local host="${1:-github.com}" port="${2:-443}"
@@ -250,7 +271,7 @@ main() {
         if [[ "${CERVELAI_SELECTED:-all}" == "all" ]]; then
             selected=("${CATEGORIES[@]}")
             : "${CERVELAI_AGENTS:=all}"
-            : "${CERVELAI_EDITORS:=all}"
+            : "${CERVELAI_EDITOR:=all}"
             : "${CERVELAI_GIT_FORGES:=all}"
             : "${CERVELAI_RUNTIMES:=all}"
             : "${CERVELAI_AGENT_MEMORY:=all}"
@@ -262,12 +283,12 @@ main() {
             : "${CERVELAI_K8S_STACK:=all}"
             : "${CERVELAI_CLI_EXTRAS:=all}"
             : "${CERVELAI_SECURITY_TOOLS:=all}"
-            : "${CERVELAI_TOKEN_SAVER:=snip}"
+            : "${CERVELAI_TOKEN_SAVERS:=snip}"
             : "${CERVELAI_MULTIPLEXER:=tmux+aoe}"
-            export CERVELAI_AGENTS CERVELAI_EDITORS CERVELAI_GIT_FORGES CERVELAI_RUNTIMES \
+            export CERVELAI_AGENTS CERVELAI_EDITOR CERVELAI_GIT_FORGES CERVELAI_RUNTIMES \
                 CERVELAI_AGENT_MEMORY CERVELAI_AI_TOOLS CERVELAI_CLOUD_STACK CERVELAI_BLOCKCHAIN \
                 CERVELAI_DATA_STACK CERVELAI_CONTAINERS CERVELAI_K8S_STACK \
-                CERVELAI_CLI_EXTRAS CERVELAI_SECURITY_TOOLS CERVELAI_TOKEN_SAVER \
+                CERVELAI_CLI_EXTRAS CERVELAI_SECURITY_TOOLS CERVELAI_TOKEN_SAVERS \
                 CERVELAI_MULTIPLEXER
         else
             IFS=',' read -r -a selected <<<"$CERVELAI_SELECTED"
@@ -303,18 +324,18 @@ main() {
                         editor)
                             local ed_sel=()
                             if menu_editor_select ed_sel; then
-                                CERVELAI_EDITORS="$(
+                                CERVELAI_EDITOR="$(
                                     IFS=,
                                     echo "${ed_sel[*]}"
                                 )"
-                                export CERVELAI_EDITORS
+                                export CERVELAI_EDITOR
                             fi
                             ;;
                         token-savers)
                             local ts_sel=""
                             menu_token_savers_select ts_sel && {
-                                CERVELAI_TOKEN_SAVER="$ts_sel"
-                                export CERVELAI_TOKEN_SAVER
+                                CERVELAI_TOKEN_SAVERS="$ts_sel"
+                                export CERVELAI_TOKEN_SAVERS
                             }
                             ;;
                         agent-memory)
@@ -432,7 +453,7 @@ main() {
                 menu_summary_confirm && break
                 log_info "redoing selection…"
                 unset CERVELAI_RUNTIMES CERVELAI_GIT_FORGES CERVELAI_AGENTS \
-                    CERVELAI_EDITORS CERVELAI_TOKEN_SAVER CERVELAI_AGENT_MEMORY \
+                    CERVELAI_EDITOR CERVELAI_TOKEN_SAVERS CERVELAI_AGENT_MEMORY \
                     CERVELAI_AI_TOOLS CERVELAI_CLOUD_STACK CERVELAI_BLOCKCHAIN \
                     CERVELAI_DATA_STACK CERVELAI_CONTAINERS CERVELAI_K8S_STACK \
                     CERVELAI_CLI_EXTRAS CERVELAI_SECURITY_TOOLS
@@ -491,6 +512,7 @@ main() {
     install_shell_aoe_post_dispatch
 
     install_configs
+    source_install agents && install_agents_md_links
     ensure_env_file
     prompt_api_keys
     finalize

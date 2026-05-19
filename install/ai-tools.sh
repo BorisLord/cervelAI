@@ -10,19 +10,11 @@ install_ai_tools_shell_gpt() { mise_use "pipx:shell-gpt" latest sgpt; }
 install_ai_tools_gptscript() { mise_aqua "gptscript-ai/gptscript"; }
 install_ai_tools_aichat() { mise_aqua "sigoden/aichat"; }
 install_ai_tools_ttok() { mise_use "pipx:ttok" latest ttok; }
+# Cross-agent config sync (AGENTS.md canonical, skills, MCP). Complements cervelAI's symlinks.
+install_ai_tools_agents() { mise_use "npm:@agents-dev/cli" latest agents; }
+install_ai_tools_promptfoo() { mise_use "npm:promptfoo" latest promptfoo; }
 
 install_ai_tools_all() {
-    local csv="${CERVELAI_AI_TOOLS:-}"
-    [[ "$csv" == "all" ]] && csv="markitdown,fabric,mcp-inspector,code2prompt,llm,shell-gpt,gptscript,aichat,ttok"
-    IFS=',' read -r -a list <<<"$csv"
-    for t in "${list[@]}"; do
-        t="${t// /}"
-        case "$t" in
-            markitdown | fabric | mcp-inspector | code2prompt | llm | shell-gpt | gptscript | aichat | ttok)
-                "install_ai_tools_${t//-/_}"
-                ;;
-            none | "") log_skip "no ai-tools requested" ;;
-            *) log_warn "unknown ai-tools in CERVELAI_AI_TOOLS: $t (valid: markitdown,fabric,mcp-inspector,code2prompt,llm,shell-gpt,gptscript,aichat,ttok,none)" ;;
-        esac
-    done
+    _dispatch_csv ai-tools CERVELAI_AI_TOOLS \
+        "markitdown,fabric,mcp-inspector,code2prompt,llm,shell-gpt,gptscript,aichat,ttok,agents,promptfoo"
 }

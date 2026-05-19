@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # install/token-savers.sh: CLI-noise filters for AI agents.
-# CERVELAI_TOKEN_SAVER=snip|rtk|none. Mutually exclusive: their PreToolUse hooks clash.
+# CERVELAI_TOKEN_SAVERS=snip|rtk|none. Mutually exclusive: their PreToolUse hooks clash.
 
 install_token_savers_snip() { mise_use "github:edouard-claude/snip"; }
 install_token_savers_rtk() { mise_aqua "rtk-ai/rtk"; }
@@ -32,7 +32,7 @@ _rtk_init_one() {
 
 _init_token_saver() {
     local tool="$1" agents="${CERVELAI_AGENTS:-}"
-    [[ "$agents" == "all" ]] && agents="claude-code,codex,opencode,pi,crush,gemini-cli,goose,continue,qwen-code,mistral-vibe,deepseek-tui,grok-cli"
+    [[ "$agents" == "all" ]] && agents="claude-code,codex,opencode,pi,copilot-cli,crush,gemini-cli,goose,continue,qwen-code,mistral-vibe,deepseek-tui,grok-cli"
     [[ -z "$agents" ]] && {
         log_skip "$tool init: no AI agents installed"
         return 0
@@ -50,7 +50,7 @@ _init_token_saver() {
 }
 
 install_token_savers_all() {
-    case "${CERVELAI_TOKEN_SAVER:-snip}" in
+    case "${CERVELAI_TOKEN_SAVERS:-snip}" in
         snip)
             install_token_savers_snip
             _init_token_saver snip
@@ -59,9 +59,9 @@ install_token_savers_all() {
             install_token_savers_rtk
             _init_token_saver rtk
             ;;
-        none) log_skip "token-savers: none (CERVELAI_TOKEN_SAVER=none)" ;;
+        none) log_skip "token-savers: none (CERVELAI_TOKEN_SAVERS=none)" ;;
         *)
-            log_warn "unknown CERVELAI_TOKEN_SAVER=${CERVELAI_TOKEN_SAVER} (valid: snip,rtk,none), defaulting to snip"
+            log_warn "unknown CERVELAI_TOKEN_SAVERS=${CERVELAI_TOKEN_SAVERS} (valid: snip,rtk,none), defaulting to snip"
             install_token_savers_snip
             _init_token_saver snip
             ;;

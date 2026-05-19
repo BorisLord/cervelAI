@@ -28,10 +28,10 @@ print_final_summary() {
   Shell:          ${CERVELAI_SHELL:-bash} + ${CERVELAI_MULTIPLEXER:-tmux+aoe}
   Categories:     ${selected[*]:-(none beyond base)}
   Agents:         ${CERVELAI_AGENTS:-(none)}
-  Editors:        ${CERVELAI_EDITORS:-(none)}
+  Editors:        ${CERVELAI_EDITOR:-(none)}
 EOF
     [[ -n "${CERVELAI_GIT_FORGES:-}" ]] && printf '  Git forges:     %s\n' "$CERVELAI_GIT_FORGES"
-    [[ -n "${CERVELAI_TOKEN_SAVER:-}" ]] && printf '  Token-saver:    %s\n' "$CERVELAI_TOKEN_SAVER"
+    [[ -n "${CERVELAI_TOKEN_SAVERS:-}" ]] && printf '  Token-saver:    %s\n' "$CERVELAI_TOKEN_SAVERS"
     [[ -n "${CERVELAI_AGENT_MEMORY:-}" ]] && printf '  Agent memory:   %s\n' "$CERVELAI_AGENT_MEMORY"
     [[ -n "${CERVELAI_AI_TOOLS:-}" ]] && printf '  AI tools:       %s\n' "$CERVELAI_AI_TOOLS"
     [[ -n "${CERVELAI_RUNTIMES:-}" ]] && printf '  Runtimes+:      %s\n' "$CERVELAI_RUNTIMES"

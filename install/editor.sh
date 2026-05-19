@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install/editor.sh: terminal editors. CERVELAI_EDITORS=<csv|all>.
+# install/editor.sh: terminal editors. CERVELAI_EDITOR=<csv|all>.
 
 install_editor_vim() { apt_install vim; }
 install_editor_neovim() { mise_aqua "neovim/neovim"; }
@@ -7,15 +7,5 @@ install_editor_emacs() { apt_install emacs-nox; }
 install_editor_micro() { mise_aqua "micro-editor/micro"; }
 
 install_editor_all() {
-    local csv="${CERVELAI_EDITORS:-none}"
-    [[ "$csv" == "all" ]] && csv="vim,neovim,emacs,micro"
-    IFS=',' read -r -a list <<<"$csv"
-    for e in "${list[@]}"; do
-        e="${e// /}"
-        case "$e" in
-            vim | neovim | emacs | micro) "install_editor_$e" ;;
-            none | "") log_skip "no editor requested" ;;
-            *) log_warn "unknown editor in CERVELAI_EDITORS: $e (valid: vim,neovim,emacs,micro,none)" ;;
-        esac
-    done
+    _dispatch_csv editor CERVELAI_EDITOR "vim,neovim,emacs,micro"
 }

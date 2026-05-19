@@ -16,17 +16,6 @@ install_security_tools_varlock() { mise_use "npm:varlock" latest varlock; }
 install_security_tools_infisical() { mise_use "github:Infisical/cli[bin=infisical]" latest infisical; }
 
 install_security_tools_all() {
-    local csv="${CERVELAI_SECURITY_TOOLS:-}"
-    [[ "$csv" == "all" ]] && csv="sops,age,gitleaks,trivy,syft,cosign,kingfisher,varlock,dotenvx,infisical,teller"
-    IFS=',' read -r -a list <<<"$csv"
-    for s in "${list[@]}"; do
-        s="${s// /}"
-        case "$s" in
-            sops | age | syft | cosign | gitleaks | trivy | kingfisher | teller | dotenvx | varlock | infisical)
-                "install_security_tools_$s"
-                ;;
-            none | "") log_skip "no security-tools requested" ;;
-            *) log_warn "unknown security-tools in CERVELAI_SECURITY_TOOLS: $s (valid: sops,age,gitleaks,trivy,syft,cosign,kingfisher,varlock,dotenvx,infisical,teller,none)" ;;
-        esac
-    done
+    _dispatch_csv security-tools CERVELAI_SECURITY_TOOLS \
+        "sops,age,gitleaks,trivy,syft,cosign,kingfisher,varlock,dotenvx,infisical,teller"
 }

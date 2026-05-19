@@ -14,17 +14,6 @@ install_cli_extras_typos() { mise_aqua "crate-ci/typos"; }
 install_cli_extras_yazi() { mise_aqua "sxyazi/yazi"; }
 
 install_cli_extras_all() {
-    local csv="${CERVELAI_CLI_EXTRAS:-}"
-    [[ "$csv" == "all" ]] && csv="sd,eza,glow,zoxide,tldr,hyperfine,shfmt,shellcheck,xh,typos,yazi"
-    IFS=',' read -r -a list <<<"$csv"
-    for c in "${list[@]}"; do
-        c="${c// /}"
-        case "$c" in
-            sd | eza | glow | zoxide | tldr | hyperfine | shfmt | shellcheck | xh | typos | yazi)
-                "install_cli_extras_$c"
-                ;;
-            none | "") log_skip "no cli-extras tool requested" ;;
-            *) log_warn "unknown cli-extras in CERVELAI_CLI_EXTRAS: $c (valid: sd,eza,glow,zoxide,tldr,hyperfine,shfmt,shellcheck,xh,typos,yazi,none)" ;;
-        esac
-    done
+    _dispatch_csv cli-extras CERVELAI_CLI_EXTRAS \
+        "sd,eza,glow,zoxide,tldr,hyperfine,shfmt,shellcheck,xh,typos,yazi"
 }

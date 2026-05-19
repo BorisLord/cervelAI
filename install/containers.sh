@@ -50,17 +50,5 @@ install_containers_hadolint() { mise_aqua "hadolint/hadolint"; }
 install_containers_dive() { mise_aqua "wagoodman/dive"; }
 
 install_containers_all() {
-    local csv="${CERVELAI_CONTAINERS:-}"
-    [[ "$csv" == "all" ]] && csv="docker,podman,lazydocker,hadolint,dive"
-    IFS=',' read -r -a list <<<"$csv"
-    for c in "${list[@]}"; do
-        c="${c// /}"
-        case "$c" in
-            docker | podman | lazydocker | hadolint | dive)
-                "install_containers_$c"
-                ;;
-            none | "") log_skip "no containers tool requested" ;;
-            *) log_warn "unknown containers in CERVELAI_CONTAINERS: $c (valid: docker,podman,lazydocker,hadolint,dive,none)" ;;
-        esac
-    done
+    _dispatch_csv containers CERVELAI_CONTAINERS "docker,podman,lazydocker,hadolint,dive"
 }
