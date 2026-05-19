@@ -120,9 +120,10 @@ apt_install() {
 _user() { printf '%s' "${CERVELAI_USER:-agent}"; }
 # preserve-env=GITHUB_TOKEN lifts mise's GitHub backend rate limit.
 # NPM_CONFIG_MINIMUM_RELEASE_AGE=0 bypasses pnpm 11.x's policy bug during fresh installs.
+# npm_config_update_notifier=false silences pnpm "newer version available" during install only.
 _user_bash() {
     sudo -u "$(_user)" --preserve-env=GITHUB_TOKEN -i bash -c \
-        "export PNPM_HOME=\"\$HOME/.local/share/pnpm\"; export PATH=\"\$HOME/.local/share/mise/shims:\$HOME/.local/bin:\$PNPM_HOME:\$PNPM_HOME/bin:\$PATH\"; export NPM_CONFIG_MINIMUM_RELEASE_AGE=0; $*"
+        "export PNPM_HOME=\"\$HOME/.local/share/pnpm\"; export PATH=\"\$HOME/.local/share/mise/shims:\$HOME/.local/bin:\$PNPM_HOME:\$PNPM_HOME/bin:\$PATH\"; export NPM_CONFIG_MINIMUM_RELEASE_AGE=0; export npm_config_update_notifier=false; $*"
 }
 
 mise_present() { [[ -x /usr/local/bin/mise ]]; }

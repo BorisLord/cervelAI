@@ -26,6 +26,21 @@ install_runtimes_node() {
     soft _user_bash "rm -rf ~/.cache/node/corepack/v1/pnpm && corepack prepare pnpm@11.1.2 --activate"
 }
 
+# Must run before install_runtimes_pnpm: pnpm v9+ blocks dependency postinstall by default,
+# so the whitelist has to be in place before any `mise use -g npm:*` invocation.
+install_runtimes_npmrc() {
+    local u
+    u="$(_user)"
+    local src="$CONFIGS_DIR/pnpm/.npmrc"
+    local dst="/home/$u/.npmrc"
+    if [[ ! -r "$src" ]]; then
+        log_warn "configs/pnpm/.npmrc missing, postinstall scripts will stay blocked"
+        return 0
+    fi
+    run install -D -m 644 -o "$u" -g "$u" "$src" "$dst"
+    log_ok ".npmrc deployed (pnpm postinstall scripts allowed)"
+}
+
 # Bootstrap chicken-and-egg: config.toml routes npm:* through pnpm, but pnpm itself is npm:*.
 install_runtimes_pnpm() {
     if _user_bash "command -v pnpm" &>/dev/null; then
@@ -88,6 +103,7 @@ install_runtimes_haskell() {
 install_runtimes_mandatory() {
     install_runtimes_mise
     install_runtimes_node
+    install_runtimes_npmrc
     install_runtimes_pnpm
     install_runtimes_node_tools
     install_runtimes_python
