@@ -167,9 +167,8 @@ menu_ai_tools_select() {
     _menu_multi "$1" "AI/LLM helpers:" \
         code2prompt "Pack a repo as LLM-ready prompt context" ON \
         fabric "Reusable AI prompt library (Patterns) + CLI" ON \
-        llm "Universal multi-model CLI (simonw, SQLite logs)" ON \
+        llm "Universal multi-model CLI (simonw, SQLite logs, built-in `llm tokens`)" ON \
         agents "Sync AGENTS.md + skills + MCP across CLIs (canonical)" ON \
-        ttok "Count tokens in stdin/file (pre-flight cost estimator)" OFF \
         aichat "Multi-provider chat REPL + RAG + tools (Rust)" OFF \
         markitdown "Convert PDF/DOCX/PPT/HTML → Markdown (MS)" OFF \
         mcp-inspector "MCP server tester/debugger" OFF \
@@ -198,7 +197,7 @@ menu_blockchain_select() {
         move "Sui + Aptos (Move language, sui is ~1 GB)" OFF \
         cosmos "Cosmos SDK: gaiad + ignite (Go)" OFF \
         near "NEAR Protocol: near-cli-rs (interactive Rust CLI)" OFF \
-        cairo "Starknet: scarb (build/deps) + starkli CLI (Cairo lang)" OFF
+        cairo "Starknet: scarb (build/deps) + sncast CLI (Starknet Foundry, Cairo lang)" OFF
 }
 
 menu_data_stack_select() {

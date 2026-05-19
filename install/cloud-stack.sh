@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 # install/cloud-stack.sh: cloud provider CLIs. CERVELAI_CLOUD_STACK=<csv|all>. All via mise.
 
-install_cloud_stack_aws() { mise_aqua "aws/aws-cli"; }
-install_cloud_stack_flyctl() { mise_aqua "superfly/flyctl"; }
-install_cloud_stack_cloudflared() { mise_aqua "cloudflare/cloudflared"; }
-# github: backend used because aqua-registry's supabase asset pattern is stale (missing version).
-install_cloud_stack_supabase() { mise_use "github:supabase/cli[bin=supabase]" latest supabase; }
-install_cloud_stack_doctl() { mise_aqua "digitalocean/doctl"; }
-install_cloud_stack_hcloud() { mise_aqua "hetznercloud/cli"; }
-install_cloud_stack_scaleway() { mise_aqua "scaleway/scaleway-cli"; }
-install_cloud_stack_gcloud() { mise_use "vfox:mise-plugins/vfox-gcloud" latest gcloud; }
+install_cloud_stack_aws() { mise_use "aws-cli" latest aws; }
+install_cloud_stack_flyctl() { mise_use "flyctl"; }
+install_cloud_stack_cloudflared() { mise_use "cloudflared"; }
+install_cloud_stack_supabase() { mise_use "supabase"; }
+install_cloud_stack_doctl() { mise_use "doctl"; }
+install_cloud_stack_hcloud() { mise_use "hcloud"; }
+install_cloud_stack_scaleway() { mise_use "scaleway"; }
+install_cloud_stack_gcloud() { mise_use "gcloud"; }
 # pipx blocked: azure-cli depends on prerelease azure-batch==15.0.0b1, uv rejects prereleases.
 install_cloud_stack_azure() {
     if has_cmd az; then

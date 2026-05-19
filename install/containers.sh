@@ -45,9 +45,9 @@ install_containers_docker() {
 }
 
 install_containers_podman() { apt_install podman; }
-install_containers_lazydocker() { mise_aqua "jesseduffield/lazydocker"; }
-install_containers_hadolint() { mise_aqua "hadolint/hadolint"; }
-install_containers_dive() { mise_aqua "wagoodman/dive"; }
+install_containers_lazydocker() { mise_use "lazydocker"; }
+install_containers_hadolint() { mise_use "hadolint"; }
+install_containers_dive() { mise_use "dive"; }
 
 install_containers_all() {
     _dispatch_csv containers CERVELAI_CONTAINERS "docker,podman,lazydocker,hadolint,dive"

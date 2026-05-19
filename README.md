@@ -14,24 +14,12 @@
 ---
 
 ```bash
-# Wake up the workstation. As root on a clean Debian/Ubuntu host (Proxmox LXC, cloud VM, bare-metal):
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/bootstrap.sh)"
 ```
 
-```
-=== cervelAI bootstrap ===
+Run it, grab a coffee. cervelAI installs a sensible default stack for your AI — terminal agents like **Claude Code, Codex, opencode, Gemini CLI and more**, along with the runtimes, memory backends and token-savers they need. A few interactive prompts let you tweak; defaults just work. Add anything else later with `mise use -g <tool>`.
 
-  [1] Create a new unprivileged LXC on this Proxmox host
-  [2] Install directly on THIS machine (Debian/Ubuntu)
-
-Choice:
-```
-
-Non-interactive (CI, scripting): pass `--lxc` (Proxmox host, requires `pct`) or `--no-lxc` to the bootstrap one-liner.
-
-Run the one-liner, then go pour a coffee. cervelAI installs a sensible default stack for your AI — terminal agents like **Claude Code, Codex, opencode, Gemini CLI and more**, along with the runtimes, memory backends and token-savers they need. A few interactive prompts let you tweak the picks; if you'd rather not bother, the defaults just work. And anytime later, `mise use -g <tool>` adds anything else you fancy.
-
-The cerebellum coordinates the brain. **cervelAI** does the same for your agents — a personal habitat where every need is **anticipated, not improvised**.
+Non-interactive (CI): pass `--lxc` (Proxmox host, requires `pct`) or `--no-lxc` to the one-liner.
 
 ## Make it comfy — *the nest*
 
@@ -122,7 +110,7 @@ Everything else is native: `aoe` for the agents TUI (tmux only), `tmux` (`Ctrl-B
 - ccstatusline — live Claude Code status line (Powerline rendering, real-time metrics)
 
 **`ai-tools`**
-- code2prompt, fabric, llm, **agents** (sync AGENTS.md/skills/MCP across CLIs), ttok, aichat, markitdown, mcp-inspector, shell-gpt, gptscript, promptfoo
+- code2prompt, fabric, llm, **agents** (sync AGENTS.md/skills/MCP across CLIs), aichat, markitdown, mcp-inspector, shell-gpt, gptscript, promptfoo
 
 </details>
 
@@ -211,7 +199,7 @@ Everything else is native: `aoe` for the agents TUI (tmux only), `tmux` (`Ctrl-B
 - move (Sui + Aptos, ~1 GB)
 - cosmos (Cosmos SDK: gaiad + ignite)
 - near (near-cli-rs)
-- cairo (Starknet: scarb + starkli)
+- cairo (Starknet: scarb + sncast via Starknet Foundry)
 
 </details>
 

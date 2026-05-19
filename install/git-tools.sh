@@ -2,8 +2,8 @@
 # install/git-tools.sh: core (gh+delta) mandatory, rest opt-in via CERVELAI_GIT_FORGES.
 
 install_git_tools_core() {
-    mise_aqua "cli/cli"
-    mise_aqua "dandavison/delta"
+    mise_use "github-cli" latest gh
+    mise_use "delta"
 }
 
 # Direct .deb download — aqua/mise can't install Gitlab-hosted projects (aqua-registry TODO).
@@ -31,7 +31,7 @@ install_git_tools_glab() {
     run env DEBIAN_FRONTEND=noninteractive apt-get install -y "$deb"
     rm -rf "$tmp"
 }
-install_git_tools_lazygit() { mise_aqua "jesseduffield/lazygit"; }
+install_git_tools_lazygit() { mise_use "lazygit"; }
 
 install_git_tools_all() {
     local csv="${CERVELAI_GIT_FORGES:-}"
