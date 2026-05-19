@@ -3,7 +3,7 @@
 # CERVELAI_TOKEN_SAVERS=snip|rtk|none. Mutually exclusive: their PreToolUse hooks clash.
 
 install_token_savers_snip() { mise_use "github:edouard-claude/snip"; }
-install_token_savers_rtk() { mise_aqua "rtk-ai/rtk"; }
+install_token_savers_rtk() { mise_use "rtk"; }
 
 _snip_init_one() {
     local target

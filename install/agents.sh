@@ -27,18 +27,18 @@ install_agents_claude_code() {
     run _user_bash 'curl -fsSL https://claude.ai/install.sh | bash'
 }
 
-install_agents_codex() { mise_npm "@openai/codex"; }
+install_agents_codex() { mise_use "codex" latest codex; }
 install_agents_opencode() { mise_use "npm:opencode-ai" latest opencode; }
-install_agents_pi() { mise_use "npm:@earendil-works/pi-coding-agent" latest pi; }
-install_agents_copilot_cli() { mise_use "npm:@github/copilot" latest copilot; }
-install_agents_crush() { mise_aqua "charmbracelet/crush"; }
-install_agents_gemini_cli() { mise_use "npm:@google/gemini-cli" latest gemini; }
+install_agents_pi() { mise_use "pi" latest pi; }
+install_agents_copilot_cli() { mise_use "copilot" latest copilot; }
+install_agents_crush() { mise_use "crush"; }
+install_agents_gemini_cli() { mise_use "gemini-cli" latest gemini; }
 install_agents_goose() { mise_use "github:aaif-goose/goose"; }
 install_agents_continue() { mise_use "npm:@continuedev/cli" latest cn; }
-install_agents_qwen_code() { mise_use "npm:@qwen-code/qwen-code" latest qwen; }
+install_agents_qwen_code() { mise_use "qwen" latest qwen; }
 install_agents_mistral_vibe() { mise_use "pipx:mistral-vibe" latest vibe; }
 install_agents_deepseek_tui() { mise_use "npm:deepseek-tui" latest deepseek; }
-install_agents_grok_cli() { mise_use "npm:@vibe-kit/grok-cli" latest grok; }
+install_agents_grok_cli() { mise_use "npm:grok-dev" latest grok; }
 
 install_agents_all() {
     local all
@@ -57,6 +57,9 @@ declare -gA _AGENT_MD_PATH=(
     [pi]=".pi/agent/AGENTS.md"
     [copilot]=".copilot/copilot-instructions.md"
     [gemini]=".gemini/GEMINI.md"
+    [vibe]=".vibe/AGENTS.md"
+    [goose]=".config/goose/.goosehints"
+    [cn]=".continue/rules/agents.md"
 )
 
 install_agents_md_links() {

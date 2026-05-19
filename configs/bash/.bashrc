@@ -25,6 +25,9 @@ command -v mise >/dev/null 2>&1 && eval "$(mise activate bash)"
 if [ -d "$HOME/.bash_it" ]; then
     export BASH_IT="$HOME/.bash_it"
     export BASH_IT_THEME='bobby'
+    # Prevent `_bash-it-restart` (exec bash --rcfile) from replacing the current shell mid-script.
+    # bash-it checks `[[ -n "${VAR:-}" ]]` — any non-empty value triggers reload, so we unset it.
+    unset BASH_IT_AUTOMATIC_RELOAD_AFTER_CONFIG_CHANGE
     # shellcheck source=/dev/null
     source "$BASH_IT/bash_it.sh"
 fi

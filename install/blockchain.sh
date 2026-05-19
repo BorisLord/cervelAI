@@ -2,8 +2,8 @@
 # install/blockchain.sh: blockchain dev bundles. CERVELAI_BLOCKCHAIN=<csv|all>. All precompiled.
 
 install_blockchain_evm() {
-    mise_use "github:ethereum/solidity" latest solc
-    mise_aqua "foundry-rs/foundry"
+    mise_use "solidity" latest solc
+    mise_use "foundry" latest forge
     mise_use "npm:@nomicfoundation/solidity-language-server" latest solidity-language-server
     mise_npm "solhint"
     mise_use "pipx:slither-analyzer" latest slither
@@ -18,7 +18,7 @@ install_blockchain_solana() {
 
 install_blockchain_move() {
     # Pinned: sui repo tags 3 lines (mainnet-v*/testnet-v*/devnet-v*), mise picks the latest testnet otherwise.
-    mise_use "github:MystenLabs/sui" "mainnet-v1.71.1" sui
+    mise_use "sui" "mainnet-v1.71.1" sui
     # Pinned: aptos-core tags aptos-cli-v* AND aptos-node-v* (different binaries), mise picks node otherwise.
     mise_use "github:aptos-labs/aptos-core" "aptos-cli-v9.2.0" aptos
 }
@@ -37,8 +37,8 @@ install_blockchain_near() {
 }
 
 install_blockchain_cairo() {
-    mise_use "github:software-mansion/scarb" latest scarb
-    mise_use "github:xJonathanLEI/starkli" latest starkli
+    mise_use "scarb" latest scarb
+    mise_use "github:foundry-rs/starknet-foundry[bin=sncast]" latest sncast
 }
 
 install_blockchain_all() {
