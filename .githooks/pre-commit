@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Pre-commit: runs check.sh (bash -n + shellcheck + shfmt) before allowing commit.
+# Mirrors CI lint job to fail fast locally.
+# Enable once per clone: git config core.hooksPath .githooks
+set -e
+cd "$(git rev-parse --show-toplevel)"
+exec bash check.sh

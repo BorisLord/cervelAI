@@ -167,7 +167,7 @@ menu_ai_tools_select() {
     _menu_multi "$1" "AI/LLM helpers:" \
         code2prompt "Pack a repo as LLM-ready prompt context" ON \
         fabric "Reusable AI prompt library (Patterns) + CLI" ON \
-        llm "Universal multi-model CLI (simonw, SQLite logs, built-in `llm tokens`)" ON \
+        llm "Universal multi-model CLI (simonw, SQLite logs, built-in llm tokens)" ON \
         agents "Sync AGENTS.md + skills + MCP across CLIs (canonical)" ON \
         aichat "Multi-provider chat REPL + RAG + tools (Rust)" OFF \
         markitdown "Convert PDF/DOCX/PPT/HTML → Markdown (MS)" OFF \
