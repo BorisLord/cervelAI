@@ -52,15 +52,21 @@ alias t='tmux new -A -s main'
 alias zr='source ~/.zshrc'
 
 cervel() {
+    local libexec="$HOME/.local/libexec/cervelai"
     case "${1:-}" in
-        menu | -m) exec cervelai-menu ;;
-        help | -h) cervelai-menu --cheatsheet ;;
+        help | -h)   "$libexec/cheatsheet" ;;
+        status | -s) "$libexec/status" ;;
+        run)
+            shift
+            "$libexec/run" "$@"
+            ;;
         ls)
             local a
-            for a in claude codex opencode pi aider crush gemini goose cn qwen vibe deepseek grok; do
+            for a in claude codex opencode pi crush gemini goose cn qwen vibe deepseek grok; do
                 command -v "$a" >/dev/null 2>&1 && printf '  %s\n' "$a"
             done
             ;;
-        *) printf 'usage: cervel {menu|-m | help|-h | ls}\n' >&2 ;;
+        *) printf 'usage: cervel {help|-h | status|-s | ls | run <cmd>}\n' >&2 ;;
     esac
 }
+compdef '_arguments "1:subcmd:(help status ls run -h -s)"' cervel 2>/dev/null || true

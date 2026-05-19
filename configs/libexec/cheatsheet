@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Print logo + tmux/aoe/cervel keybind cheatsheet. Invoked by `cervel -h`.
+set -u
+
+_LIBEXEC="$(dirname "$(readlink -f "$0")")"
+
+if command -v tmux >/dev/null 2>&1; then
+    _MUX=tmux
+elif command -v zellij >/dev/null 2>&1; then
+    _MUX=zellij
+else
+    _MUX=none
+fi
+
+"$_LIBEXEC/logo"
+
+case "$_MUX" in
+    tmux)
+        printf '\n  tmux  (prefix = Ctrl-B, then:)\n'
+        printf '    d   detach (leave session running in background)\n'
+        printf '    c   new window     |  s   session picker\n'
+        printf '    %%   split left/right  |  "   split top/bottom\n'
+        printf '    [   scroll mode (q to exit)\n'
+        printf '    :new -s <name>     new named session\n'
+        ;;
+    zellij)
+        printf '\n  zellij  (prefix = Ctrl-P, then:)\n'
+        printf '    d   detach        |  n   new pane\n'
+        printf '    Ctrl-N  new tab   |  Ctrl-S  search mode\n'
+        ;;
+    *) printf '\n  shell:  (no multiplexer installed)\n' ;;
+esac
+
+if command -v aoe >/dev/null 2>&1; then
+    printf '\n  aoe  (Agent of Empires)\n'
+    printf '    aoe add --cmd "claude"   launch an AI agent in a tmux pane\n'
+    printf '    aoe list                 show running agents\n'
+    printf '    aoe url                  show web dashboard URL\n'
+fi
+
+printf '\n  cervel  (this CLI)\n'
+printf '    cervel help    (-h)      print this cheatsheet\n'
+printf '    cervel status  (-s)      lxc + agents + api keys + stores\n'
+printf '    cervel ls                list installed AI agents\n'
+printf '    cervel run <cmd>         run a command, ntfy push on exit (long jobs)\n'
+
+printf '\n  update\n'
+printf '    topgrade                 apt + mise + bash-it + Claude Code in one shot\n'
+printf '\n'

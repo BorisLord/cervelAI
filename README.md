@@ -68,16 +68,16 @@ The `agent` user gets `NOPASSWD:ALL` via `/etc/sudoers.d/90-agent` — fine for 
 ssh agent@<host-ip>     # IP printed at the end of install
 ```
 
-You land on the `cervelai-menu`:
+You land directly in a persistent tmux session named `shell` (auto-attached on every login). The `cervel` CLI exposes the cervelAI-specific helpers:
 
-| Choice | Does what |
+| Command | Does what |
 |---|---|
-| `resume (last session)` | re-attach to your last multiplexer session |
-| `agents (aoe)` | aoe TUI: every agent in its own tmux session, status at a glance |
-| `shell (<mux>)` | persistent session named `shell` for scratch work |
-| `status` | snapshot of multiplexer/aoe sessions + mem/load/disk |
-| `update (topgrade)` | runs `topgrade` (apt + mise + bash-it/oh-my-zsh + Claude Code) |
-| `plain shell` | bypass the menu for this session (set `CERVELAI_NO_MENU=1` to disable permanently) |
+| `cervel help` (`-h`) | logo + tmux/aoe/cervel cheatsheet |
+| `cervel status` (`-s`) | lxc identity, agents installed, API keys, disk usage |
+| `cervel ls` | list AI agents currently on PATH |
+| `cervel run <cmd>` | wrap a command, ntfy push when it exits (long jobs) |
+
+Everything else is native: `aoe` for the agents TUI, `tmux` for session management (`Ctrl-B s`, `Ctrl-B c`, `Ctrl-B d`), `topgrade` to update.
 
 ## What you get
 
@@ -222,7 +222,7 @@ Run the install, then `mise ls` on the host shows exactly what was installed —
 
 ### Backbone
 - Full `~/.bashrc`, `~/.zshrc`, `~/.tmux.conf` deployed (configs/)
-- `cervel-run <cmd>` wrapper: ntfy push when command exits (topic in `~/.config/cervelAI/env`)
+- `cervel run <cmd>` wrapper: ntfy push when command exits (topic in `~/.config/cervelAI/env`)
 
 ## How it works
 
@@ -251,7 +251,7 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/bootstrap.sh)" _ --lxc --update <CTID>
 ```
 
-Or **tool-only refresh** (no script re-fetch): inside the host, `cervelai-menu` → `update (topgrade)` runs `apt` + `mise` (all backends) + bash-it/oh-my-zsh.
+Or **tool-only refresh** (no script re-fetch): inside the host, run `topgrade` (apt + mise + bash-it/oh-my-zsh + Claude Code in one shot).
 
 ## Advanced
 
@@ -286,7 +286,7 @@ The menu fills every `CERVELAI_*` automatically. Set them by hand only for CI / 
 | `CERVELAI_CONTAINERS` / `_K8S_STACK` / `_DATA_STACK` | (menu) | CSV per sub-menu |
 | `CERVELAI_CLOUD_STACK` / `_BLOCKCHAIN` / `_CLI_EXTRAS` / `_SECURITY_TOOLS` / `_GIT_FORGES` | (menu) | CSV per sub-menu |
 | `CERVELAI_TOKEN_SAVER` | (menu) | `snip\|rtk\|none` |
-| `CERVELAI_NO_MENU` | unset | Skip `cervelai-menu` on login |
+| `CERVELAI_NO_MENU` | unset | Skip auto-attach to the `shell` tmux session on login |
 | `CERVELAI_TEMPLATE_PATTERN` | `debian-[0-9]+-standard` | LXC mode only: pveam regex |
 | `CERVELAI_REPO` / `CERVELAI_REF` | `BorisLord/cervelAI` / `main` | `bootstrap.sh` only (forks) |
 
@@ -314,7 +314,7 @@ Multi-provider agents (opencode, Crush, Goose, Continue) accept any of
 provider you want each agent to use.
 
 Written to `~agent/.config/cervelAI/env` (mode 600), sourced by bash, zsh and
-`cervel-run`. Skippable if you'd rather manage keys with 1password-cli, vault or
+`cervel run`. Skippable if you'd rather manage keys with 1password-cli, vault or
 `direnv` later.
 
 ## Remote access

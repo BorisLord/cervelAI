@@ -85,16 +85,20 @@ install_shell_aoe() {
 }
 
 # /root/.bashrc handoff covers `pct enter` (interactive non-login skips /etc/profile.d).
-install_shell_entry_menu() {
+install_shell_entry_handoff() {
     local src_profile="${CONFIGS_DIR}/profile.d/cervelai-entry.sh"
-    local src_menu="${CONFIGS_DIR}/bin/cervelai-menu"
-    if [[ ! -r "$src_profile" || ! -r "$src_menu" ]]; then
-        log_warn "configs/profile.d/cervelai-entry.sh or configs/bin/cervelai-menu missing, skip"
+    local src_libexec="${CONFIGS_DIR}/libexec"
+    if [[ ! -r "$src_profile" || ! -d "$src_libexec" ]]; then
+        log_warn "configs/profile.d/cervelai-entry.sh or configs/libexec/ missing, skip"
         return 0
     fi
-    log_info "deploying /etc/profile.d/cervelai-entry.sh + /etc/skel menu"
+    log_info "deploying /etc/profile.d/cervelai-entry.sh + /etc/skel libexec"
     run install -D -m 644 "$src_profile" /etc/profile.d/cervelai-entry.sh
-    run install -D -m 755 "$src_menu" /etc/skel/.local/bin/cervelai-menu
+    local b
+    for b in "$src_libexec"/*; do
+        [[ -f "$b" ]] || continue
+        run install -D -m 755 "$b" "/etc/skel/.local/libexec/cervelai/$(basename "$b")"
+    done
 
     local marker='# cervelai-entry handoff'
     local snippet='
@@ -144,7 +148,7 @@ install_shell_aoe_serve_systemd() {
 # aoe install is deferred to install_shell_aoe_post_dispatch (gated on ≥1 agent installed).
 install_shell_multiplexer_tmux_aoe() {
     install_shell_tmux
-    install_shell_entry_menu
+    install_shell_entry_handoff
 }
 
 install_shell_aoe_post_dispatch() {

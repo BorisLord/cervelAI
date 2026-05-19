@@ -18,7 +18,7 @@ print_final_summary() {
     # default-route src IP — skips docker0/podman bridges that eth0 hardcoding would catch.
     ip="$(ip -4 -o route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++)if($i=="src")print $(i+1)}' | head -1)"
     log_step "summary"
-    bash "$CONFIGS_DIR/bin/cervelai-logo"
+    bash "$CONFIGS_DIR/libexec/logo"
     printf '\n'
     cat <<EOF
   cervelAI is ready.
@@ -44,7 +44,7 @@ EOF
     [[ -n "${CERVELAI_SECURITY_TOOLS:-}" ]] && printf '  Security:       %s\n' "$CERVELAI_SECURITY_TOOLS"
     cat <<EOF
   Env/keys:       /home/$u/.config/cervelAI/env
-  Notify:         cervel-run <cmd>
+  Notify:         cervel run <cmd>
   Tools quickref: cat /home/$u/AGENTS.md
 
   Connect:
@@ -96,7 +96,7 @@ finalize() {
     else
         {
             printf '\n'
-            bash "$CONFIGS_DIR/bin/cervelai-logo"
+            bash "$CONFIGS_DIR/libexec/logo"
             cat <<MOTD
 
   ready for AI coding agents
@@ -104,7 +104,7 @@ finalize() {
   Shell:    ${desired}    Multiplexer: ${CERVELAI_MULTIPLEXER:-tmux+aoe}
   Connect:  ssh ${u}@<this-ip>  |  mosh ${u}@<this-ip>
   Env/keys: ~/.config/cervelAI/env
-  Notify:   cervel-run <cmd>
+  Notify:   cervel run <cmd>
   Tools:    cat ~/AGENTS.md
 
 MOTD

@@ -4,7 +4,7 @@ set -uo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 
 rc=0
-scripts=(setup.sh menu.sh cervelAI-lxc.sh bootstrap.sh check.sh smoke.sh install/*.sh configs/bin/* configs/profile.d/*.sh)
+scripts=(setup.sh menu.sh cervelAI-lxc.sh bootstrap.sh check.sh smoke.sh install/*.sh configs/libexec/* configs/profile.d/*.sh)
 
 echo "── bash -n ──"
 for f in "${scripts[@]}"; do

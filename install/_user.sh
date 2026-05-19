@@ -61,6 +61,7 @@ install_configs() {
         ["tmux/.tmux.conf"]=".tmux.conf"
         ["agents/AGENTS.md"]="AGENTS.md"
         ["topgrade/topgrade.toml"]=".config/topgrade.toml"
+        ["pnpm/.npmrc"]=".npmrc"
     )
     local src
     for src in "${!files[@]}"; do
@@ -78,6 +79,16 @@ install_configs() {
             [[ -f "$b" ]] || continue
             run install -D -m 755 -o "$u" -g "$u" "$b" "$h/.local/bin/$(basename "$b")"
             log_ok ".local/bin/$(basename "$b")"
+        done
+    fi
+
+    # Internal helpers (logo, menu, run) — out of PATH, dispatched via the `cervel` shell function.
+    if [[ -d "$CONFIGS_DIR/libexec" ]]; then
+        local b
+        for b in "$CONFIGS_DIR"/libexec/*; do
+            [[ -f "$b" ]] || continue
+            run install -D -m 755 -o "$u" -g "$u" "$b" "$h/.local/libexec/cervelai/$(basename "$b")"
+            log_ok ".local/libexec/cervelai/$(basename "$b")"
         done
     fi
 }
@@ -109,7 +120,7 @@ ensure_env_file() {
     fi
     topic="cervelAI-${suffix}"
     cat >"$f" <<EOF
-# cervelAI shared environment (bash, zsh, cervel-run). Mode 600.
+# cervelAI shared environment (bash, zsh, cervel run). Mode 600.
 # mise shims first so runtimes stay visible in non-interactive shells.
 # PNPM_HOME/bin needed: pnpm 11+ puts global bins there, not in PNPM_HOME.
 export PNPM_HOME="\$HOME/.local/share/pnpm"
