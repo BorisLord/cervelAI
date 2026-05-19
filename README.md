@@ -4,7 +4,7 @@
 
 *Pronounced like the French **« cervelet »** (cerebellum) — `/sɛʁ.və.lɛ/`*
 
-### Your AI coding agents, self-hosted. Anywhere, any device.
+### A comfy server, tailored for your AI.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Bash](https://img.shields.io/badge/shell-bash-89e051?logo=gnubash&logoColor=white)](https://www.gnu.org/software/bash/)
@@ -13,33 +13,8 @@
 
 ---
 
-**12 terminal AI agents** — Claude Code · Codex · opencode · Gemini CLI · Pi.dev · Crush · Goose · Continue · Qwen Code · Mistral Vibe · DeepSeek TUI · Grok CLI
-
-**Run them in parallel** via `aoe` (tmux + web dashboard) · **Save 70–90 % tokens** with `snip` / `rtk` · **Cross-session memory** (6 backends) · **Access from anywhere** (SSH + Mosh, phone-friendly)
-
-**Make it your own stack** — 18 opt-in categories à la carte (runtimes, editors, containers, k8s, cloud, data, blockchain, ...), sensible defaults pre-selected, no bloat.
-
-**All managed by `mise`, all precompiled** — no compile-from-source, no waiting on cargo/go, one `topgrade` updates everything.
-
-**Deploy on** Proxmox LXC · Debian/Ubuntu cloud VM · bare-metal — same install scripts.
-
-## Why cervelAI?
-
-A personal AI coding workstation that delivers four concrete value props out of the box:
-
-- **Saves tokens** : `snip` / `rtk` PreToolUse hooks cut 70-90 % of the noise piped to agents (file listings, command output, etc.)
-- **Runs agents in parallel** : `aoe` orchestrator + tmux supervise N agents at once with real-time status (running / waiting / idle / error), with a web dashboard reachable from your phone
-- **Persists context across sessions** : 6 memory backends (lite : `memsearch`, `qmd`, `engram` ; heavy : `claude-mem`, `mcp-memory-service`, `agentmemory`) so agents remember previous decisions
-- **Works from anywhere** : SSH + Mosh, mobile clients, persistent tmux/aoe sessions survive disconnects
-
-**One person, one workspace, KISS.** Self-hosted, your hardware, your keys, no lock-in. Not built for enterprise multi-tenancy or to replace Coder / Gitpod / Codespaces.
-
-## Quick start
-
-As root on the target host (Proxmox host, cloud VM, bare-metal Debian/Ubuntu),
-the one-liner prompts which mode to use:
-
 ```bash
+# Wake up the workstation. As root on a clean Debian/Ubuntu host (Proxmox LXC, cloud VM, bare-metal):
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/bootstrap.sh)"
 ```
 
@@ -52,7 +27,25 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/
 Choice:
 ```
 
-Non-interactive (CI, scripting): pass `--lxc` (Proxmox host, requires `pct`) or `--no-lxc` (install in place) to the bootstrap one-liner above.
+Non-interactive (CI, scripting): pass `--lxc` (Proxmox host, requires `pct`) or `--no-lxc` to the bootstrap one-liner.
+
+Run the one-liner, then go pour a coffee. cervelAI installs a sensible default stack for your AI — terminal agents like **Claude Code, Codex, opencode, Gemini CLI and more**, along with the runtimes, memory backends and token-savers they need. A few interactive prompts let you tweak the picks; if you'd rather not bother, the defaults just work. And anytime later, `mise use -g <tool>` adds anything else you fancy.
+
+The cerebellum coordinates the brain. **cervelAI** does the same for your agents — a personal habitat where every need is **anticipated, not improvised**.
+
+## Make it comfy — *the nest*
+
+A single identity (`agent` user). A persistent `shell` tmux session waiting at every SSH login. `cervel help` one keystroke away, `cervel status` to see who's home (lxc + agents + keys + disks). No noise, no surprises, no compile-from-source — `mise` owns every runtime, every binary is precompiled. SSH + Mosh keep the room reachable from anywhere, even your phone. `topgrade` tidies up in one shot.
+
+## Stock the toolbox — *the workshop*
+
+Pick the stack à la carte — **18 opt-in categories** (runtimes, editors, containers, k8s, cloud, data, blockchain, security, ...), sensible defaults pre-selected, zero bloat. Drop a `GITHUB_TOKEN`, sprinkle API keys, the agents introduce themselves and find their toys.
+
+## Power it on — *the dashboard*
+
+`aoe` (Agent of Empires) orchestrates **N agents in parallel** in tmux, each in its own git worktree, with a web dashboard reachable from any device. The token-savers (`snip`, `rtk`) sit between the shell and the model — agents see signal, not stack traces. Six **cross-session memory backends** (`memsearch`, `qmd`, `engram`, `claude-mem`, `mcp-memory-service`, `agentmemory`) so an agent picks up where it left off.
+
+Prefer **zellij** over tmux+aoe? It's offered as a multiplexer option at install (modern Rust, simpler keybinds) — you lose aoe's web dashboard but keep the rest.
 
 ## Supported environments
 
@@ -60,24 +53,25 @@ Debian 12+, Ubuntu 22.04+, and any Debian/Ubuntu derivative with systemd as PID 
 
 `setup.sh` aborts early if `/run/systemd/system` is missing or the distro isn't Debian-family.
 
-The `agent` user gets `NOPASSWD:ALL` via `/etc/sudoers.d/90-agent` — fine for a personal LXC/VM, remove it if you share the host.
+The `agent` user gets `NOPASSWD:ALL` via `/etc/sudoers.d/90-agent` (single-user workstation assumption).
 
 ## First login
 
 ```bash
-ssh agent@<host-ip>     # IP printed at the end of install
+ssh  agent@<host-ip>     # IP printed at the end of install
+mosh agent@<host-ip>     # roaming-friendly alternative (survives Wi-Fi drops, mobile)
 ```
 
-You land directly in a persistent tmux session named `shell` (auto-attached on every login). The `cervel` CLI exposes the cervelAI-specific helpers:
+You land directly in a persistent multiplexer session named `shell` (tmux or zellij, auto-attached on every login). The `cervel` CLI exposes the cervelAI-specific helpers:
 
 | Command | Does what |
 |---|---|
-| `cervel help` (`-h`) | logo + tmux/aoe/cervel cheatsheet |
+| `cervel help` (`-h`) | logo + cheatsheet (tmux or zellij keybinds, aoe, cervel) |
 | `cervel status` (`-s`) | lxc identity, agents installed, API keys, disk usage |
 | `cervel ls` | list AI agents currently on PATH |
 | `cervel run <cmd>` | wrap a command, ntfy push when it exits (long jobs) |
 
-Everything else is native: `aoe` for the agents TUI, `tmux` for session management (`Ctrl-B s`, `Ctrl-B c`, `Ctrl-B d`), `topgrade` to update.
+Everything else is native: `aoe` for the agents TUI (tmux only), `tmux` (`Ctrl-B s/c/d`) or `zellij` (`Ctrl-P d/n`) for session management, `topgrade` to update.
 
 ## What you get
 
@@ -87,12 +81,13 @@ Everything else is native: `aoe` for the agents TUI, `tmux` for session manageme
 | Block | Content |
 |---|---|
 | Base | apt packages, gum (TUI), mosh, `agent` user, locale en_US.UTF-8 |
+| C/C++ base | gcc, g++, make — full tooling is opt-in via `runtimes → c-cpp` |
 | mise + topgrade | system-wide polyglot version manager + one-shot update tool |
 | Runtimes core | node lts, pnpm, tsc, tsx, python, ruff, uv |
 | LSPs universal | bash, yaml, taplo (TOML), marksman (md), typescript-ls, vscode-json-ls, basedpyright |
-| LSPs runtime-gated | gopls, rust-analyzer, zls, lua-ls, kotlin-ls, ruby-lsp (if matching runtime present) |
-| Search-core | ripgrep, fd, fzf, jq, yq, dasel, gron, ast-grep, bat, delta |
-| Git | gh (GitHub CLI) |
+| LSPs runtime-gated | rust-analyzer, zls, lua-language-server, kotlin-language-server, ruby-lsp — auto-installed only if the matching runtime is opted in (docker LSPs if `containers` is enabled) |
+| Search-core | ripgrep, fd, fzf, jq, yq, dasel, gron, ast-grep, bat |
+| Git | gh (GitHub CLI), delta |
 
 </details>
 
@@ -111,21 +106,23 @@ Everything else is native: `aoe` for the agents TUI, `tmux` for session manageme
 <summary><b>AI &amp; assistance</b> — agents · token-savers · agent-memory · usage-trackers · ai-tools</summary>
 
 **`agents`** — AI agent CLIs
-- claude-code, codex, opencode, pi, crush, gemini-cli, goose, continue, qwen-code, mistral-vibe, deepseek-tui, grok-cli
+- claude-code, codex, opencode, pi, copilot-cli, crush, gemini-cli, goose, continue, qwen-code, mistral-vibe, deepseek-tui, grok-cli
 
-**`token-savers`** (single-select)
-- snip — YAML pipelines, 60-90% token savings
-- rtk — Rust binary, 100+ commands built-in
+**`token-savers`** (single-select) — pre-built filters that strip ≥60 % of command output noise before agents see it
+- snip — YAML-driven pipelines, 126+ built-in filters (git, cargo, docker, kubectl, …)
+- rtk — Rust binary, leaner alternative
 - none
 
 **`agent-memory`**
 - memsearch, qmd, engram, claude-mem, mcp-memory-service, agentmemory
 
-**`usage-trackers`** (one-shot, all installed)
-- tokscale, ccusage, ccstatusline
+**`usage-trackers`** (one-shot, all installed) — complementary token-cost visibility
+- tokscale — multi-agent dashboard (Claude, Codex, OpenCode, Gemini, Cursor, …) with 2D/3D contribution graphs
+- ccusage — Claude Code historical analyzer (daily/weekly/monthly tables from local JSONL)
+- ccstatusline — live Claude Code status line (Powerline rendering, real-time metrics)
 
 **`ai-tools`**
-- code2prompt, fabric, llm, ttok, aichat, markitdown, mcp-inspector, shell-gpt, gptscript
+- code2prompt, fabric, llm, **agents** (sync AGENTS.md/skills/MCP across CLIs), ttok, aichat, markitdown, mcp-inspector, shell-gpt, gptscript, promptfoo
 
 </details>
 
@@ -144,7 +141,7 @@ Everything else is native: `aoe` for the agents TUI, `tmux` for session manageme
 <summary><b>Languages &amp; build</b> — runtimes · workflow-tools</summary>
 
 **`runtimes`** — extras (node/python always installed)
-- go, rust, bun, deno, zig, java, kotlin, dotnet, dart, scala, lua, ruby, julia, haskell
+- c-cpp, go, rust, bun, deno, zig, java, kotlin, dotnet, dart, scala, lua, ruby, julia, haskell
 
 **`workflow-tools`** (one-shot, all installed)
 - act (GitHub Actions local), just (task runner), watchexec (file watcher)
@@ -218,40 +215,39 @@ Everything else is native: `aoe` for the agents TUI, `tmux` for session manageme
 
 </details>
 
-Run the install, then `mise ls` on the host shows exactly what was installed — that's the source of truth, not a manually-maintained list that drifts.
+Run the install, then `mise ls` on the host shows exactly what was installed — the source of truth, not a manually-maintained list that drifts.
 
-### Backbone
-- Full `~/.bashrc`, `~/.zshrc`, `~/.tmux.conf` deployed (configs/)
-- `cervel run <cmd>` wrapper: ntfy push when command exits (topic in `~/.config/cervelAI/env`)
+<details>
+<summary><b>How it works</b> — flow, layout, idempotence</summary>
 
-## How it works
+`bootstrap.sh` prompts (or accepts `--lxc` / `--no-lxc`) and dispatches:
 
-`bootstrap.sh` is the entry point. It prompts (or accepts `--lxc` / `--no-lxc`) and dispatches:
+- **LXC mode** (Proxmox host): `cervelAI-lxc.sh` creates the container (specs prompt, latest `debian-*-standard` template, DHCP wait, push repo inside), then `setup.sh` runs inside.
+- **Direct mode** (Debian/Ubuntu host): `setup.sh` runs in place.
 
-**LXC mode** (Proxmox host):
-1. `cervelAI-lxc.sh`: prompts for LXC specs, picks the latest `debian-*-standard` template (overridable via `CERVELAI_TEMPLATE_PATTERN`), `pct create`, waits DHCP, pushes the repo inside.
-2. `setup.sh` runs inside the LXC.
+**`setup.sh` flow**: distro/systemd checks → base packages → gum prompts (shell, multiplexer, categories) → mandatory baseline (mise, runtimes core, LSPs, search-core, gh, C/C++ toolchain) → selected `install/<cat>.sh` → aoe (if applicable) → deploy `configs/` → API keys prompt → final `topgrade` → summary.
 
-**Direct mode** (Debian/Ubuntu host):
-1. `setup.sh` runs in place (no container, no extra layer).
-
-**`setup.sh`** (both modes):
-- Distro/systemd checks → base packages → gum prompts (shell, multiplexer, categories + sub-menus) → mandatory baseline (mise, runtimes core, LSPs, search-core, gh) → selected `install/<cat>.sh` → aoe (if applicable) → deploy `configs/` → prompt API keys → final `topgrade` → summary.
-
-**Layout**: `bootstrap.sh` → `cervelAI-lxc.sh` (LXC mode only) → `setup.sh` + `menu.sh` → `install/*.sh` (one per category) + `configs/` (dotfiles).
+**Layout**: `bootstrap.sh` → `cervelAI-lxc.sh` (LXC only) → `setup.sh` + `menu.sh` → `install/*.sh` (one per category) + `configs/` (dotfiles).
 
 Idempotent: re-runs skip already-installed tools.
 
+</details>
+
 ## Updates
 
-Re-run the bootstrap to refresh scripts + tools (LXC mode adds `--update <CTID>`):
+Inside the host, just run:
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/bootstrap.sh)" _ --no-lxc
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/bootstrap.sh)" _ --lxc --update <CTID>
+topgrade
 ```
 
-Or **tool-only refresh** (no script re-fetch): inside the host, run `topgrade` (apt + mise + bash-it/oh-my-zsh + Claude Code in one shot).
+That refreshes everything in one shot: apt + mise (all backends) + bash-it/oh-my-zsh + Claude Code **+ cervelAI scripts themselves** (re-fetched from upstream, re-applied idempotently — `configs/topgrade.toml` ships the custom step).
+
+For Proxmox LXC update from the host side (re-run on an existing CTID):
+
+```bash
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/bootstrap.sh)" _ --lxc --update <CTID>
+```
 
 ## Advanced
 
@@ -278,14 +274,14 @@ The menu fills every `CERVELAI_*` automatically. Set them by hand only for CI / 
 | `CERVELAI_SELECTED` | (menu) | CSV of opt-in categories (or `all`) |
 | `CERVELAI_SSH_KEY` | (prompt) | Pubkey added to `agent`, plus sshd key-only hardening |
 | `CERVELAI_USER` | `agent` | Non-root user created on the host |
-| `CERVELAI_LOCALES` | none | Extra locales via `locale-gen` |
 | `GITHUB_TOKEN` | (prompt) | Lifts the GitHub API rate limit during install |
 | `CERVELAI_SHELL` | `bash` | `bash\|bash-it\|zsh\|zsh-omz\|fish\|none` |
 | `CERVELAI_MULTIPLEXER` | `tmux+aoe` | `tmux+aoe\|zellij\|none` |
-| `CERVELAI_AGENTS` / `_EDITORS` / `_RUNTIMES` / `_AGENT_MEMORY` / `_AI_TOOLS` | (menu) | CSV per sub-menu |
+| `CERVELAI_AGENTS` / `_EDITOR` / `_RUNTIMES` / `_AGENT_MEMORY` / `_AI_TOOLS` | (menu) | CSV per sub-menu |
 | `CERVELAI_CONTAINERS` / `_K8S_STACK` / `_DATA_STACK` | (menu) | CSV per sub-menu |
 | `CERVELAI_CLOUD_STACK` / `_BLOCKCHAIN` / `_CLI_EXTRAS` / `_SECURITY_TOOLS` / `_GIT_FORGES` | (menu) | CSV per sub-menu |
-| `CERVELAI_TOKEN_SAVER` | (menu) | `snip\|rtk\|none` |
+| `CERVELAI_TOKEN_SAVERS` | (menu) | `snip\|rtk\|none` |
+| `CERVELAI_LOCALES` | unset | Extra locales to `locale-gen` (CSV, e.g. `fr_FR.UTF-8,de_DE.UTF-8`). Useful when SSH SendEnv ships a non-C `LANG` and perl/python warn otherwise. `en_US.UTF-8` is always generated. |
 | `CERVELAI_NO_MENU` | unset | Skip auto-attach to the `shell` tmux session on login |
 | `CERVELAI_TEMPLATE_PATTERN` | `debian-[0-9]+-standard` | LXC mode only: pveam regex |
 | `CERVELAI_REPO` / `CERVELAI_REF` | `BorisLord/cervelAI` / `main` | `bootstrap.sh` only (forks) |
@@ -319,35 +315,12 @@ Written to `~agent/.config/cervelAI/env` (mode 600), sourced by bash, zsh and
 
 ## Remote access
 
-The host exposes **SSH** (port 22) and **Mosh** (UDP 60000-61000). How you
-connect is up to you and your infrastructure.
+The host exposes **SSH** (port 22) and **Mosh** (UDP 60000-61000). Basic connection in [First login](#first-login).
 
-### From a phone
-
-Any SSH/Mosh client works. Examples: **Termux** or **Termius** on Android,
-**Blink Shell** on iOS/iPadOS.
-
-### From a laptop
-
-```bash
-ssh agent@<host-ip>           # standard
-mosh agent@<host-ip>          # resilient to network changes
-mosh --ssh="ssh -J jump.example.com" agent@<host-ip>   # via ProxyJump
-```
-
-### aoe web dashboard
-
-When `multiplexer=tmux+aoe` (default) and at least one AI agent is installed,
-`aoe-serve.service` (systemd user, linger enabled) exposes the aoe dashboard at
-`http://<host-ip>:8081` over the LAN. Use it from your phone or laptop browser
-to watch agents in real time.
-
-### Networking beyond the LAN
-
-Configure on your firewall or on the host:
-
-- **[WireGuard](https://www.wireguard.com/quickstart/)**: best performance, full sovereignty (tip: listen on UDP/443 to dodge carrier shaping on mobile).
-- **[Tailscale](https://tailscale.com/)**: zero-config, MagicDNS, 100 devices free.
+- **Mobile clients**: Termux / Termius (Android), Blink Shell (iOS/iPadOS).
+- **Jump host**: `mosh --ssh="ssh -J jump.example.com" agent@<host-ip>`.
+- **aoe web dashboard**: `http://<host-ip>:8081` when `multiplexer=tmux+aoe` and at least one agent is installed (`aoe-serve.service` runs as systemd-user with linger).
+- **Beyond LAN**: [WireGuard](https://www.wireguard.com/quickstart/) (UDP/443 to dodge mobile carrier shaping) or [Tailscale](https://tailscale.com/) (zero-config, 100 devices free).
 
 ## Contributing
 
