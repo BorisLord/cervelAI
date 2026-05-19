@@ -196,7 +196,7 @@ run pct create "$CTID" "$TEMPLATE_PATH" \
     --swap "$SWAP_MB" \
     --rootfs "${STORAGE}:${DISK_GB}" \
     --net0 "name=eth0,bridge=${BRIDGE},ip=dhcp" \
-    --features "keyctl=1,nesting=1" \
+    --features "keyctl=1,nesting=1,fuse=1,mknod=1" \
     --unprivileged 1 \
     --onboot 1 \
     --start 1 \

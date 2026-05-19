@@ -12,7 +12,3 @@ disable = [
     "pip3",  # mise:pipx backend covers it
     "yarn",  # not used
 ]
-
-# Prompt before re-fetching cervelAI scripts (gum confirm defaults to No; sudo via NOPASSWD).
-[commands]
-"cervelAI scripts" = "gum confirm 'Re-fetch cervelAI scripts?' --default=false && sudo -E env DEV_MODE=nomenu bash -c \"$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/bootstrap.sh)\" _ --no-lxc || echo 'cervelAI re-fetch skipped'"

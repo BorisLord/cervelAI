@@ -28,6 +28,7 @@ prompt_github_token() {
     else
         log_skip "GITHUB_TOKEN skipped, installs may hit the GitHub rate limit"
     fi
+    sleep 1
 }
 
 _agent_keys() {

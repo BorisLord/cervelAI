@@ -1,0 +1,8 @@
+# pnpm v11 renamed `onlyBuiltDependencies` to `allowBuilds` and moved it OUT of .npmrc
+# (only auth/registry settings load from .npmrc now). Listed packages may run their
+# postinstall scripts; everything else stays blocked. The 3 agent CLIs below download
+# a native binary in postinstall — the other 8 agents use optionalDependencies (no script).
+allowBuilds:
+  - opencode-ai
+  - "@anthropic-ai/claude-code"
+  - deepseek-tui

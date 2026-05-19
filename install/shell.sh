@@ -31,14 +31,15 @@ install_shell_bash_it() {
         return 0
     fi
     log_info "installing bash-it for $u"
+    # Full clone (no --depth=1): bash-it's version detection and _bash-it-update need tag history.
     run sudo -u "$u" bash -c '
-        git clone --depth=1 https://github.com/Bash-it/bash-it.git "$HOME/.bash_it" \
+        git clone https://github.com/Bash-it/bash-it.git "$HOME/.bash_it" \
         && "$HOME/.bash_it/install.sh" --silent
     '
 }
 
 install_shell_tmux() { apt_install tmux; }
-install_shell_zellij() { mise_aqua "zellij-org/zellij"; }
+install_shell_zellij() { mise_use "zellij"; }
 
 # --- aoe orchestrator (CERVELAI_MULTIPLEXER=tmux+aoe) ---
 

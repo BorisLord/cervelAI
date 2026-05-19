@@ -8,7 +8,8 @@
 
 set -uo pipefail
 export LC_ALL=C # silences perl locale warnings
-trap 'printf "\n[ ABORT ] interrupted (Ctrl+C), partial install state likely\n" >&2; exit 130' INT TERM
+# Kernel delivers SIGINT to the entire foreground pgid (children included). Just mark and exit.
+trap 'printf "\n[ ABORT ] interrupted (Ctrl+C)\n" >&2; exit 130' INT TERM
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALL_DIR="${SCRIPT_DIR}/install"
