@@ -86,10 +86,8 @@ menu_select() {
 
 menu_shell_select() {
     _menu_single "$1" "Login shell:" \
-        bash "Plain bash (universal, zero config)" ON \
-        bash-it "bash + bash-it framework (themes, aliases)" OFF \
-        zsh "Plain zsh" OFF \
-        zsh-omz "zsh + oh-my-zsh framework" OFF
+        bash "bash" ON \
+        zsh "zsh" OFF
 }
 
 menu_multiplexer_select() {
@@ -103,7 +101,7 @@ menu_multiplexer_select() {
 
 menu_runtimes_select() {
     _menu_multi "$1" "Extra runtimes (node/python/pnpm/uv + gcc/g++/make always installed):" \
-        c-cpp "C/C++ dev tooling: cmake, gdb, pkg-config, clangd LSP" OFF \
+        c-cpp "C/C++: clang, clang-format/tidy, lld, lldb, cmake, gdb, clangd" OFF \
         go "Backend, DevOps, CLI (kubectl, traefik, Charm)" OFF \
         rust "Modern dev tools, systems perf" OFF \
         bun "Fast JS/TS runtime (opencode uses it)" OFF \

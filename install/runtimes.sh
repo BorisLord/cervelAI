@@ -63,7 +63,7 @@ install_runtimes_python() {
 install_runtimes_uv() { mise_use "uv"; }
 install_runtimes_go() { mise_use "go" "latest"; }
 install_runtimes_rust() { mise_use "rust" "latest"; }
-install_runtimes_c_cpp() { apt_install cmake gdb pkg-config clangd; }
+install_runtimes_c_cpp() { apt_install cmake gdb pkg-config clangd clang clang-format clang-tidy lld lldb; }
 install_runtimes_bun() { mise_use "bun" "latest"; }
 install_runtimes_deno() { mise_use "deno" "latest"; }
 install_runtimes_zig() { mise_use "zig" "latest"; }
@@ -82,8 +82,9 @@ install_runtimes_scala() { mise_use "scala" "latest"; }
 install_runtimes_lua() { mise_use "lua" "latest"; }
 
 install_runtimes_ruby() {
-    apt_install libffi-dev libyaml-dev libreadline-dev libssl-dev zlib1g-dev libgmp-dev
-    mise_use "ruby" "latest"
+    # Pin to the latest jdx/ruby precompiled binary (ruby.compile=false). `latest` would
+    # outrun the binary feed and fall back to a source build — bump when a newer binary ships.
+    mise_use "ruby" "4.0.4"
 }
 
 install_runtimes_julia() {
