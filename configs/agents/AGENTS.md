@@ -30,7 +30,7 @@ Gitignore-aware, less noise, more signal:
 ```bash
 mise ls                # every managed tool
 cervel ls              # installed AI agents
-cervel status          # host + agents + API keys + stores
+cervel status          # host + agents + stack + sessions
 command -v <tool>      # single binary check
 <tool> --help          # most tools have it
 ```
