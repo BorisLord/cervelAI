@@ -136,10 +136,12 @@ _user_bash() {
         printf '%s\n' 'export PNPM_HOME="$HOME/.local/share/pnpm"'
         printf 'export PATH="%s"\n' "$CERVELAI_AGENT_PATH"
         printf '%s\n' 'export npm_config_update_notifier=false'
+        [[ -n "${GITHUB_TOKEN:-}" ]] && printf 'export GITHUB_TOKEN=%q\n' "$GITHUB_TOKEN"
         printf '%s\n' "$*"
     } >"$tmp"
-    chmod 644 "$tmp"
-    sudo -u "$u" --preserve-env=GITHUB_TOKEN -i bash "$tmp"
+    chmod 600 "$tmp"
+    chown "$u" "$tmp"
+    sudo -u "$u" -i bash "$tmp"
     rc=$?
     rm -f "$tmp"
     return "$rc"

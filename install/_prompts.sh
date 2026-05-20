@@ -82,6 +82,8 @@ prompt_api_keys() {
         return 0
     }
 
+    want=(GITHUB_TOKEN "${want[@]}")
+
     if ! (: </dev/tty) 2>/dev/null; then
         log_warn "no TTY, skipping API key entry"
         log_warn "→ add them manually to $envfile, or re-run setup.sh via 'pct enter'"
