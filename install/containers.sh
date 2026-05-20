@@ -43,8 +43,8 @@ install_containers_docker() {
 }
 
 install_containers_podman() {
-    # uidmap + slirp4netns are Recommends; without them rootless podman fails.
-    apt_install podman uidmap slirp4netns
+    # uidmap + slirp4netns + passt(pasta) are Recommends; without them rootless podman fails
+    apt_install podman uidmap slirp4netns passt
     local u
     u="$(_user)"
     if ! grep -q "^${u}:" /etc/subuid 2>/dev/null; then
