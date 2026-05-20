@@ -58,6 +58,7 @@ install_configs() {
         ["bash/.bash_profile"]=".bash_profile"
         ["zsh/.zshrc"]=".zshrc"
         ["zsh/.zshenv"]=".zshenv"
+        ["zsh/.zprofile"]=".zprofile"
         ["tmux/.tmux.conf"]=".tmux.conf"
         ["agents/AGENTS.md"]="AGENTS.md"
         ["topgrade/topgrade.toml"]=".config/topgrade.toml"

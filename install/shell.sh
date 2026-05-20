@@ -4,39 +4,6 @@
 install_shell_bash() { apt_install bash bash-completion; }
 install_shell_zsh() { apt_install zsh; }
 
-install_shell_oh_my_zsh() {
-    local u
-    u="$(_user)"
-    if [[ -d "/home/$u/.oh-my-zsh" ]]; then
-        log_skip "oh-my-zsh already installed for $u"
-        return 0
-    fi
-    log_info "installing oh-my-zsh for $u"
-    run sudo -u "$u" sh -c 'RUNZSH=no CHSH=no KEEP_ZSHRC=yes \
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
-}
-
-install_shell_bash_it() {
-    local u
-    u="$(_user)"
-    # bash-it sets LC_CTYPE=en_US.UTF-8 — must be generated or it spams setlocale warnings.
-    if ! locale -a 2>/dev/null | grep -qiE '^en_US\.utf-?8$'; then
-        log_info "locale-gen en_US.UTF-8 (needed by bash-it)"
-        run bash -c 'sed -i "s/^# *\(en_US.UTF-8 UTF-8\)/\1/" /etc/locale.gen'
-        run locale-gen en_US.UTF-8 >/dev/null
-    fi
-    if [[ -d "/home/$u/.bash_it" ]]; then
-        log_skip "bash-it already installed for $u"
-        return 0
-    fi
-    log_info "installing bash-it for $u"
-    # Full clone (no --depth=1): bash-it's version detection and _bash-it-update need tag history.
-    run sudo -u "$u" bash -c '
-        git clone https://github.com/Bash-it/bash-it.git "$HOME/.bash_it" \
-        && "$HOME/.bash_it/install.sh" --silent
-    '
-}
-
 install_shell_tmux() { apt_install tmux; }
 install_shell_zellij() { mise_use "zellij"; }
 
@@ -162,18 +129,11 @@ install_shell_aoe_post_dispatch() {
 }
 
 install_shell_all() {
-    # bash always present (login shell fallback). Framework is opt-in via the -it/-omz variants.
-    install_shell_bash
     case "${CERVELAI_SHELL:-bash}" in
         bash) ;;
-        bash-it) install_shell_bash_it ;;
         zsh) install_shell_zsh ;;
-        zsh-omz)
-            install_shell_zsh
-            install_shell_oh_my_zsh
-            ;;
-        none) log_skip "shell: none (bash only, no framework)" ;;
-        *) log_warn "unknown CERVELAI_SHELL=${CERVELAI_SHELL} (valid: bash,bash-it,zsh,zsh-omz,none); keeping plain bash" ;;
+        none) log_skip "shell: none (bash only)" ;;
+        *) log_warn "unknown CERVELAI_SHELL=${CERVELAI_SHELL} (valid: bash,zsh,none); keeping plain bash" ;;
     esac
 
     case "${CERVELAI_MULTIPLEXER:-tmux+aoe}" in

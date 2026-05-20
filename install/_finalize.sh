@@ -66,8 +66,8 @@ finalize() {
 
     local desired_bin
     case "$desired" in
-        bash | bash-it) desired_bin=bash ;;
-        zsh | zsh-omz) desired_bin=zsh ;;
+        bash) desired_bin=bash ;;
+        zsh) desired_bin=zsh ;;
         *) desired_bin="$desired" ;;
     esac
 
