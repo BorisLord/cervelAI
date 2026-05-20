@@ -73,7 +73,7 @@ Everything else is native: `aoe` for the agents TUI (tmux only), `tmux` (`Ctrl-B
 | mise + topgrade | system-wide polyglot version manager + one-shot update tool |
 | Runtimes core | node lts, pnpm, tsc, tsx, python, ruff, uv |
 | LSPs universal | bash, yaml, taplo (TOML), marksman (md), typescript-ls, biome (JSON/CSS), superhtml, basedpyright |
-| LSPs runtime-gated | rust-analyzer, zls, lua-language-server, kotlin-language-server, ruby-lsp — auto-installed only if the matching runtime is opted in (docker LSPs if `containers` is enabled) |
+| LSPs runtime-gated | rust-analyzer, gopls, zls, lua-language-server, kotlin-language-server, ruby-lsp — auto-installed only if the matching runtime is opted in (docker LSPs if `containers` is enabled) |
 | Search-core | ripgrep, fd, fzf, jq, yq, dasel, gron, ast-grep, bat |
 | Git | gh (GitHub CLI), delta |
 
@@ -82,7 +82,7 @@ Everything else is native: `aoe` for the agents TUI (tmux only), `tmux` (`Ctrl-B
 <details>
 <summary><b>Workspace setup</b> — 2 always-asked prompts (single-select)</summary>
 
-**Login shell** — bash · bash-it · zsh · zsh-omz
+**Login shell** — bash · zsh
 
 **Terminal multiplexer** — tmux+aoe · zellij · none
 
@@ -228,12 +228,7 @@ Inside the host, just run:
 topgrade
 ```
 
-That refreshes everything in one shot: apt + mise (all backends) + bash-it/oh-my-zsh + Claude Code **+ cervelAI scripts themselves** (re-fetched from upstream, re-applied idempotently — `configs/topgrade.toml` ships the custom step).
-
-For Proxmox LXC update from the host side (re-run on an existing CTID):
-
-```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/bootstrap.sh)" _ --lxc --update <CTID>
+That refreshes everything in one shot: apt + mise (all backends)**.
 ```
 
 ## Advanced
@@ -262,7 +257,7 @@ The menu fills every `CERVELAI_*` automatically. Set them by hand only for CI / 
 | `CERVELAI_SSH_KEY` | (prompt) | Pubkey added to `agent`, plus sshd key-only hardening |
 | `CERVELAI_USER` | `agent` | Non-root user created on the host |
 | `GITHUB_TOKEN` | (prompt) | Lifts the GitHub API rate limit during install |
-| `CERVELAI_SHELL` | `bash` | `bash\|bash-it\|zsh\|zsh-omz\|none` |
+| `CERVELAI_SHELL` | `bash` | `bash\|zsh\|none` |
 | `CERVELAI_MULTIPLEXER` | `tmux+aoe` | `tmux+aoe\|zellij\|none` |
 | `CERVELAI_AGENTS` / `_EDITOR` / `_RUNTIMES` / `_AGENT_MEMORY` / `_AI_TOOLS` | (menu) | CSV per sub-menu |
 | `CERVELAI_CONTAINERS` / `_K8S_STACK` / `_DATA_STACK` | (menu) | CSV per sub-menu |
