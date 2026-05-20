@@ -13,11 +13,15 @@ trap 'printf "\n[ ABORT ] interrupted (Ctrl+C)\n" >&2; exit 130' INT TERM
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALL_DIR="${SCRIPT_DIR}/install"
-# shellcheck disable=SC2034  # used by install/_user.sh and install/_finalize.sh
 CONFIGS_DIR="${SCRIPT_DIR}/configs"
 
-# shellcheck disable=SC2034  # used by install/_user.sh, install/_finalize.sh, install/_prompts.sh
+# shellcheck disable=SC2034  # used only by sourced install/*.sh
 ENV_FILE_REL=".config/cervelAI/env"
+
+# Agent runtime PATH, single source for _user_bash + the env file. Literal $HOME (expanded by
+# the agent shell, not here). Includes ~/.bun/bin for bun-global tools.
+# shellcheck disable=SC2016
+CERVELAI_AGENT_PATH='$HOME/.local/share/mise/shims:$HOME/.local/bin:$HOME/.bun/bin:$PNPM_HOME:$PNPM_HOME/bin:$PATH'
 
 DEV_MODE="${dev_mode:-}"
 in_dev_mode() { [[ ",${DEV_MODE}," == *",$1,"* ]]; }
@@ -83,6 +87,7 @@ require_debian_family() {
         log_err "/etc/os-release missing"
         exit 1
     }
+    # shellcheck disable=SC1091
     . /etc/os-release
     if [[ "${ID:-}" != "debian" && "${ID:-}" != "ubuntu" && "${ID_LIKE:-}" != *"debian"* ]]; then
         log_err "not a Debian-family distro (ID=${ID:-?}, ID_LIKE=${ID_LIKE:-})"
@@ -119,12 +124,36 @@ apt_install() {
 }
 
 _user() { printf '%s' "${CERVELAI_USER:-agent}"; }
-# preserve-env=GITHUB_TOKEN lifts mise's GitHub backend rate limit.
-# NPM_CONFIG_MINIMUM_RELEASE_AGE=0 bypasses pnpm 11.x's policy bug during fresh installs.
-# npm_config_update_notifier=false silences pnpm "newer version available" during install only.
 _user_bash() {
-    sudo -u "$(_user)" --preserve-env=GITHUB_TOKEN -i bash -c \
-        "export PNPM_HOME=\"\$HOME/.local/share/pnpm\"; export PATH=\"\$HOME/.local/share/mise/shims:\$HOME/.local/bin:\$PNPM_HOME:\$PNPM_HOME/bin:\$PATH\"; export NPM_CONFIG_MINIMUM_RELEASE_AGE=0; export npm_config_update_notifier=false; $*"
+    # Run via a temp script, not `bash -c "...$*"`: inlining lets the root shell pre-expand the
+    # user command's $vars/$(…) before the agent shell sees them (silently broke find/$src).
+    local u tmp rc
+    u="$(_user)"
+    tmp="$(mktemp /tmp/cervelai-userbash.XXXXXX)"
+    {
+        # literal $HOME/$PATH: written to the script, expanded by the agent shell at run time.
+        # shellcheck disable=SC2016
+        printf '%s\n' 'export PNPM_HOME="$HOME/.local/share/pnpm"'
+        printf 'export PATH="%s"\n' "$CERVELAI_AGENT_PATH"
+        printf '%s\n' 'export npm_config_update_notifier=false'
+        printf '%s\n' "$*"
+    } >"$tmp"
+    chmod 644 "$tmp"
+    sudo -u "$u" --preserve-env=GITHUB_TOKEN -i bash "$tmp"
+    rc=$?
+    rm -f "$tmp"
+    return "$rc"
+}
+
+# Copy configs/libexec/* into <dest>/ at mode 755; pass an owner to chown (omit for /etc/skel).
+_deploy_libexec() {
+    local dest="$1" owner="${2:-}" b
+    local -a own=()
+    [[ -n "$owner" ]] && own=(-o "$owner" -g "$owner")
+    for b in "$CONFIGS_DIR"/libexec/*; do
+        [[ -f "$b" ]] || continue
+        run install -D -m 755 "${own[@]}" "$b" "$dest/$(basename "$b")"
+    done
 }
 
 mise_present() { [[ -x /usr/local/bin/mise ]]; }
@@ -154,8 +183,7 @@ mise_use() {
 mise_npm() { mise_use "npm:$1" "${2:-latest}"; }
 mise_aqua() { mise_use "aqua:$1" "${2:-latest}"; }
 
-# Dispatch a CSV (or "all" → expand to $all) to install_<cat>_<choice> functions.
-# Single source of truth for valid list, expand-all, skip-none, warn-unknown.
+# Dispatch a CSV (or "all" → full-list) to install_<cat>_<choice>. Skips none/empty, warns unknown.
 # Usage: _dispatch_csv <category> <env-var-name> <full-list-csv>
 _dispatch_csv() {
     local cat="$1" envname="$2" all="$3"
@@ -245,7 +273,7 @@ main() {
     log_step "cervelAI setup"
 
     if ((!NO_MENU)); then
-        if ! { [ -r /dev/tty ] && [ -w /dev/tty ]; }; then
+        if ! (: </dev/tty) 2>/dev/null; then
             log_err "interactive setup needs a TTY, not available via 'pct exec' without a pty"
             log_err "→ run via 'pct enter <CTID>', or use dev_mode=nomenu with CERVELAI_SELECTED"
             exit 1
@@ -472,8 +500,8 @@ main() {
     source_install runtimes
     install_runtimes_mandatory
 
-    log_step "language servers (LSP)"
-    source_install lsp && install_lsp_all
+    log_step "language servers (LSP core — runtime-gated LSPs run later)"
+    source_install lsp && install_lsp_core
 
     log_step "search-core (AI-critical: rg/fd/jq/yq/bat/...)"
     source_install search && install_search_all
@@ -508,6 +536,10 @@ main() {
         fi
     done
 
+    # runtime-gated LSPs (rust-analyzer, zls, lua-LSP, kotlin-LSP, ruby-lsp) need opt-in runtimes installed first.
+    log_step "language servers (runtime-gated)"
+    source_install lsp && install_lsp_runtime_gated
+
     # aoe gated on ≥1 agent installed — must run AFTER agents category.
     log_step "aoe orchestrator (post-dispatch)"
     install_shell_aoe_post_dispatch
@@ -517,6 +549,7 @@ main() {
     ensure_env_file
     prompt_api_keys
     finalize
+    lock_pnpm_release_age
     run_final_topgrade
 
     if ((SETUP_ERRORS > 0)); then

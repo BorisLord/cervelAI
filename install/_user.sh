@@ -2,14 +2,14 @@
 # install/_user.sh: user creation, sudoers, SSH key, config files, env file.
 
 create_user() {
-    local u="${CERVELAI_USER:-agent}"
+    local u
+    u="$(_user)"
     if id "$u" &>/dev/null; then
         log_skip "user $u already exists"
     else
         log_info "creating user $u"
         run useradd -m -s /bin/bash -G sudo "$u"
     fi
-    # `install -d` doesn't chown intermediate dirs — list each level.
     run install -d -m 700 -o "$u" -g "$u" "/home/$u/.ssh"
     run install -d -m 755 -o "$u" -g "$u" "/home/$u/.config"
     run install -d -m 755 -o "$u" -g "$u" "/home/$u/.cache"
@@ -52,7 +52,7 @@ install_configs() {
     }
     log_step "deploying configs/ → $h"
 
-    # mise/config.toml deliberately omitted — owned by install_runtimes_mise (avoid clobbering [tools]).
+    # mise/config.toml omitted: owned by install_runtimes_mise (avoid clobbering [tools]).
     local -A files=(
         ["bash/.bashrc"]=".bashrc"
         ["bash/.bash_profile"]=".bash_profile"
@@ -61,7 +61,6 @@ install_configs() {
         ["tmux/.tmux.conf"]=".tmux.conf"
         ["agents/AGENTS.md"]="AGENTS.md"
         ["topgrade/topgrade.toml"]=".config/topgrade.toml"
-        ["pnpm/.npmrc"]=".npmrc"
     )
     local src
     for src in "${!files[@]}"; do
@@ -73,14 +72,11 @@ install_configs() {
         log_ok "${files[$src]}"
     done
 
-    # Internal helpers (logo, menu, run) — out of PATH, dispatched via the `cervel` shell function.
     if [[ -d "$CONFIGS_DIR/libexec" ]]; then
-        local b
-        for b in "$CONFIGS_DIR"/libexec/*; do
-            [[ -f "$b" ]] || continue
-            run install -D -m 755 -o "$u" -g "$u" "$b" "$h/.local/libexec/cervelai/$(basename "$b")"
-            log_ok ".local/libexec/cervelai/$(basename "$b")"
-        done
+        _deploy_libexec "$h/.local/libexec/cervelai" "$u"
+        run install -d -m 755 -o "$u" -g "$u" "$h/.local/bin"
+        run sudo -u "$u" ln -sf "$h/.local/libexec/cervelai/cervel" "$h/.local/bin/cervel"
+        log_ok "libexec deployed + cervel → ~/.local/bin/cervel"
     fi
 }
 
@@ -89,7 +85,6 @@ ensure_env_file() {
     u="$(_user)"
     local f="/home/$u/${ENV_FILE_REL}"
     if [[ -e "$f" ]]; then
-        # Covers re-runs where the first install ran without a token.
         if [[ -n "${GITHUB_TOKEN:-}" ]] && ! grep -q '^export GITHUB_TOKEN=' "$f"; then
             printf 'export GITHUB_TOKEN=%q\n' "$GITHUB_TOKEN" >>"$f"
             log_ok "appended GITHUB_TOKEN to existing env file: $f"
@@ -112,10 +107,8 @@ ensure_env_file() {
     topic="cervelAI-${suffix}"
     cat >"$f" <<EOF
 # cervelAI shared environment (bash, zsh, cervel run). Mode 600.
-# mise shims first so runtimes stay visible in non-interactive shells.
-# PNPM_HOME/bin needed: pnpm 11+ puts global bins there, not in PNPM_HOME.
 export PNPM_HOME="\$HOME/.local/share/pnpm"
-export PATH="\$HOME/.local/share/mise/shims:\$HOME/.local/bin:\$PNPM_HOME:\$PNPM_HOME/bin:\$PATH"
+export PATH="${CERVELAI_AGENT_PATH}"
 export NTFY_SERVER="https://ntfy.sh"
 export NTFY_TOPIC="${topic}"
 EOF
