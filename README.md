@@ -94,7 +94,8 @@ The menu drives everything; env vars only matter for headless installs and forks
 <summary>Headless install + env reference</summary>
 
 ```bash
-dev_mode=nomenu CERVELAI_NO_PROMPT=1 CERVELAI_SELECTED=all bash setup.sh
+# GITHUB_TOKEN avoids GitHub API rate-limit 403s on a full `all` install (not persisted)
+GITHUB_TOKEN=ghp_… dev_mode=nomenu CERVELAI_NO_PROMPT=1 CERVELAI_SELECTED=all bash setup.sh
 ```
 
 | Variable | Effect |
