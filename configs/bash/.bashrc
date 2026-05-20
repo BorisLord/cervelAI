@@ -22,6 +22,7 @@ export GOPATH="$HOME/go"
 path_prepend "$GOPATH/bin"
 # ghcup installs ghc/cabal/hls/runhaskell here when haskell runtime is opt-in.
 path_prepend "$HOME/.ghcup/bin"
+for _gemdir in "$HOME"/.local/share/gem/ruby/*/bin; do [ -d "$_gemdir" ] && path_prepend "$_gemdir"; done
 # shellcheck source=/dev/null
 [ -s "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 

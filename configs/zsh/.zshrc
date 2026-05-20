@@ -12,6 +12,7 @@ path_prepend "$HOME/.local/bin"
 path_prepend "$HOME/bin"
 path_prepend "$HOME/.bun/bin"
 path_prepend "$HOME/.ghcup/bin"
+for _gemdir in "$HOME"/.local/share/gem/ruby/*/bin(N); do path_prepend "$_gemdir"; done
 [ -s "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 export GOPATH="$HOME/go"
 path_prepend "$GOPATH/bin"
