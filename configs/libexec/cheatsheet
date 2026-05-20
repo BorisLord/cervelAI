@@ -40,7 +40,7 @@ fi
 
 printf '\n  cervel  (this CLI)\n'
 printf '    cervel help    (-h)      print this cheatsheet\n'
-printf '    cervel status  (-s)      lxc + agents + api keys + stores\n'
+printf '    cervel status  (-s)      host + stack + agents + sessions + keys\n'
 printf '    cervel ls                list installed AI agents\n'
 printf '    cervel run <cmd>         run a command, ntfy push on exit (long jobs)\n'
 

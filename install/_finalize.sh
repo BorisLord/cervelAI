@@ -1,7 +1,17 @@
 #!/usr/bin/env bash
 # install/_finalize.sh: final topgrade + summary + chsh + MOTD.
 
-# GIT_TERMINAL_PROMPT=0 keeps any git step from prompting for creds on dead/private repos.
+# Installs run with minimumReleaseAge: 0 (always latest); comment it out afterwards so periodic
+# updates fall back to pnpm's default quarantine instead of auto-pulling <1-day-old releases.
+lock_pnpm_release_age() {
+    local u f
+    u="$(_user)"
+    f="/home/$u/.local/share/pnpm/pnpm-workspace.yaml"
+    ((DRY_RUN)) && return 0
+    [[ -f "$f" ]] || return 0
+    run sed -i 's/^minimumReleaseAge: 0$/# minimumReleaseAge: 0 — install-only; updates use pnpm default/' "$f"
+}
+
 run_final_topgrade() {
     ((DRY_RUN)) && {
         log_skip "final topgrade (dryrun)"
@@ -11,56 +21,47 @@ run_final_topgrade() {
     soft _user_bash "GIT_TERMINAL_PROMPT=0 topgrade --yes"
 }
 
-print_final_summary() {
-    local u
+# Persisted for `cervel status` to read back (stack, categories, agents).
+write_manifest() {
+    local u f
     u="$(_user)"
-    local ip
-    # default-route src IP — skips docker0/podman bridges that eth0 hardcoding would catch.
+    f="/home/$u/.config/cervelAI/manifest"
+    ((DRY_RUN)) && return 0
+    run install -d -m 700 -o "$u" -g "$u" "$(dirname "$f")"
+    {
+        printf 'CERVELAI_SHELL=%q\n' "${CERVELAI_SHELL:-bash}"
+        printf 'CERVELAI_MULTIPLEXER=%q\n' "${CERVELAI_MULTIPLEXER:-tmux+aoe}"
+        printf 'CERVELAI_CATEGORIES=%q\n' "${selected[*]:-}"
+        printf 'CERVELAI_AGENTS=%q\n' "${CERVELAI_AGENTS:-}"
+        printf 'CERVELAI_EDITOR=%q\n' "${CERVELAI_EDITOR:-}"
+    } >"$f"
+    chmod 644 "$f"
+    chown "$u:$u" "$f"
+}
+
+# Slim: identity + a pointer to `cervel status`; connect/management live on the host side.
+print_final_summary() {
+    local u ip
+    u="$(_user)"
+    # default-route src IP — skips docker0/podman bridges that hardcoding eth0 would catch.
     ip="$(ip -4 -o route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++)if($i=="src")print $(i+1)}' | head -1)"
-    log_step "summary"
+    write_manifest
+    log_step "setup complete"
     bash "$CONFIGS_DIR/libexec/logo"
-    printf '\n'
     cat <<EOF
-  cervelAI is ready.
 
-  User:           $u
-  IP:             ${ip:-<detect: ip a>}
-  Shell:          ${CERVELAI_SHELL:-bash} + ${CERVELAI_MULTIPLEXER:-tmux+aoe}
-  Categories:     ${selected[*]:-(none beyond base)}
-  Agents:         ${CERVELAI_AGENTS:-(none)}
-  Editors:        ${CERVELAI_EDITOR:-(none)}
-EOF
-    [[ -n "${CERVELAI_GIT_FORGES:-}" ]] && printf '  Git forges:     %s\n' "$CERVELAI_GIT_FORGES"
-    [[ -n "${CERVELAI_TOKEN_SAVERS:-}" ]] && printf '  Token-saver:    %s\n' "$CERVELAI_TOKEN_SAVERS"
-    [[ -n "${CERVELAI_AGENT_MEMORY:-}" ]] && printf '  Agent memory:   %s\n' "$CERVELAI_AGENT_MEMORY"
-    [[ -n "${CERVELAI_AI_TOOLS:-}" ]] && printf '  AI tools:       %s\n' "$CERVELAI_AI_TOOLS"
-    [[ -n "${CERVELAI_RUNTIMES:-}" ]] && printf '  Runtimes+:      %s\n' "$CERVELAI_RUNTIMES"
-    [[ -n "${CERVELAI_DATA_STACK:-}" ]] && printf '  Data:           %s\n' "$CERVELAI_DATA_STACK"
-    [[ -n "${CERVELAI_CONTAINERS:-}" ]] && printf '  Containers:     %s\n' "$CERVELAI_CONTAINERS"
-    [[ -n "${CERVELAI_K8S_STACK:-}" ]] && printf '  k8s:            %s\n' "$CERVELAI_K8S_STACK"
-    [[ -n "${CERVELAI_CLOUD_STACK:-}" ]] && printf '  Cloud:          %s\n' "$CERVELAI_CLOUD_STACK"
-    [[ -n "${CERVELAI_BLOCKCHAIN:-}" ]] && printf '  Blockchain:     %s\n' "$CERVELAI_BLOCKCHAIN"
-    [[ -n "${CERVELAI_CLI_EXTRAS:-}" ]] && printf '  CLI extras:     %s\n' "$CERVELAI_CLI_EXTRAS"
-    [[ -n "${CERVELAI_SECURITY_TOOLS:-}" ]] && printf '  Security:       %s\n' "$CERVELAI_SECURITY_TOOLS"
-    cat <<EOF
-  Env/keys:       /home/$u/.config/cervelAI/env
-  Notify:         cervel run <cmd>
-  Tools quickref: cat /home/$u/AGENTS.md
+  cervelAI is ready on ${u}@$(hostname) (${ip:-<detect: ip a>})
 
-  Connect:
-      ssh $u@${ip:-<lxc-ip>}
-      mosh $u@${ip:-<lxc-ip>}
-
-  The cervelai menu greets every interactive login (skip via plain shell).
+  → run  cervel status  for the full picture — stack, sessions, endpoints, keys
 
 EOF
 }
 
 finalize() {
-    local u="${CERVELAI_USER:-agent}"
-    local desired="${CERVELAI_SHELL:-bash}"
+    local u desired
+    u="$(_user)"
+    desired="${CERVELAI_SHELL:-bash}"
 
-    # `install -d` as root leaves parents root-owned — fix recursively.
     run chown -R "$u:$u" "/home/$u"
 
     local desired_bin

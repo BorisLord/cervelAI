@@ -7,8 +7,11 @@ path_prepend() {
     return 0
 }
 
+path_prepend "$HOME/.local/share/mise/shims"
 path_prepend "$HOME/.local/bin"
 path_prepend "$HOME/bin"
+path_prepend "$HOME/.bun/bin"
+path_prepend "$HOME/.ghcup/bin"
 [ -s "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 export GOPATH="$HOME/go"
 path_prepend "$GOPATH/bin"
@@ -48,25 +51,8 @@ zstyle ':completion:*' menu select
 # on Debian fd-find is `fdfind`, bat is `batcat`
 command -v fdfind &>/dev/null && ! command -v fd &>/dev/null && alias fd='fdfind'
 command -v batcat &>/dev/null && ! command -v bat &>/dev/null && alias bat='batcat'
-alias t='tmux new -A -s main'
+alias t='tmux new -A -s shell'
 alias zr='source ~/.zshrc'
 
-cervel() {
-    local libexec="$HOME/.local/libexec/cervelai"
-    case "${1:-}" in
-        help | -h)   "$libexec/cheatsheet" ;;
-        status | -s) "$libexec/status" ;;
-        run)
-            shift
-            "$libexec/run" "$@"
-            ;;
-        ls)
-            local a
-            for a in claude codex opencode pi copilot crush gemini goose cn qwen vibe deepseek grok; do
-                command -v "$a" >/dev/null 2>&1 && printf '  %s\n' "$a"
-            done
-            ;;
-        *) printf 'usage: cervel {help|-h | status|-s | ls | run <cmd>}\n' >&2 ;;
-    esac
-}
+# `cervel` is a standalone script at ~/.local/bin/cervel — works in any shell, no function needed.
 compdef '_arguments "1:subcmd:(help status ls run -h -s)"' cervel 2>/dev/null || true

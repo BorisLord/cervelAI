@@ -225,26 +225,18 @@ log_ok "LXC IP: $LXC_IP"
 
 push_and_setup "$CTID" "$CT_USER" "$SSH_PUB_KEY"
 
-log_step "summary"
+# Host-side panel: connect + container management only (the install recap lives inside
+# the LXC via `cervel status`, reachable once connected — no duplication here).
+log_step "$HOSTNAME · CT $CTID · $LXC_IP"
 cat <<EOF
 
-  CTID:     $CTID
-  Hostname: $HOSTNAME
-  IP:       $LXC_IP
-  User:     $CT_USER
+  Connect   ssh ${CT_USER}@${LXC_IP}   ·   mosh ${CT_USER}@${LXC_IP}
 
-  Connect:
-      ssh ${CT_USER}@${LXC_IP}
-      mosh ${CT_USER}@${LXC_IP}
+  Manage    pct enter $CTID          root shell inside
+            pct stop $CTID  ·  pct start $CTID  ·  pct destroy $CTID
+            bash cervelAI-lxc.sh --update $CTID
 
-  Manage:
-      pct enter $CTID            # shell inside LXC as root
-      pct stop $CTID
-      pct start $CTID
-      pct destroy $CTID          # CAREFUL: deletes the LXC
-
-  Update (re-push + re-run setup.sh):
-      bash cervelAI-lxc.sh --update $CTID
+  Inside    cervel status   stack · sessions · endpoints · keys
 
 EOF
 log_ok "done"

@@ -2,8 +2,8 @@
 # .bashrc — cervelAI (the VM's default shell).
 # The optional zsh shell has its own config in ../zsh/.
 
-# Interactive-only — non-interactive runs go through ai-run, which loads the env itself.
-case $- in *i*) ;; *) return ;; esac
+# ─── Always-on (interactive + scripts): env, PATH, mise shims, cervel() ───
+# Needed so `ssh agent@host 'cervel run …'`, cron, and non-interactive scripts can find mise tools.
 
 # shellcheck source=/dev/null
 [ -r "$HOME/.config/cervelAI/env" ] && . "$HOME/.config/cervelAI/env"
@@ -12,13 +12,23 @@ path_prepend() {
     [[ ":$PATH:" != *":$1:"* ]] && export PATH="$1:$PATH"
     return 0
 }
+path_prepend "$HOME/.local/share/mise/shims"
 path_prepend "$HOME/.local/bin"
 path_prepend "$HOME/bin"
 path_prepend "$HOME/.local/share/npm/bin"
+# bun global installs (promptfoo + any tool pnpm v11 can't hoist) land here.
+path_prepend "$HOME/.bun/bin"
 export GOPATH="$HOME/go"
 path_prepend "$GOPATH/bin"
+# ghcup installs ghc/cabal/hls/runhaskell here when haskell runtime is opt-in.
+path_prepend "$HOME/.ghcup/bin"
 # shellcheck source=/dev/null
 [ -s "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+
+# `cervel` is a standalone script at ~/.local/bin/cervel — works in any shell, no function needed.
+
+# ─── Interactive-only: prompt, history, bash-it, aliases, completions ───
+case $- in *i*) ;; *) return ;; esac
 
 command -v mise >/dev/null 2>&1 && eval "$(mise activate bash)"
 
@@ -44,25 +54,7 @@ shopt -s histappend checkwinsize
 
 command -v fdfind &>/dev/null && ! command -v fd &>/dev/null && alias fd='fdfind'
 command -v batcat &>/dev/null && ! command -v bat &>/dev/null && alias bat='batcat'
-alias t='tmux new -A -s main'
+alias t='tmux new -A -s shell'
 alias br='source ~/.bashrc'
 
-cervel() {
-    local libexec="$HOME/.local/libexec/cervelai"
-    case "${1:-}" in
-        help | -h)   "$libexec/cheatsheet" ;;
-        status | -s) "$libexec/status" ;;
-        run)
-            shift
-            "$libexec/run" "$@"
-            ;;
-        ls)
-            local a
-            for a in claude codex opencode pi copilot crush gemini goose cn qwen vibe deepseek grok; do
-                command -v "$a" >/dev/null 2>&1 && printf '  %s\n' "$a"
-            done
-            ;;
-        *) printf 'usage: cervel {help|-h | status|-s | ls | run <cmd>}\n' >&2 ;;
-    esac
-}
 complete -W "help status ls run -h -s" cervel

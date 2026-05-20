@@ -3,6 +3,8 @@
 # Invoked by `cervel -s`. One-shot output, no prompt.
 set -u
 
+_LIBEXEC="$(dirname "$(readlink -f "$0")")"
+
 if command -v tmux >/dev/null 2>&1; then
     _MUX=tmux
 elif command -v zellij >/dev/null 2>&1; then
@@ -19,14 +21,24 @@ _mux_list() {
     esac
 }
 
+# Install selection persisted by setup.sh (shell, multiplexer, categories).
+_manifest="$HOME/.config/cervelAI/manifest"
+# shellcheck source=/dev/null
+[ -r "$_manifest" ] && . "$_manifest"
+
 printf '═══ cervelai status ═══\n\n'
 
-printf '── lxc ──\n'
+printf '── host ──\n'
 _ip=$(ip -4 -o addr show 2>/dev/null | awk '$3=="inet" && $4!~/^127\./ {print $4}' | head -1 | cut -d/ -f1)
 _uptime=$(uptime -p 2>/dev/null)
-printf '  host:    %s (%s)\n' "$(hostname)" "${_ip:-?}"
+printf '  host:    %s@%s (%s)\n' "$(whoami)" "$(hostname)" "${_ip:-?}"
 printf '  uptime:  %s\n' "${_uptime:-?}"
+[ -n "${CERVELAI_SHELL:-}" ] && printf '  stack:   %s + %s\n' "$CERVELAI_SHELL" "${CERVELAI_MULTIPLEXER:-?}"
 printf '\n'
+
+if [ -n "${CERVELAI_CATEGORIES:-}" ]; then
+    printf '── installed categories ──\n  %s\n\n' "$CERVELAI_CATEGORIES"
+fi
 
 printf '── %s sessions ──\n' "$_MUX"
 _sessions=$(_mux_list)
@@ -55,7 +67,9 @@ printf '\n'
 
 printf '── AI agents installed ──\n'
 _found=()
-for a in claude codex opencode pi copilot crush gemini goose cn qwen vibe deepseek grok; do
+# shellcheck source=/dev/null
+[ -r "$_LIBEXEC/agents-registry" ] && . "$_LIBEXEC/agents-registry"
+for a in $(cervelai_agent_bins 2>/dev/null); do
     command -v "$a" >/dev/null 2>&1 && _found+=("$a")
 done
 if ((${#_found[@]} > 0)); then
@@ -66,7 +80,7 @@ fi
 printf '\n'
 
 printf '── api keys ──\n'
-for k in ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY MISTRAL_API_KEY DEEPSEEK_API_KEY DASHSCOPE_API_KEY XAI_API_KEY OPENROUTER_API_KEY GITHUB_TOKEN; do
+for k in ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY MISTRAL_API_KEY DEEPSEEK_API_KEY DASHSCOPE_API_KEY OPENROUTER_API_KEY GITHUB_TOKEN; do
     if [[ -n "${!k:-}" ]]; then
         printf '  %-22s set\n' "$k"
     else
