@@ -3,7 +3,6 @@
 
 install_shell_bash() { apt_install bash bash-completion; }
 install_shell_zsh() { apt_install zsh; }
-install_shell_fish() { mise_aqua "fish-shell/fish-shell"; }
 
 install_shell_oh_my_zsh() {
     local u
@@ -173,9 +172,8 @@ install_shell_all() {
             install_shell_zsh
             install_shell_oh_my_zsh
             ;;
-        fish) install_shell_fish ;;
         none) log_skip "shell: none (bash only, no framework)" ;;
-        *) log_warn "unknown CERVELAI_SHELL=${CERVELAI_SHELL} (valid: bash,bash-it,zsh,zsh-omz,fish,none); keeping plain bash" ;;
+        *) log_warn "unknown CERVELAI_SHELL=${CERVELAI_SHELL} (valid: bash,bash-it,zsh,zsh-omz,none); keeping plain bash" ;;
     esac
 
     case "${CERVELAI_MULTIPLEXER:-tmux+aoe}" in

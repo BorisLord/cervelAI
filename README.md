@@ -82,7 +82,7 @@ Everything else is native: `aoe` for the agents TUI (tmux only), `tmux` (`Ctrl-B
 <details>
 <summary><b>Workspace setup</b> — 2 always-asked prompts (single-select)</summary>
 
-**Login shell** — bash · bash-it · zsh · zsh-omz · fish
+**Login shell** — bash · bash-it · zsh · zsh-omz
 
 **Terminal multiplexer** — tmux+aoe · zellij · none
 
@@ -262,7 +262,7 @@ The menu fills every `CERVELAI_*` automatically. Set them by hand only for CI / 
 | `CERVELAI_SSH_KEY` | (prompt) | Pubkey added to `agent`, plus sshd key-only hardening |
 | `CERVELAI_USER` | `agent` | Non-root user created on the host |
 | `GITHUB_TOKEN` | (prompt) | Lifts the GitHub API rate limit during install |
-| `CERVELAI_SHELL` | `bash` | `bash\|bash-it\|zsh\|zsh-omz\|fish\|none` |
+| `CERVELAI_SHELL` | `bash` | `bash\|bash-it\|zsh\|zsh-omz\|none` |
 | `CERVELAI_MULTIPLEXER` | `tmux+aoe` | `tmux+aoe\|zellij\|none` |
 | `CERVELAI_AGENTS` / `_EDITOR` / `_RUNTIMES` / `_AGENT_MEMORY` / `_AI_TOOLS` | (menu) | CSV per sub-menu |
 | `CERVELAI_CONTAINERS` / `_K8S_STACK` / `_DATA_STACK` | (menu) | CSV per sub-menu |

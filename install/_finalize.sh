@@ -68,7 +68,6 @@ finalize() {
     case "$desired" in
         bash | bash-it) desired_bin=bash ;;
         zsh | zsh-omz) desired_bin=zsh ;;
-        fish) desired_bin=fish ;;
         *) desired_bin="$desired" ;;
     esac
 

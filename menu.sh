@@ -89,8 +89,7 @@ menu_shell_select() {
         bash "Plain bash (universal, zero config)" ON \
         bash-it "bash + bash-it framework (themes, aliases)" OFF \
         zsh "Plain zsh" OFF \
-        zsh-omz "zsh + oh-my-zsh framework" OFF \
-        fish "Fish (smart autosuggest, no POSIX)" OFF
+        zsh-omz "zsh + oh-my-zsh framework" OFF
 }
 
 menu_multiplexer_select() {
