@@ -1,34 +1,26 @@
 #!/usr/bin/env bash
-# menu.sh: gum-powered setup menus. Sourced by setup.sh. Each menu_*_select writes via nameref.
-
-# -g: sourced from a function (must survive). No commas: gum's --selected splits on commas.
-# Order: matches CATEGORIES in setup.sh — logical groups (AI > workspace > languages > devops > data > polish > security > niche).
+# -g: sourced inside a function; must survive. No commas in values: gum --selected splits on commas.
 declare -gA _MENU_DESC=(
     ["agents"]="AI agent CLIs: claude/codex/opencode/pi/copilot/gemini/qwen/... (sub)"
     ["token-savers"]="snip | rtk (cut shell output 60-90% before reaching agents)"
     ["agent-memory"]="cross-session memory: memsearch/qmd/engram/claude-mem/... (sub)"
     ["usage-trackers"]="token/cost trackers: tokscale + ccusage + ccstatusline"
     ["ai-tools"]="LLM helpers: code2prompt/fabric/llm/markitdown/... (sub)"
-    ["editor"]="vim/neovim/emacs/micro (sub)"
-    ["ide-web"]="code-server (VS Code in browser)"
+    ["editor"]="vim/neovim/emacs/micro + code-server (sub)"
     ["runtimes"]="extra runtimes: go/rust/bun/deno/zig/java/.../haskell (sub)"
-    ["workflow-tools"]="act + just + watchexec (dev-loop helpers)"
     ["containers"]="docker/podman/lazydocker/hadolint/dive (sub)"
     ["k8s-stack"]="kubectl/k9s/helm/kubectx/kubens/kustomize/kind/stern (sub)"
-    ["iac-stack"]="opentofu + pulumi"
-    ["cloud-stack"]="aws/flyctl/cloudflared/supabase/doctl/hcloud/scaleway/gcloud/azure (sub)"
+    ["cloud-stack"]="cloud CLIs + IaC: aws/gcloud/azure/.../opentofu/pulumi (sub)"
     ["data-stack"]="sqlite3/psql/redis-cli/usql/duckdb/mlr/pgcli/mycli/litecli (sub)"
-    ["cli-extras"]="modern CLI: eza/zoxide/tldr/glow/sd/yazi/... (sub)"
+    ["cli-extras"]="modern CLI + dev-loop: eza/zoxide/.../act/just/watchexec (sub)"
     ["security-tools"]="sops/age/gitleaks/trivy/syft/cosign (sub)"
-    ["git-forges"]="extra forges + git TUI: glab/lazygit (sub)"
+    ["git-tools"]="git TUI + forge CLI: lazygit/glab (sub)"
     ["blockchain"]="evm/solana/move/cosmos/near/cairo (sub)"
 )
 
 _MENU_DEFAULT_OFF=("${CATEGORIES[@]}")
 
-# Item format: "<label>\t<value>" with --label-delimiter — gum displays label, returns value.
-# /dev/tty pin: gum TUI works under pct exec without a controlling tty inherited.
-
+# /dev/tty: gum TUI works under pct exec without an inherited controlling tty.
 # _menu_multi <result_array> <header> <name> <desc> <ON|OFF>... — always rc=0, [] on cancel.
 _menu_multi() {
     local -n _mm_out="$1"
@@ -54,7 +46,6 @@ _menu_multi() {
     return 0
 }
 
-# _menu_single <result_var> <header> <name> <desc> <ON|OFF>... — radio, rc=1 on cancel.
 _menu_single() {
     local -n _ms_out="$1"
     shift
@@ -82,8 +73,6 @@ menu_select() {
     _menu_multi "$1" "Categories to install (Space toggles, Enter confirms):" "${args[@]}"
 }
 
-# --- Always-asked single-select prompts (workspace setup) ---
-
 menu_shell_select() {
     _menu_single "$1" "Login shell:" \
         bash "bash" ON \
@@ -96,8 +85,6 @@ menu_multiplexer_select() {
         zellij "zellij (modern Rust multiplexer)" OFF \
         none "none (direct shell login, no persistence)" OFF
 }
-
-# --- Sub-menus (multi-select) ---
 
 menu_runtimes_select() {
     _menu_multi "$1" "Extra runtimes (node/python/pnpm/uv + gcc/g++/make always installed):" \
@@ -118,8 +105,7 @@ menu_runtimes_select() {
         haskell "Functional purist via ghcup (ghc+cabal+hls)" OFF
 }
 
-# NOTE: the agent SET here must match configs/libexec/agents-registry (the single source of
-# truth). This menu only adds presentation (labels + ON/OFF defaults), which the registry omits.
+# Agent set must match configs/libexec/agents-registry (source of truth); menu adds labels+defaults only.
 menu_agents_select() {
     _menu_multi "$1" "AI agent CLIs:" \
         claude-code "Claude Code" ON \
@@ -137,11 +123,12 @@ menu_agents_select() {
 }
 
 menu_editor_select() {
-    _menu_multi "$1" "Terminal editors:" \
+    _menu_multi "$1" "Editors:" \
         vim "Vim" OFF \
         neovim "Neovim — modern standard, Lua config" ON \
         emacs "Emacs (emacs-nox)" OFF \
-        micro "micro — intuitive editor (no modes)" OFF
+        micro "micro — intuitive editor (no modes)" OFF \
+        code-server "code-server — VS Code in the browser" OFF
 }
 
 menu_agent_memory_select() {
@@ -175,7 +162,7 @@ menu_ai_tools_select() {
 }
 
 menu_cloud_stack_select() {
-    _menu_multi "$1" "Cloud provider CLIs:" \
+    _menu_multi "$1" "Cloud provider CLIs + IaC:" \
         aws "AWS CLI v2 (hyperscaler)" OFF \
         flyctl "Fly.io" OFF \
         cloudflared "Cloudflare tunnel + Zero Trust access client" OFF \
@@ -184,7 +171,9 @@ menu_cloud_stack_select() {
         hcloud "Hetzner Cloud (EU)" OFF \
         scaleway "Scaleway (EU)" OFF \
         gcloud "Google Cloud SDK (vfox, ~87 MB, init required)" OFF \
-        azure "Azure CLI (Microsoft official installer)" OFF
+        azure "Azure CLI (Microsoft official installer)" OFF \
+        opentofu "OpenTofu — Terraform-compatible IaC" OFF \
+        pulumi "Pulumi — IaC in real languages" OFF
 }
 
 menu_blockchain_select() {
@@ -244,7 +233,10 @@ menu_cli_extras_select() {
         shfmt "Shell formatter" OFF \
         shellcheck "Shell linter" OFF \
         xh "Modern HTTPie clone (Rust)" OFF \
-        typos "Source-code spell checker" OFF
+        typos "Source-code spell checker" OFF \
+        act "Run GitHub Actions locally" OFF \
+        just "Command runner (Make-like)" OFF \
+        watchexec "Re-run a command on file change" OFF
 }
 
 menu_security_tools_select() {
@@ -261,7 +253,7 @@ menu_security_tools_select() {
         cosign "Sign/verify container images + artifacts" OFF
 }
 
-menu_git_forges_select() {
+menu_git_tools_select() {
     _menu_multi "$1" "Extra git forges + TUI (gh + delta always installed):" \
         lazygit "TUI for git (most popular)" ON \
         gitlab "GitLab CLI (glab) — PRs/issues/CI from terminal" OFF
@@ -289,11 +281,8 @@ menu_summary_confirm() {
         [[ -n "${CERVELAI_BLOCKCHAIN:-}" ]] && printf '  Blockchain:    %s\n' "$CERVELAI_BLOCKCHAIN"
         [[ -n "${CERVELAI_CLI_EXTRAS:-}" ]] && printf '  CLI extras:    %s\n' "$CERVELAI_CLI_EXTRAS"
         [[ -n "${CERVELAI_SECURITY_TOOLS:-}" ]] && printf '  Security:      %s\n' "$CERVELAI_SECURITY_TOOLS"
-        [[ -n "${CERVELAI_GIT_FORGES:-}" ]] && printf '  Git extras:    %s\n' "$CERVELAI_GIT_FORGES"
-        _menu_in_selected ide-web && printf '  IDE web:       code-server\n'
+        [[ -n "${CERVELAI_GIT_TOOLS:-}" ]] && printf '  Git extras:    %s\n' "$CERVELAI_GIT_TOOLS"
         _menu_in_selected usage-trackers && printf '  Usage:         tokscale + ccusage + ccstatusline\n'
-        _menu_in_selected workflow-tools && printf '  Workflow:      act + just + watchexec\n'
-        _menu_in_selected iac-stack && printf '  IaC stack:     opentofu + pulumi\n'
         printf '\n'
     } >/dev/tty
     gum confirm --default=Yes "Install with these choices?" </dev/tty
