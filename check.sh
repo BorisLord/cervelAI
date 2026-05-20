@@ -17,9 +17,8 @@ done
 
 echo "── shellcheck ──"
 if command -v shellcheck >/dev/null 2>&1; then
-    # SC1090/SC1091: we source runtime-resolved files; shellcheck can't follow.
-    shellcheck -e SC1090,SC1091 "${scripts[@]}" || rc=1
-    shellcheck -e SC1090,SC1091 -s bash configs/bash/.bashrc configs/bash/.bash_profile || rc=1
+    shellcheck "${scripts[@]}" || rc=1
+    shellcheck -s bash configs/bash/.bashrc configs/bash/.bash_profile || rc=1
 else
     echo "  shellcheck not found; 'apt install shellcheck' to enable it"
 fi
