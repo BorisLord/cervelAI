@@ -9,7 +9,6 @@ install_cloud_stack_doctl() { mise_use "doctl"; }
 install_cloud_stack_hcloud() { mise_use "hcloud"; }
 install_cloud_stack_scaleway() { mise_use "scaleway"; }
 install_cloud_stack_gcloud() { mise_use "gcloud"; }
-# pipx blocked: azure-cli depends on prerelease azure-batch==15.0.0b1, uv rejects prereleases.
 install_cloud_stack_azure() {
     if has_cmd az; then
         log_skip "azure-cli already installed"

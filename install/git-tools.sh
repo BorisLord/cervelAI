@@ -6,7 +6,6 @@ install_git_tools_core() {
     mise_use "delta"
 }
 
-# Direct .deb download — aqua/mise can't install Gitlab-hosted projects (aqua-registry TODO).
 install_git_tools_glab() {
     if has_cmd glab; then
         log_skip "glab already installed"
@@ -22,7 +21,6 @@ install_git_tools_glab() {
         log_warn "could not resolve latest glab version, skipping"
         return 0
     }
-    # mktemp -d defaults to mode 700 — apt's sandbox user `_apt` then can't read the .deb.
     tmp="$(mktemp -d)" && chmod 755 "$tmp"
     deb="$tmp/glab_${v}_linux_amd64.deb"
     log_info "downloading glab ${v} .deb from GitLab"
