@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# install/token-savers.sh: CLI-noise filters for AI agents.
-# CERVELAI_TOKEN_SAVERS=snip|rtk|none. Mutually exclusive: their PreToolUse hooks clash.
+# install/token-savers.sh: CLI-noise filters. CERVELAI_TOKEN_SAVERS=snip|rtk|none.
 
 install_token_savers_snip() { mise_use "github:edouard-claude/snip"; }
 install_token_savers_rtk() { mise_use "rtk"; }
@@ -31,8 +30,10 @@ _rtk_init_one() {
 }
 
 _init_token_saver() {
+    # shellcheck source=/dev/null
+    declare -F cervelai_agent_packages_csv >/dev/null || source "${CONFIGS_DIR}/libexec/agents-registry"
     local tool="$1" agents="${CERVELAI_AGENTS:-}"
-    [[ "$agents" == "all" ]] && agents="claude-code,codex,opencode,pi,copilot-cli,crush,gemini-cli,goose,continue,qwen-code,mistral-vibe,deepseek-tui,grok-cli"
+    [[ "$agents" == "all" ]] && agents="$(cervelai_agent_packages_csv)"
     [[ -z "$agents" ]] && {
         log_skip "$tool init: no AI agents installed"
         return 0

@@ -94,7 +94,7 @@ Everything else is native: `aoe` for the agents TUI (tmux only), `tmux` (`Ctrl-B
 <summary><b>AI &amp; assistance</b> — agents · token-savers · agent-memory · usage-trackers · ai-tools</summary>
 
 **`agents`** — AI agent CLIs
-- claude-code, codex, opencode, pi, copilot-cli, crush, gemini-cli, goose, continue, qwen-code, mistral-vibe, deepseek-tui, grok-cli
+- claude-code, codex, opencode, pi, copilot-cli, crush, gemini-cli, goose, continue, qwen-code, mistral-vibe, deepseek-tui
 
 **`token-savers`** (single-select) — pre-built filters that strip ≥60 % of command output noise before agents see it
 - snip — YAML-driven pipelines, 126+ built-in filters (git, cargo, docker, kubectl, …)
@@ -110,7 +110,7 @@ Everything else is native: `aoe` for the agents TUI (tmux only), `tmux` (`Ctrl-B
 - ccstatusline — live Claude Code status line (Powerline rendering, real-time metrics)
 
 **`ai-tools`**
-- code2prompt, fabric, llm, **agents** (sync AGENTS.md/skills/MCP across CLIs), aichat, markitdown, mcp-inspector, shell-gpt, gptscript, promptfoo
+- code2prompt, fabric, llm, **agents** (sync AGENTS.md/skills/MCP across CLIs), aichat, markitdown, shell-gpt, gptscript, promptfoo
 
 </details>
 
@@ -179,7 +179,6 @@ Everything else is native: `aoe` for the agents TUI (tmux only), `tmux` (`Ctrl-B
 - varlock (AI-safe .env: schemas for agents, secrets for humans)
 - dotenvx (encrypted .env files)
 - infisical (centralized secret manager CLI)
-- teller (multi-backend secret fetcher)
 - trivy (CVE/IaC/secrets/SBOM scanner)
 - gitleaks (committed-secret scanner)
 - syft (SBOM generator)
@@ -197,7 +196,7 @@ Everything else is native: `aoe` for the agents TUI (tmux only), `tmux` (`Ctrl-B
 - evm (Ethereum: solc + foundry + LSP + slither + solhint)
 - solana (agave validator/CLI + anchor)
 - move (Sui + Aptos, ~1 GB)
-- cosmos (Cosmos SDK: gaiad + ignite)
+- cosmos (Cosmos SDK: ignite scaffolder)
 - near (near-cli-rs)
 - cairo (Starknet: scarb + sncast via Starknet Foundry)
 
@@ -291,7 +290,6 @@ agents you installed can actually use** (no agents selected: no prompt):
 | `MISTRAL_API_KEY` | Mistral Vibe |
 | `DEEPSEEK_API_KEY` | DeepSeek TUI |
 | `DASHSCOPE_API_KEY` | Qwen Code (Alibaba) |
-| `XAI_API_KEY` | Grok CLI |
 
 Multi-provider agents (opencode, Crush, Goose, Continue) accept any of
 `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `OPENROUTER_API_KEY` — pick the

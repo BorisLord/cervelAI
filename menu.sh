@@ -4,7 +4,7 @@
 # -g: sourced from a function (must survive). No commas: gum's --selected splits on commas.
 # Order: matches CATEGORIES in setup.sh — logical groups (AI > workspace > languages > devops > data > polish > security > niche).
 declare -gA _MENU_DESC=(
-    ["agents"]="AI agent CLIs: claude/codex/opencode/pi/crush/gemini/goose/continue (sub)"
+    ["agents"]="AI agent CLIs: claude/codex/opencode/pi/copilot/gemini/qwen/... (sub)"
     ["token-savers"]="snip | rtk (cut shell output 60-90% before reaching agents)"
     ["agent-memory"]="cross-session memory: memsearch/qmd/engram/claude-mem/... (sub)"
     ["usage-trackers"]="token/cost trackers: tokscale + ccusage + ccstatusline"
@@ -121,6 +121,8 @@ menu_runtimes_select() {
         haskell "Functional purist via ghcup (ghc+cabal+hls)" OFF
 }
 
+# NOTE: the agent SET here must match configs/libexec/agents-registry (the single source of
+# truth). This menu only adds presentation (labels + ON/OFF defaults), which the registry omits.
 menu_agents_select() {
     _menu_multi "$1" "AI agent CLIs:" \
         claude-code "Claude Code" ON \
@@ -134,8 +136,7 @@ menu_agents_select() {
         continue "Continue" OFF \
         qwen-code "Qwen-Code" OFF \
         mistral-vibe "Mistral Vibe" OFF \
-        deepseek-tui "DeepSeek TUI" OFF \
-        grok-cli "Grok CLI" OFF
+        deepseek-tui "DeepSeek TUI" OFF
 }
 
 menu_editor_select() {
@@ -171,7 +172,6 @@ menu_ai_tools_select() {
         agents "Sync AGENTS.md + skills + MCP across CLIs (canonical)" ON \
         aichat "Multi-provider chat REPL + RAG + tools (Rust)" OFF \
         markitdown "Convert PDF/DOCX/PPT/HTML → Markdown (MS)" OFF \
-        mcp-inspector "MCP server tester/debugger" OFF \
         shell-gpt "NL → shell/code/chat REPL (sgpt)" OFF \
         gptscript "Framework: LLM ↔ tools/APIs/files (Acorn)" OFF \
         promptfoo "Eval/test LLM prompts (regressions, A/B, metrics)" OFF
@@ -195,7 +195,7 @@ menu_blockchain_select() {
         evm "Ethereum: solc + foundry + LSP + slither + solhint" OFF \
         solana "Solana: agave validator/CLI + anchor framework" OFF \
         move "Sui + Aptos (Move language, sui is ~1 GB)" OFF \
-        cosmos "Cosmos SDK: gaiad + ignite (Go)" OFF \
+        cosmos "Cosmos SDK: ignite scaffolder (Go)" OFF \
         near "NEAR Protocol: near-cli-rs (interactive Rust CLI)" OFF \
         cairo "Starknet: scarb (build/deps) + sncast CLI (Starknet Foundry, Cairo lang)" OFF
 }
@@ -258,7 +258,6 @@ menu_security_tools_select() {
         varlock "AI-safe .env: schemas for agents, secrets for humans" OFF \
         dotenvx "Encrypted .env files (drop-in dotenv)" OFF \
         infisical "Centralized secret manager CLI" OFF \
-        teller "Multi-backend secret fetcher (1Password/Vault/AWS/...)" OFF \
         trivy "All-in-one scanner: CVE+IaC+secrets+SBOM" OFF \
         gitleaks "Scan repos for committed secrets" OFF \
         syft "Generate SBOMs from images/dirs" OFF \

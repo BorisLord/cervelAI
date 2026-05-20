@@ -1,0 +1,40 @@
+# shellcheck shell=bash
+# agents-registry: SINGLE SOURCE OF TRUTH for cervelAI's AI agent CLIs.
+# Sourced (never executed) by both sides:
+#   install — install/agents.sh, install/_prompts.sh, install/token-savers.sh
+#   runtime — libexec/status, libexec/cervel  (deployed next to this file)
+# Format "<package>:<binary>" in display order:
+#   package = mise/install id used by `install_agents_*` + CSV dispatch
+#   binary  = command name on PATH after install (probed by status/cervel)
+# Per-attribute lookups that aren't 1:1 (API keys, prompt-file paths) stay as
+# keyed maps in their own files, but their keys MUST be a subset of this list.
+CERVELAI_AGENTS_REGISTRY=(
+    "claude-code:claude"
+    "codex:codex"
+    "opencode:opencode"
+    "pi:pi"
+    "copilot-cli:copilot"
+    "crush:crush"
+    "gemini-cli:gemini"
+    "goose:goose"
+    "continue:cn"
+    "qwen-code:qwen"
+    "mistral-vibe:vibe"
+    "deepseek-tui:deepseek"
+)
+
+# CSV of package ids (for _dispatch_csv / "all" expansion).
+cervelai_agent_packages_csv() {
+    local IFS=, e
+    local -a a=()
+    for e in "${CERVELAI_AGENTS_REGISTRY[@]}"; do a+=("${e%%:*}"); done
+    printf '%s' "${a[*]}"
+}
+
+# Space-separated binary names (for `command -v` probes).
+cervelai_agent_bins() {
+    local e
+    local -a a=()
+    for e in "${CERVELAI_AGENTS_REGISTRY[@]}"; do a+=("${e##*:}"); done
+    printf '%s' "${a[*]}"
+}

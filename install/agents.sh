@@ -1,22 +1,15 @@
 #!/usr/bin/env bash
-# install/agents.sh: AI agent CLIs (CERVELAI_AGENTS=<csv|all>). claude-code self-updates.
+# install/agents.sh: AI agent CLIs. CERVELAI_AGENTS=<csv|all>.
 
-# package → binary map. -g survives sourcing from a function; also read by aoe gate in shell.sh.
-declare -gA _AGENT_BIN=(
-    ["claude-code"]=claude
-    ["codex"]=codex
-    ["opencode"]=opencode
-    ["pi"]=pi
-    ["copilot-cli"]=copilot
-    ["crush"]=crush
-    ["gemini-cli"]=gemini
-    ["goose"]=goose
-    ["continue"]=cn
-    ["qwen-code"]=qwen
-    ["mistral-vibe"]=vibe
-    ["deepseek-tui"]=deepseek
-    ["grok-cli"]=grok
-)
+# Agent list = configs/libexec/agents-registry (single source); _AGENT_BIN feeds shell.sh's aoe gate.
+# shellcheck source=configs/libexec/agents-registry
+source "${CONFIGS_DIR}/libexec/agents-registry"
+declare -gA _AGENT_BIN=()
+_agent_entry=""
+for _agent_entry in "${CERVELAI_AGENTS_REGISTRY[@]}"; do
+    _AGENT_BIN["${_agent_entry%%:*}"]="${_agent_entry##*:}"
+done
+unset _agent_entry
 
 install_agents_claude_code() {
     if _user_bash 'command -v claude' &>/dev/null; then
@@ -28,7 +21,12 @@ install_agents_claude_code() {
 }
 
 install_agents_codex() { mise_use "codex" latest codex; }
-install_agents_opencode() { mise_use "npm:opencode-ai" latest opencode; }
+install_agents_opencode() {
+    mise_use "npm:opencode-ai" latest opencode || return
+    # pnpm v11 skips opencode-ai's postinstall (it downloads the platform binary); run it ourselves.
+    # shellcheck disable=SC2016
+    soft _user_bash 'p=$(find -L ~/.local/share/mise/installs/npm-opencode-ai -maxdepth 12 -path "*opencode-ai*" -name postinstall.mjs 2>/dev/null | head -1); [ -n "$p" ] && cd "$(dirname "$p")" && node postinstall.mjs'
+}
 install_agents_pi() { mise_use "pi" latest pi; }
 install_agents_copilot_cli() { mise_use "copilot" latest copilot; }
 install_agents_crush() { mise_use "crush"; }
@@ -38,18 +36,12 @@ install_agents_continue() { mise_use "npm:@continuedev/cli" latest cn; }
 install_agents_qwen_code() { mise_use "qwen" latest qwen; }
 install_agents_mistral_vibe() { mise_use "pipx:mistral-vibe" latest vibe; }
 install_agents_deepseek_tui() { mise_use "npm:deepseek-tui" latest deepseek; }
-install_agents_grok_cli() { mise_use "npm:grok-dev" latest grok; }
 
 install_agents_all() {
-    local all
-    all="$(
-        IFS=,
-        echo "${!_AGENT_BIN[*]}"
-    )"
-    _dispatch_csv agents CERVELAI_AGENTS "$all"
+    _dispatch_csv agents CERVELAI_AGENTS "$(cervelai_agent_packages_csv)"
 }
 
-# bin → agent prompt path. Symlinked to ~/AGENTS.md (single source of truth, no drift).
+# binary → prompt-file path; each symlinked to ~/AGENTS.md.
 declare -gA _AGENT_MD_PATH=(
     [claude]=".claude/CLAUDE.md"
     [codex]=".codex/AGENTS.md"

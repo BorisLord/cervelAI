@@ -9,7 +9,6 @@ install_blockchain_evm() {
     mise_use "pipx:slither-analyzer" latest slither
 }
 
-# Rust required: Solana programs compile to BPF.
 install_blockchain_solana() {
     _user_bash 'command -v rustc' &>/dev/null || mise_use "rust"
     mise_use "github:anza-xyz/agave" latest solana
@@ -17,20 +16,17 @@ install_blockchain_solana() {
 }
 
 install_blockchain_move() {
-    # Pinned: sui repo tags 3 lines (mainnet-v*/testnet-v*/devnet-v*), mise picks the latest testnet otherwise.
+    # pin: repo also tags testnet-v*/devnet-v*, mise picks the latest testnet otherwise.
     mise_use "sui" "mainnet-v1.71.1" sui
-    # Pinned: aptos-core tags aptos-cli-v* AND aptos-node-v* (different binaries), mise picks node otherwise.
+    # pin: repo also tags aptos-node-v*, mise picks the node binary otherwise.
     mise_use "github:aptos-labs/aptos-core" "aptos-cli-v9.2.0" aptos
 }
 
-# Go required: custom Cosmos modules are Go packages.
 install_blockchain_cosmos() {
     _user_bash 'command -v go' &>/dev/null || mise_use "go"
-    mise_use "github:cosmos/gaia" latest gaiad
     mise_use "github:ignite/cli" latest ignite
 }
 
-# Rust required: NEAR smart contracts compile to WASM via Rust.
 install_blockchain_near() {
     _user_bash 'command -v rustc' &>/dev/null || mise_use "rust"
     mise_use "github:near/near-cli-rs" latest near

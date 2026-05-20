@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # install/_prompts.sh: interactive prompts for GITHUB_TOKEN + per-agent API keys.
 
-# GITHUB_TOKEN lifts the 60→5000 req/h rate limit that mise + installers hit mid-run.
 prompt_github_token() {
     if [[ -n "${GITHUB_TOKEN:-}" ]]; then
         log_skip "GITHUB_TOKEN already set, used for mise + GitHub API"
@@ -12,14 +11,14 @@ prompt_github_token() {
         log_skip "GITHUB_TOKEN prompt (CERVELAI_NO_PROMPT=1 or dryrun)"
         return 0
     fi
-    if ! { [ -r /dev/tty ] && [ -w /dev/tty ]; }; then
+    # Open /dev/tty before reading: under pct exec the inode exists but opening it fails.
+    if ! (: </dev/tty) 2>/dev/null; then
         log_warn "no TTY, skipping GITHUB_TOKEN prompt (installs may hit the GitHub rate limit)"
         return 0
     fi
     log_step "GitHub token (recommended, lifts the GitHub API rate limit during install)"
     log_info "create one with no scopes at https://github.com/settings/tokens"
     local val
-    # read -r -s instead of gum --password: gum truncates long pastes wider than the terminal.
     read -r -s -p "  GITHUB_TOKEN (leave empty to skip): " val </dev/tty || val=""
     printf '\n'
     if [[ -n "$val" ]]; then
@@ -39,7 +38,6 @@ _agent_keys() {
         qwen-code) echo "DASHSCOPE_API_KEY" ;;
         mistral-vibe) echo "MISTRAL_API_KEY" ;;
         deepseek-tui) echo "DEEPSEEK_API_KEY" ;;
-        grok-cli) echo "XAI_API_KEY" ;;
         opencode | crush | goose | continue)
             echo "ANTHROPIC_API_KEY OPENAI_API_KEY OPENROUTER_API_KEY"
             ;;
@@ -60,8 +58,10 @@ prompt_api_keys() {
         return 0
     }
 
+    # shellcheck source=/dev/null
+    declare -F cervelai_agent_packages_csv >/dev/null || source "${CONFIGS_DIR}/libexec/agents-registry"
     local agents="${CERVELAI_AGENTS:-}"
-    [[ "$agents" == "all" ]] && agents="claude-code,codex,opencode,pi,copilot-cli,crush,gemini-cli,goose,continue,qwen-code,mistral-vibe,deepseek-tui,grok-cli"
+    [[ "$agents" == "all" ]] && agents="$(cervelai_agent_packages_csv)"
     if [[ -z "$agents" ]]; then
         log_skip "no AI agents installed, skipping API key prompt"
         return 0
@@ -82,7 +82,7 @@ prompt_api_keys() {
         return 0
     }
 
-    if ! { [ -r /dev/tty ] && [ -w /dev/tty ]; }; then
+    if ! (: </dev/tty) 2>/dev/null; then
         log_warn "no TTY, skipping API key entry"
         log_warn "→ add them manually to $envfile, or re-run setup.sh via 'pct enter'"
         return 0

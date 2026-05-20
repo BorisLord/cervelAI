@@ -78,7 +78,10 @@ This file (`~/AGENTS.md`) is symlinked at install time to each installed agent's
 | Pi | `~/.pi/agent/AGENTS.md` |
 | Copilot CLI | `~/.copilot/copilot-instructions.md` |
 | Gemini CLI | `~/.gemini/GEMINI.md` |
-| Others (Crush, Goose, Continue, Qwen, Vibe, DeepSeek, Grok) | check their docs and add a symlink manually |
+| Mistral Vibe | `~/.vibe/AGENTS.md` |
+| Goose | `~/.config/goose/.goosehints` |
+| Continue | `~/.continue/rules/agents.md` |
+| Others (Crush, Qwen, DeepSeek) | check their docs and add a symlink manually |
 
 cervelAI's symlinks cover only the prompt file. To sync MCP servers, skills, slash commands across agents, install via `ai-tools` category:
 
