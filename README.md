@@ -72,7 +72,7 @@ Everything else is native: `aoe` for the agents TUI (tmux only), `tmux` (`Ctrl-B
 | C/C++ base | gcc, g++, make — full tooling is opt-in via `runtimes → c-cpp` |
 | mise + topgrade | system-wide polyglot version manager + one-shot update tool |
 | Runtimes core | node lts, pnpm, tsc, tsx, python, ruff, uv |
-| LSPs universal | bash, yaml, taplo (TOML), marksman (md), typescript-ls, vscode-json-ls, basedpyright |
+| LSPs universal | bash, yaml, taplo (TOML), marksman (md), typescript-ls, biome (JSON/CSS), superhtml, basedpyright |
 | LSPs runtime-gated | rust-analyzer, zls, lua-language-server, kotlin-language-server, ruby-lsp — auto-installed only if the matching runtime is opted in (docker LSPs if `containers` is enabled) |
 | Search-core | ripgrep, fd, fzf, jq, yq, dasel, gron, ast-grep, bat |
 | Git | gh (GitHub CLI), delta |

@@ -7,7 +7,8 @@ install_lsp_core() {
     mise_use "taplo"
     mise_use "marksman"
     mise_npm "typescript-language-server"
-    mise_use "npm:vscode-langservers-extracted" latest vscode-json-language-server
+    mise_use "biome"
+    mise_use "github:kristoff-it/superhtml" latest superhtml
     mise_use "pipx:basedpyright" latest basedpyright
     if [[ " ${selected[*]:-} " == *" containers "* ]]; then
         mise_use "github:docker/docker-language-server[bin=docker-language-server]" latest docker-language-server
