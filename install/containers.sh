@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 # install/containers.sh: container runtimes + tooling. CERVELAI_CONTAINERS=<csv|all>.
-# LXC needs nesting=1 + keyctl=1 (cervelAI's defaults).
 
 install_containers_docker() {
     local u
@@ -8,7 +7,6 @@ install_containers_docker() {
     if has_cmd docker; then
         log_skip "docker already installed"
     else
-        # Docker's own APT repo — fresher than Debian's docker.io package.
         local distro_id
         # shellcheck disable=SC1091
         . /etc/os-release
@@ -44,7 +42,27 @@ install_containers_docker() {
     fi
 }
 
-install_containers_podman() { apt_install podman; }
+install_containers_podman() {
+    # uidmap + slirp4netns are Recommends; without them rootless podman fails.
+    apt_install podman uidmap slirp4netns
+    local u
+    u="$(_user)"
+    if ! grep -q "^${u}:" /etc/subuid 2>/dev/null; then
+        run usermod --add-subuids 100000-165535 "$u"
+        log_ok "subuid range added for $u"
+    else
+        log_skip "subuid already set for $u"
+    fi
+    if ! grep -q "^${u}:" /etc/subgid 2>/dev/null; then
+        run usermod --add-subgids 100000-165535 "$u"
+        log_ok "subgid range added for $u"
+    else
+        log_skip "subgid already set for $u"
+    fi
+    if ! _user_bash "podman info" &>/dev/null; then
+        log_warn "rootless podman not functional in unprivileged LXC (kernel uid_map limit); use 'sudo podman' for rootful mode"
+    fi
+}
 install_containers_lazydocker() { mise_use "lazydocker"; }
 install_containers_hadolint() { mise_use "hadolint"; }
 install_containers_dive() { mise_use "dive"; }
