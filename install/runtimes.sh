@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# install/runtimes.sh: mise + language runtimes. node/python/pnpm/uv mandatory, rest opt-in.
 
 # pnpm 11.1.3 breaks with ERR_PNPM_RESOLUTION_POLICY_VIOLATIONS_UNHANDLED; pin it.
 _PNPM_VERSION="11.1.2"
@@ -11,7 +10,7 @@ install_runtimes_mise() {
         log_info "installing mise system-wide to /usr/local/bin/mise"
         run sh -c 'curl -fsSL https://mise.run | MISE_INSTALL_PATH=/usr/local/bin/mise sh'
     fi
-    # Deploy [settings] before any `mise use -g` appends [tools] to the same file.
+    # Must deploy [settings] before any `mise use -g` appends [tools] to the same file.
     local u
     u="$(_user)"
     local cfg="/home/$u/.config/mise/config.toml"
@@ -36,11 +35,11 @@ install_runtimes_pnpm_config() {
     if [[ -r "$src_ws" ]]; then
         run install -d -m 755 -o "$u" -g "$u" "$pnpm_home"
         run install -D -m 644 -o "$u" -g "$u" "$src_ws" "$pnpm_home/pnpm-workspace.yaml"
-        log_ok "pnpm-workspace.yaml deployed to PNPM_HOME"
+        log_ok "pnpm-workspace.yaml deployed to ~/.local/share/pnpm (pnpm XDG dir)"
     fi
 }
 
-# Bootstrap chicken-and-egg: config.toml routes npm:* through pnpm, but pnpm itself is npm:*.
+# Chicken-and-egg: config.toml routes npm:* through pnpm, but pnpm itself is npm:*.
 install_runtimes_pnpm() {
     if _user_bash "command -v pnpm" &>/dev/null; then
         log_skip "mise: pnpm already on PATH"
@@ -82,8 +81,7 @@ install_runtimes_scala() { mise_use "scala" "latest"; }
 install_runtimes_lua() { mise_use "lua" "latest"; }
 
 install_runtimes_ruby() {
-    # Pin to the latest jdx/ruby precompiled binary (ruby.compile=false). `latest` would
-    # outrun the binary feed and fall back to a source build — bump when a newer binary ships.
+    # Pin: `latest` outruns the precompiled binary feed and falls back to a source build — bump when a newer binary ships.
     mise_use "ruby" "4.0.4"
 }
 

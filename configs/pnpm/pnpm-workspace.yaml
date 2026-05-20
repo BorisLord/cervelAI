@@ -1,15 +1,9 @@
-# pnpm v11 renamed `onlyBuiltDependencies` to `allowBuilds` and moved it OUT of .npmrc
-# (only auth/registry settings load from .npmrc now). Listed packages may run their
-# postinstall scripts; everything else stays blocked. The 3 agent CLIs below download
-# a native binary in postinstall — the other 8 agents use optionalDependencies (no script).
+# pnpm v11: allowBuilds moved out of .npmrc. These 3 CLIs download a native binary in postinstall.
 allowBuilds:
   - opencode-ai
   - "@anthropic-ai/claude-code"
   - deepseek-tui
 
-# Bypass pnpm v11's default 1440-min (1 day) release-age gate that blocks freshly
-# published versions mid-install. Set here (not via NPM_CONFIG_MINIMUM_RELEASE_AGE)
-# so the value stays pnpm-only and doesn't leak "Unknown env config" warns into npm.
-# install/_finalize.sh:lock_pnpm_release_age comments this out after install so periodic
-# updates fall back to the default quarantine.
+# Set here (not NPM_CONFIG_MINIMUM_RELEASE_AGE) to avoid leaking "Unknown env config" into npm.
+# install/_finalize.sh comments this out after install to restore the default 1440-min quarantine.
 minimumReleaseAge: 0

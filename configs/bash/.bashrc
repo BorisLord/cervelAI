@@ -1,10 +1,4 @@
 # shellcheck shell=bash
-# .bashrc — cervelAI (the VM's default shell).
-# The optional zsh shell has its own config in ../zsh/.
-
-# ─── Always-on (interactive + scripts): env, PATH, mise shims, cervel() ───
-# Needed so `ssh agent@host 'cervel run …'`, cron, and non-interactive scripts can find mise tools.
-
 # shellcheck source=/dev/null
 [ -r "$HOME/.config/cervelAI/env" ] && . "$HOME/.config/cervelAI/env"
 
@@ -16,19 +10,14 @@ path_prepend "$HOME/.local/share/mise/shims"
 path_prepend "$HOME/.local/bin"
 path_prepend "$HOME/bin"
 path_prepend "$HOME/.local/share/npm/bin"
-# bun global installs (promptfoo + any tool pnpm v11 can't hoist) land here.
 path_prepend "$HOME/.bun/bin"
 export GOPATH="$HOME/go"
 path_prepend "$GOPATH/bin"
-# ghcup installs ghc/cabal/hls/runhaskell here when haskell runtime is opt-in.
 path_prepend "$HOME/.ghcup/bin"
 for _gemdir in "$HOME"/.local/share/gem/ruby/*/bin; do [ -d "$_gemdir" ] && path_prepend "$_gemdir"; done
 # shellcheck source=/dev/null
 [ -s "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
-# `cervel` is a standalone script at ~/.local/bin/cervel — works in any shell, no function needed.
-
-# ─── Interactive-only: prompt, history, bash-it, aliases, completions ───
 case $- in *i*) ;; *) return ;; esac
 
 command -v mise >/dev/null 2>&1 && eval "$(mise activate bash)"
@@ -36,8 +25,7 @@ command -v mise >/dev/null 2>&1 && eval "$(mise activate bash)"
 if [ -d "$HOME/.bash_it" ]; then
     export BASH_IT="$HOME/.bash_it"
     export BASH_IT_THEME='bobby'
-    # Prevent `_bash-it-restart` (exec bash --rcfile) from replacing the current shell mid-script.
-    # bash-it checks `[[ -n "${VAR:-}" ]]` — any non-empty value triggers reload, so we unset it.
+    # bash-it's auto-restart fires on any non-empty value; unset to prevent mid-session exec bash.
     unset BASH_IT_AUTOMATIC_RELOAD_AFTER_CONFIG_CHANGE
     # shellcheck source=/dev/null
     source "$BASH_IT/bash_it.sh"

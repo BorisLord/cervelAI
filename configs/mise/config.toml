@@ -1,15 +1,7 @@
-# mise: cervelAI baseline settings.
-# Settings only: the [tools] section is owned by mise. `mise use -g <tool>`
-# (run by install/runtimes.sh and the install/*.sh scripts) appends to this
-# file; node, python and pnpm always end up here. Per-project .mise.toml
-# overrides as usual.
-
 [settings.npm]
-# Every `mise use -g npm:<pkg>` routes through pnpm (faster + content-addressable
-# store dedupes). pnpm itself bootstraps with MISE_NPM_PACKAGE_MANAGER=npm in
-# install/runtimes.sh to break the circular dep.
+# pnpm bootstraps with MISE_NPM_PACKAGE_MANAGER=npm in install/runtimes.sh to break the circular dep.
 package_manager = "pnpm"
 
-# Ruby defaults to source compile until mise 2026.8; force precompiled until then.
+# Ruby defaults to source-compile until mise 2026.8; force precompiled until then.
 [settings.ruby]
 compile = false

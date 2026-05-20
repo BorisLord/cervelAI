@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
-# cervel-run <cmd> [args...]: run a command (an AI agent), ntfy-notify on exit.
-#   cervel-run claude -p "implement X"
-# Reads NTFY_SERVER / NTFY_TOPIC from ~/.config/cervelAI/env. Empty topic: no notification.
 set -uo pipefail
+
+# Non-interactive shells don't load .bashrc; activate mise shims so agent binaries resolve.
+command -v mise >/dev/null 2>&1 && eval "$(mise activate bash --shims)"
+case ":$PATH:" in
+    *":$HOME/.local/bin:"*) ;;
+    *) export PATH="$HOME/.local/bin:$HOME/.bun/bin:$PATH" ;;
+esac
 
 env_file="$HOME/.config/cervelAI/env"
 # shellcheck source=/dev/null
