@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# install/base.sh: essential packages, gum, locales, sshd.
 
 install_base_apt_update() {
     log_info "apt update + upgrade"
@@ -20,13 +19,12 @@ install_base_packages() {
         xclip
 }
 
-# CERVELAI_LOCALES silences perl warnings when SSH sends a non-C LANG via SendEnv.
+# C.UTF-8 is built into glibc (no locale-gen needed); LC_ALL overrides any locale SSH forwards via SendEnv.
 install_base_locales() {
+    log_info "update-locale LANG=C.UTF-8 LC_ALL=C.UTF-8"
+    run update-locale LANG=C.UTF-8 LC_ALL=C.UTF-8
     local csv="${CERVELAI_LOCALES:-}"
-    [[ -z "$csv" ]] && {
-        log_skip "no extra locale (set CERVELAI_LOCALES=<csv>)"
-        return 0
-    }
+    [[ -z "$csv" ]] && return 0
     IFS=',' read -r -a list <<<"$csv"
     log_info "locale-gen ${list[*]}"
     run locale-gen "${list[@]}" >/dev/null
@@ -48,12 +46,21 @@ install_base_gum() {
     apt_install gum
 }
 
+# Security patches as root via the stock apt-daily timers. The no-sudo agent can't apt, so without
+# this the box is never patched after install. Stock 50unattended-upgrades only pulls *-security.
+install_base_unattended() {
+    apt_install unattended-upgrades
+    # Own the setting deterministically — don't rely on the package's debconf default being "on".
+    log_info "enabling unattended-upgrades (security auto-updates)"
+    run bash -c "printf 'APT::Periodic::Update-Package-Lists \"1\";\nAPT::Periodic::Unattended-Upgrade \"1\";\n' > /etc/apt/apt.conf.d/20auto-upgrades"
+}
+
 install_base_sshd() {
-    # Recent Debian/Ubuntu use ssh.socket; absent on older releases (soft absorbs).
+    # Recent Debian/Ubuntu use ssh.socket; absent on older releases (soft absorbs the error).
     soft run systemctl disable --now ssh.socket
     run systemctl enable ssh.service
 
-    # Key-only hardening: gated on a key being provided, else lock-out risk.
+    # Gated on a key being provided — hardening without a key would lock out the user.
     local dropin="/etc/ssh/sshd_config.d/10-cervelAI.conf"
     if [[ -n "${CERVELAI_SSH_KEY:-}" ]]; then
         if [[ -f "$dropin" ]]; then
@@ -72,6 +79,7 @@ install_base_sshd() {
 install_base_all() {
     install_base_apt_update
     install_base_packages
+    install_base_unattended
     install_base_gum
     install_base_locales
     install_base_sshd

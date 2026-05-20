@@ -1,14 +1,11 @@
-# cervelAI topgrade config.
-# Skip step types covered by mise (mise upgrade handles them via its backends),
-# and tools that recursively fetch flaky upstream repos.
 [misc]
 assume_yes = true
-# topgrade's self_update calls api.github.com anonymously (no GITHUB_TOKEN support);
-# mise already handles topgrade upgrades via aqua:topgrade-rs/topgrade — avoid the duplicate.
+# topgrade's self_update uses anonymous GitHub API (no token); mise already upgrades it via aqua.
 no_self_update = true
 disable = [
-    "pnpm",  # mise:npm backend uses pnpm internally; `pnpm root -g` is unrelated
-    "node",  # idem: mise drives node version
+    "system",  # agent has no sudo; apt is root's job (unattended-upgrades + manual root apt)
+    "pnpm",  # mise:npm backend owns pnpm; `pnpm root -g` is unrelated
+    "node",  # mise drives node version
     "pip3",  # mise:pipx backend covers it
     "yarn",  # not used
 ]

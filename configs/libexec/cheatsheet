@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Print logo + tmux/aoe/cervel keybind cheatsheet. Invoked by `cervel -h`.
 set -u
 
 _LIBEXEC="$(dirname "$(readlink -f "$0")")"
@@ -45,5 +44,5 @@ printf '    cervel ls                list installed AI agents\n'
 printf '    cervel run <cmd>         run a command, ntfy push on exit (long jobs)\n'
 
 printf '\n  update\n'
-printf '    topgrade                 apt + mise + in one shot\n'
+printf '    topgrade                 update mise + user-space (apt/system = root)\n'
 printf '\n'

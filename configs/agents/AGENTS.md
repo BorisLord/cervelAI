@@ -52,7 +52,7 @@ Everything else is opt-in (`mise ls` for the actual catalog).
 - `cervel help` — tmux/aoe/cervel cheatsheet
 - `cervel ls` / `cervel status` — discoverability
 - `aoe` — parallel agents in tmux + web dashboard
-- `topgrade` — update everything
+- `topgrade` — update mise + user-space (apt/system updates are root's job)
 
 ## Adding a tool
 
