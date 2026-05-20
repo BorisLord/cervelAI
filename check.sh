@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# check.sh: local lint (bash -n + shellcheck + shfmt). Run before commit.
 set -uo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 

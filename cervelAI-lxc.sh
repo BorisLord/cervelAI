@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
-# cervelAI-lxc.sh: phase 1, provisions a Proxmox LXC. Run as root on the host.
-# Usage:
-#   bash cervelAI-lxc.sh                    # interactive
-#   bash cervelAI-lxc.sh --update <CTID>    # re-push + re-run setup.sh
-#   dev_mode=nomenu bash cervelAI-lxc.sh    # installs everything
-#   dev_mode=trace,dryrun bash cervelAI-lxc.sh
+# Usage: bash cervelAI-lxc.sh  |  bash cervelAI-lxc.sh --update <CTID>  |  dev_mode=nomenu bash cervelAI-lxc.sh
 
 set -uo pipefail
 export LC_ALL=C # silences perl locale warnings from pct/pveam
@@ -44,14 +39,14 @@ push_and_setup() {
     if ((DRY_RUN)); then
         log_info "(dryrun: skipping tar/push)"
     else
-        # pct has no recursive push: tar | pct exec tar -x.
+        # pct has no recursive push; use tar | pct exec tar -x.
         tar -C "$SCRIPT_DIR" --exclude=.git --exclude=.gitkeep \
             --exclude=.memsearch --exclude=plan -cf - . |
             pct exec "$_ctid" -- tar -C "$PUSH_DIR" -xf -
     fi
     log_ok "files pushed to $PUSH_DIR inside LXC"
 
-    # GITHUB_TOKEN dodges the GitHub API rate limit that 403s tool installs mid-run.
+    # GITHUB_TOKEN: avoids GitHub API rate-limit 403s during tool installs.
     local _gh_env=()
     [[ -n "${GITHUB_TOKEN:-}" ]] && _gh_env=("GITHUB_TOKEN=${GITHUB_TOKEN}")
 
@@ -120,7 +115,7 @@ if [[ -n "$UPDATE_CTID" ]]; then
     exit 0
 fi
 
-# /dev/tty explicitly so it works under `bash -c "$(curl ...)"`.
+# /dev/tty explicit: works under `bash -c "$(curl ...)"` where stdin is the script.
 prompt_default() {
     local var="$1" question="$2" def="$3" val=""
     read -r -p "$question [$def]: " val </dev/tty
@@ -134,7 +129,6 @@ pvesm status --content rootdir 2>/dev/null |
     awk 'NR>1 {printf "         %-18s %-9s %8.1f GiB free\n", $1, $2, $6/1024/1024}'
 
 DEFAULT_CTID="$(pvesh get /cluster/nextid 2>/dev/null || true)"
-# Prefer copy-on-write pools (btrfs/zfs) for rootfs; fall back to any active.
 DEFAULT_STORAGE="$(pvesm status --content rootdir 2>/dev/null |
     awk 'NR>1 && $3=="active" && $2 ~ /^(btrfs|zfspool)$/ {print $1; exit}')"
 [[ -z "$DEFAULT_STORAGE" ]] && DEFAULT_STORAGE="$(pvesm status --content rootdir 2>/dev/null |
@@ -188,7 +182,7 @@ if pct status "$CTID" &>/dev/null; then
     exit 1
 fi
 
-# keyctl=1 + nesting=1: systemd + Docker/Podman work inside unprivileged LXC (uns isolation still holds).
+# keyctl=1,nesting=1: systemd + Docker/Podman work inside unprivileged LXC (kernel isolation still holds).
 run pct create "$CTID" "$TEMPLATE_PATH" \
     --hostname "$HOSTNAME" \
     --cores "$VCPU" \
@@ -225,8 +219,6 @@ log_ok "LXC IP: $LXC_IP"
 
 push_and_setup "$CTID" "$CT_USER" "$SSH_PUB_KEY"
 
-# Host-side panel: connect + container management only (the install recap lives inside
-# the LXC via `cervel status`, reachable once connected — no duplication here).
 log_step "$HOSTNAME · CT $CTID · $LXC_IP"
 cat <<EOF
 

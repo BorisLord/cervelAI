@@ -5,21 +5,14 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-# Bind all interfaces so the dashboard is reachable from LAN/mobile.
-# Token auth stays on (aoe refuses --no-auth unless bound to localhost),
-# the URL with ?token=… is printed in the journal and stable across restarts.
-# PATH includes ~/.local/bin + mise shims so aoe finds agent binaries
-# (claude, opencode, …) installed per-user via npm/mise.
+# PATH includes mise shims so aoe finds agent binaries installed per-user via npm/mise.
 Environment="PATH=%h/.local/bin:%h/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin"
-# aoe itself is installed via mise (ubi:njbrake/agent-of-empires).
-# Using the mise shim so version upgrades (`mise upgrade aoe`) take effect on restart.
+# mise shim so `mise upgrade aoe` takes effect on next restart.
 ExecStart=%h/.local/share/mise/shims/aoe serve --host 0.0.0.0
 Restart=on-failure
 RestartSec=5s
 
-# Hardening kept minimal because aoe needs full access to $HOME (sessions,
-# config, agent worktrees) and to /tmp (tmux sockets shared with user shells,
-# so PrivateTmp would isolate them and break attaching from SSH).
+# PrivateTmp omitted: aoe shares tmux sockets in /tmp with user shells; isolating breaks SSH attach.
 NoNewPrivileges=true
 ProtectKernelTunables=true
 ProtectKernelModules=true

@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# install/security-tools.sh: secrets + signing + SBOM + AI-aware tooling.
-# CERVELAI_SECURITY_TOOLS=<csv|all>.
 
 install_security_tools_sops() { mise_use "sops"; }
 install_security_tools_age() { mise_use "age"; }

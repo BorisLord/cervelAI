@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# install/token-savers.sh: CLI-noise filters. CERVELAI_TOKEN_SAVERS=snip|rtk|none.
 
 install_token_savers_snip() { mise_use "github:edouard-claude/snip"; }
 install_token_savers_rtk() { mise_use "rtk"; }

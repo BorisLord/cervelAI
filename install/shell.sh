@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# install/shell.sh: shell (CERVELAI_SHELL) + multiplexer (CERVELAI_MULTIPLEXER, drives aoe).
 
 install_shell_bash() { apt_install bash bash-completion; }
 install_shell_zsh() { apt_install zsh; }
@@ -7,15 +6,12 @@ install_shell_zsh() { apt_install zsh; }
 install_shell_tmux() { apt_install tmux; }
 install_shell_zellij() { mise_use "zellij"; }
 
-# --- aoe orchestrator (CERVELAI_MULTIPLEXER=tmux+aoe) ---
-
 _orch_load_agent_bin() {
     # shellcheck disable=SC1091
     [[ -n "${_AGENT_BIN[*]:-}" ]] || source "${INSTALL_DIR}/agents.sh"
 }
 
-# aoe-recognized agents NOT in cervelAI's registry — only detected if the user pre-installed them.
-# (copilot is omitted: it's already a registry binary via copilot-cli, covered by _AGENT_BIN.)
+# aoe-recognized but not in registry; copilot excluded (covered by copilot-cli in _AGENT_BIN).
 _AOE_EXTRA_AGENTS=(
     cursor droid hermes kiro
 )
@@ -47,12 +43,12 @@ _orch_at_least_one_agent_installed() {
     return 1
 }
 
-# [bin=aoe]: release asset is aoe-linux-amd64.tar.gz, else mise names the shim aoe-linux-amd64.
+# [bin=aoe]: without it mise names the shim after the tarball (aoe-linux-amd64).
 install_shell_aoe() {
     mise_use "github:njbrake/agent-of-empires[bin=aoe]" latest aoe
 }
 
-# /root/.bashrc handoff covers `pct enter` (interactive non-login skips /etc/profile.d).
+# `pct enter` is interactive non-login; /etc/profile.d is skipped, so /root/.bashrc must source the handoff.
 install_shell_entry_handoff() {
     local src_profile="${CONFIGS_DIR}/profile.d/cervelai-entry.sh"
     local src_libexec="${CONFIGS_DIR}/libexec"
@@ -62,7 +58,7 @@ install_shell_entry_handoff() {
     fi
     log_info "deploying /etc/profile.d/cervelai-entry.sh + /etc/skel libexec"
     run install -D -m 644 "$src_profile" /etc/profile.d/cervelai-entry.sh
-    # Bake the chosen user into the root→user login handoff (default in the file is `agent`).
+    # Bake the chosen user in (default in the shipped file is `agent`).
     run sed -i "s/^CERVELAI_ENTRY_USER=agent$/CERVELAI_ENTRY_USER=$(_user)/" /etc/profile.d/cervelai-entry.sh
     _deploy_libexec /etc/skel/.local/libexec/cervelai
 
@@ -99,7 +95,7 @@ install_shell_aoe_serve_systemd() {
     # `install -D` as root leaves parents root-owned; systemctl --user needs $u to own wants/.
     run chown -R "$u:$u" "$home/.config/systemd"
     soft run loginctl enable-linger "$u"
-    # enable-linger spawns user@.service async; wait for /run/user/UID/systemd before systemctl --user.
+    # enable-linger is async; wait for /run/user/UID/systemd before systemctl --user.
     local uid xdg
     uid="$(id -u "$u")"
     xdg="/run/user/$uid"
@@ -111,7 +107,6 @@ install_shell_aoe_serve_systemd() {
     soft run sudo -u "$u" XDG_RUNTIME_DIR="$xdg" systemctl --user enable --now aoe-serve.service
 }
 
-# aoe install is deferred to install_shell_aoe_post_dispatch (gated on ≥1 agent installed).
 install_shell_multiplexer_tmux_aoe() {
     install_shell_tmux
     install_shell_entry_handoff

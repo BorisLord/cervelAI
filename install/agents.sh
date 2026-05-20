@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# install/agents.sh: AI agent CLIs. CERVELAI_AGENTS=<csv|all>.
 
-# Agent list = configs/libexec/agents-registry (single source); _AGENT_BIN feeds shell.sh's aoe gate.
+# _AGENT_BIN feeds shell.sh's aoe gate; single source of truth is configs/libexec/agents-registry.
 # shellcheck source=configs/libexec/agents-registry
 source "${CONFIGS_DIR}/libexec/agents-registry"
 declare -gA _AGENT_BIN=()
@@ -23,7 +22,7 @@ install_agents_claude_code() {
 install_agents_codex() { mise_use "codex" latest codex; }
 install_agents_opencode() {
     mise_use "npm:opencode-ai" latest opencode || return
-    # pnpm v11 skips opencode-ai's postinstall (it downloads the platform binary); run it ourselves.
+    # pnpm v11 skips postinstall (downloads platform binary); run it ourselves.
     # shellcheck disable=SC2016
     soft _user_bash 'p=$(find -L ~/.local/share/mise/installs/npm-opencode-ai -maxdepth 12 -path "*opencode-ai*" -name postinstall.mjs 2>/dev/null | head -1); [ -n "$p" ] && cd "$(dirname "$p")" && node postinstall.mjs'
 }
@@ -41,7 +40,6 @@ install_agents_all() {
     _dispatch_csv agents CERVELAI_AGENTS "$(cervelai_agent_packages_csv)"
 }
 
-# binary → prompt-file path; each symlinked to ~/AGENTS.md.
 declare -gA _AGENT_MD_PATH=(
     [claude]=".claude/CLAUDE.md"
     [codex]=".codex/AGENTS.md"

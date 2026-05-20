@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# install/data-stack.sh: DB clients + data CLIs. CERVELAI_DATA_STACK=<csv|all>.
 
 install_data_stack_sqlite3() { apt_install sqlite3; }
 install_data_stack_postgresql_client() { apt_install postgresql-client; }

@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-# install/agent-memory.sh: cross-session memory. CERVELAI_AGENT_MEMORY=<csv|all>.
 
 install_agent_memory_memsearch() { mise_use "pipx:memsearch" latest memsearch; }
 install_agent_memory_qmd() { mise_use "npm:@tobilu/qmd" latest qmd; }
 install_agent_memory_engram() {
-    # Pinned to 1.x — upstream also tags pi-v* (Pi.dev integration, no binary assets) that mise's "latest" picks up.
+    # Pinned to 1.x — upstream also tags pi-v* (no binary assets) that mise's "latest" picks up.
     mise_use "github:Gentleman-Programming/engram[bin=engram]" "1" engram || return
     local agent bin
     for agent in claude-code:claude opencode:opencode pi:pi gemini-cli:gemini codex:codex; do

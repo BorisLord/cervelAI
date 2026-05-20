@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# cervel: dispatcher CLI (installed to ~/.local/bin/cervel via libexec symlink).
-# Works in any shell — interactive, non-interactive, cron, ssh `cmd`, etc.
 set -u
 LIBEXEC="$(dirname "$(readlink -f "$0")")"
 case "${1:-}" in
@@ -16,7 +14,7 @@ case "${1:-}" in
         for a in $(cervelai_agent_bins 2>/dev/null); do
             command -v "$a" >/dev/null 2>&1 && printf '  %s\n' "$a"
         done
-        # `true`: the final loop iteration leaks its rc, so a missing last agent would exit 1.
+        # final loop iteration leaks its rc; a missing last agent would exit 1.
         true
         ;;
     *)

@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
-# bootstrap.sh: cervelAI one-liner installer.
-#   bash -c "$(curl -fsSL .../bootstrap.sh)"             # interactive
-#   bash -c "$(curl -fsSL .../bootstrap.sh)" _ --lxc     # Proxmox LXC mode
-#   bash -c "$(curl -fsSL .../bootstrap.sh)" _ --no-lxc  # install on THIS machine
+# Usage: bash -c "$(curl -fsSL .../bootstrap.sh)" [_ --lxc | _ --no-lxc]
 # Override: CERVELAI_REPO (default BorisLord/cervelAI), CERVELAI_REF (default main).
 
 set -euo pipefail

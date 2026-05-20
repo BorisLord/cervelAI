@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# install/lsp.sh: LSP servers. core runs early; runtime-gated runs after opt-in runtimes exist.
 
 install_lsp_core() {
     mise_npm "bash-language-server"
@@ -16,8 +15,7 @@ install_lsp_core() {
 }
 
 install_lsp_runtime_gated() {
-    # rustup proxy in ~/.cargo/bin shadows mise shims; installing via rustup avoids the
-    # "infinite recursion detected" error when the component is missing.
+    # rustup proxy shadows mise shims; installing via rustup avoids "infinite recursion detected".
     _user_bash "command -v rustc" &>/dev/null &&
         soft _user_bash "rustup component add rust-analyzer"
     _user_bash "command -v go" &>/dev/null && mise_use "go:golang.org/x/tools/gopls"

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# install/search.sh: AI-critical search/parsing CLIs (mandatory). Human extras in install/cli-extras.sh.
 
 install_search_all() {
     mise_use "ripgrep" latest rg

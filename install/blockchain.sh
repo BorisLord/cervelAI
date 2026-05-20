@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# install/blockchain.sh: blockchain dev bundles. CERVELAI_BLOCKCHAIN=<csv|all>. All precompiled.
 
 install_blockchain_evm() {
     mise_use "solidity" latest solc
@@ -16,9 +15,9 @@ install_blockchain_solana() {
 }
 
 install_blockchain_move() {
-    # pin: repo also tags testnet-v*/devnet-v*, mise picks the latest testnet otherwise.
+    # pin: repo also tags testnet-v*/devnet-v*, mise would pick the latest testnet without a pin.
     mise_use "sui" "mainnet-v1.71.1" sui
-    # pin: repo also tags aptos-node-v*, mise picks the node binary otherwise.
+    # pin: repo also tags aptos-node-v*, mise would pick the node binary without a pin.
     mise_use "github:aptos-labs/aptos-core" "aptos-cli-v9.2.0" aptos
 }
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# install/containers.sh: container runtimes + tooling. CERVELAI_CONTAINERS=<csv|all>.
 
 install_containers_docker() {
     local u
