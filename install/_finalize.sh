@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
-# install/_finalize.sh: final topgrade + summary + chsh + MOTD.
 
-# Installs run with minimumReleaseAge: 0 (always latest); comment it out afterwards so periodic
-# updates fall back to pnpm's default quarantine instead of auto-pulling <1-day-old releases.
+# minimumReleaseAge: 0 is install-only; lock it out so periodic updates use pnpm's default quarantine.
 lock_pnpm_release_age() {
     local u f
     u="$(_user)"
@@ -17,11 +15,27 @@ run_final_topgrade() {
         log_skip "final topgrade (dryrun)"
         return 0
     }
-    log_step "final refresh (topgrade): catches apt security updates"
+    log_step "final refresh (topgrade): mise + user-space backends (apt = root/unattended-upgrades)"
     soft _user_bash "GIT_TERMINAL_PROMPT=0 topgrade --yes"
 }
 
-# Persisted for `cervel status` to read back (stack, categories, agents).
+# GITHUB_TOKEN is install-only; wipe it at end so runtime access uses `gh auth login` + SSH keys, not a stored token.
+clear_github_token() {
+    ((DRY_RUN)) && {
+        log_skip "clear GITHUB_TOKEN (dryrun)"
+        return 0
+    }
+    local u f
+    u="$(_user)"
+    f="/home/$u/${ENV_FILE_REL}"
+    if [[ -f "$f" ]] && grep -q '^export GITHUB_TOKEN=' "$f"; then
+        run sed -i '/^export GITHUB_TOKEN=/d' "$f"
+        log_ok "removed persisted GITHUB_TOKEN from $f"
+    fi
+    unset GITHUB_TOKEN
+    log_ok "GITHUB_TOKEN cleared (install-only, not kept on the box)"
+}
+
 write_manifest() {
     local u f
     u="$(_user)"
@@ -39,7 +53,6 @@ write_manifest() {
     chown "$u:$u" "$f"
 }
 
-# Slim: identity + a pointer to `cervel status`; connect/management live on the host side.
 print_final_summary() {
     local u ip
     u="$(_user)"
@@ -52,7 +65,7 @@ print_final_summary() {
 
   cervelAI is ready on ${u}@$(hostname) (${ip:-<detect: ip a>})
 
-  → run  cervel status  for the full picture — stack, sessions, endpoints, keys
+  → run  cervel status  for the full picture — stack, sessions, endpoints
 
 EOF
 }
@@ -103,7 +116,7 @@ finalize() {
 
   Shell:    ${desired}    Multiplexer: ${CERVELAI_MULTIPLEXER:-tmux+aoe}
   Connect:  ssh ${u}@<this-ip>  |  mosh ${u}@<this-ip>
-  Env/keys: ~/.config/cervelAI/env
+  Env:      ~/.config/cervelAI/env
   Notify:   cervel run <cmd>
   Tools:    cat ~/AGENTS.md
 

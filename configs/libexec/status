@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-# Print aggregated cervelAI status (lxc + sessions + aoe + ntfy + agents + keys + system).
-# Invoked by `cervel -s`. One-shot output, no prompt.
 set -u
 
 _LIBEXEC="$(dirname "$(readlink -f "$0")")"
@@ -21,7 +19,6 @@ _mux_list() {
     esac
 }
 
-# Install selection persisted by setup.sh (shell, multiplexer, categories).
 _manifest="$HOME/.config/cervelAI/manifest"
 # shellcheck source=/dev/null
 [ -r "$_manifest" ] && . "$_manifest"
@@ -78,16 +75,6 @@ if ((${#_found[@]} > 0)); then
 else
     printf '  (none installed)\n'
 fi
-printf '\n'
-
-printf '── api keys ──\n'
-for k in ANTHROPIC_API_KEY OPENAI_API_KEY GEMINI_API_KEY MISTRAL_API_KEY DEEPSEEK_API_KEY DASHSCOPE_API_KEY OPENROUTER_API_KEY GITHUB_TOKEN; do
-    if [[ -n "${!k:-}" ]]; then
-        printf '  %-22s set\n' "$k"
-    else
-        printf '  %-22s unset\n' "$k"
-    fi
-done
 printf '\n'
 
 printf '── system ──\n'

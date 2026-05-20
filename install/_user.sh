@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# install/_user.sh: user creation, sudoers, SSH key, config files, env file.
 
 create_user() {
     local u
@@ -7,8 +6,8 @@ create_user() {
     if id "$u" &>/dev/null; then
         log_skip "user $u already exists"
     else
-        log_info "creating user $u"
-        run useradd -m -s /bin/bash -G sudo "$u"
+        log_info "creating user $u (no sudo — agents run untrusted code)"
+        run useradd -m -s /bin/bash "$u"
     fi
     run install -d -m 700 -o "$u" -g "$u" "/home/$u/.ssh"
     run install -d -m 755 -o "$u" -g "$u" "/home/$u/.config"
@@ -17,16 +16,6 @@ create_user() {
     run install -d -m 755 -o "$u" -g "$u" "/home/$u/.local/bin"
     run install -d -m 755 -o "$u" -g "$u" "/home/$u/.local/share"
     run install -d -m 755 -o "$u" -g "$u" "/home/$u/.local/state"
-    local sudoers="/etc/sudoers.d/90-${u}"
-    if [[ ! -f "$sudoers" ]]; then
-        if ((DRY_RUN)); then
-            log_info "(dryrun) would write $sudoers"
-        else
-            printf '%s ALL=(ALL) NOPASSWD:ALL\n' "$u" >"$sudoers"
-            chmod 440 "$sudoers"
-            log_ok "sudo NOPASSWD configured for $u"
-        fi
-    fi
     if [[ -n "${CERVELAI_SSH_KEY:-}" ]]; then
         local ak="/home/$u/.ssh/authorized_keys"
         if ! grep -qF "${CERVELAI_SSH_KEY}" "$ak" 2>/dev/null; then
@@ -52,7 +41,7 @@ install_configs() {
     }
     log_step "deploying configs/ → $h"
 
-    # mise/config.toml omitted: owned by install_runtimes_mise (avoid clobbering [tools]).
+    # mise/config.toml omitted here: owned by install_runtimes_mise to avoid clobbering [tools].
     local -A files=(
         ["bash/.bashrc"]=".bashrc"
         ["bash/.bash_profile"]=".bash_profile"
@@ -86,12 +75,7 @@ ensure_env_file() {
     u="$(_user)"
     local f="/home/$u/${ENV_FILE_REL}"
     if [[ -e "$f" ]]; then
-        if [[ -n "${GITHUB_TOKEN:-}" ]] && ! grep -q '^export GITHUB_TOKEN=' "$f"; then
-            printf 'export GITHUB_TOKEN=%q\n' "$GITHUB_TOKEN" >>"$f"
-            log_ok "appended GITHUB_TOKEN to existing env file: $f"
-        else
-            log_skip "env file already exists: $f"
-        fi
+        log_skip "env file already exists: $f"
         return 0
     fi
     if ((DRY_RUN)); then
@@ -107,15 +91,11 @@ ensure_env_file() {
     fi
     topic="cervelAI-${suffix}"
     cat >"$f" <<EOF
-# cervelAI shared environment (bash, zsh, cervel run). Mode 600.
-export PNPM_HOME="\$HOME/.local/share/pnpm"
-export PATH="${CERVELAI_AGENT_PATH}"
+# cervelAI env: NTFY_* for cervel run notifications. Mode 600.
+# PATH is native (mise shims via mise activate + dotfiles), not set here.
 export NTFY_SERVER="https://ntfy.sh"
 export NTFY_TOPIC="${topic}"
 EOF
-    if [[ -n "${GITHUB_TOKEN:-}" ]]; then
-        printf 'export GITHUB_TOKEN=%q\n' "$GITHUB_TOKEN" >>"$f"
-    fi
     chmod 600 "$f"
     chown "$u:$u" "$f"
     log_ok "env file created: $f"

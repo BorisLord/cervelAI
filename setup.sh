@@ -1,14 +1,8 @@
 #!/usr/bin/env bash
-# setup.sh: cervelAI phase 2. Run as root on Debian/Ubuntu.
-# Usage:
-#   bash setup.sh                    # interactive
-#   dev_mode=nomenu bash setup.sh    # installs everything
-#   dev_mode=trace,dryrun bash setup.sh
-# Env vars: see README.md (CERVELAI_*).
+# Usage: bash setup.sh  |  dev_mode=nomenu bash setup.sh  |  dev_mode=trace,dryrun bash setup.sh
 
 set -uo pipefail
 export LC_ALL=C # silences perl locale warnings
-# Kernel delivers SIGINT to the entire foreground pgid (children included). Just mark and exit.
 trap 'printf "\n[ ABORT ] interrupted (Ctrl+C)\n" >&2; exit 130' INT TERM
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -18,10 +12,9 @@ CONFIGS_DIR="${SCRIPT_DIR}/configs"
 # shellcheck disable=SC2034  # used only by sourced install/*.sh
 ENV_FILE_REL=".config/cervelAI/env"
 
-# Agent runtime PATH, single source for _user_bash + the env file. Literal $HOME (expanded by
-# the agent shell, not here). Includes ~/.bun/bin for bun-global tools.
+# Literal $HOME: expanded by the agent shell at run time, not here.
 # shellcheck disable=SC2016
-CERVELAI_AGENT_PATH='$HOME/.local/share/mise/shims:$HOME/.local/bin:$HOME/.bun/bin:$PNPM_HOME:$PNPM_HOME/bin:$PATH'
+CERVELAI_AGENT_PATH='$HOME/.local/share/mise/shims:$HOME/.local/bin:$HOME/.bun/bin:$PATH'
 
 DEV_MODE="${dev_mode:-}"
 in_dev_mode() { [[ ",${DEV_MODE}," == *",$1,"* ]]; }
@@ -41,7 +34,6 @@ log_warn() { printf '%s[ WARN ]%s %s\n' "$(_color '1;33')" "$(_color 0)" "$*" >&
 log_err() { printf '%s[ ERR  ]%s %s\n' "$(_color '1;31')" "$(_color 0)" "$*" >&2; }
 log_step() { printf '\n%s━━━ %s ━━━%s\n' "$(_color '1;36')" "$*" "$(_color 0)"; }
 
-# gum theme (inherits to all child gum calls): cyan=step, green=ok, yellow=focus, gray=dim.
 export GUM_CHOOSE_HEADER_FOREGROUND="14"
 export GUM_CHOOSE_CURSOR_FOREGROUND="11"
 export GUM_CHOOSE_SELECTED_FOREGROUND="10"
@@ -125,15 +117,12 @@ apt_install() {
 
 _user() { printf '%s' "${CERVELAI_USER:-agent}"; }
 _user_bash() {
-    # Run via a temp script, not `bash -c "...$*"`: inlining lets the root shell pre-expand the
-    # user command's $vars/$(…) before the agent shell sees them (silently broke find/$src).
+    # Temp script prevents root pre-expanding $vars before agent shell sees them (silently broke find/$src).
     local u tmp rc
     u="$(_user)"
     tmp="$(mktemp /tmp/cervelai-userbash.XXXXXX)"
     {
-        # literal $HOME/$PATH: written to the script, expanded by the agent shell at run time.
         # shellcheck disable=SC2016
-        printf '%s\n' 'export PNPM_HOME="$HOME/.local/share/pnpm"'
         printf 'export PATH="%s"\n' "$CERVELAI_AGENT_PATH"
         printf '%s\n' 'export npm_config_update_notifier=false'
         [[ -n "${GITHUB_TOKEN:-}" ]] && printf 'export GITHUB_TOKEN=%q\n' "$GITHUB_TOKEN"
@@ -147,7 +136,6 @@ _user_bash() {
     return "$rc"
 }
 
-# Copy configs/libexec/* into <dest>/ at mode 755; pass an owner to chown (omit for /etc/skel).
 _deploy_libexec() {
     local dest="$1" owner="${2:-}" b
     local -a own=()
@@ -185,8 +173,6 @@ mise_use() {
 mise_npm() { mise_use "npm:$1" "${2:-latest}"; }
 mise_aqua() { mise_use "aqua:$1" "${2:-latest}"; }
 
-# Dispatch a CSV (or "all" → full-list) to install_<cat>_<choice>. Skips none/empty, warns unknown.
-# Usage: _dispatch_csv <category> <env-var-name> <full-list-csv>
 _dispatch_csv() {
     local cat="$1" envname="$2" all="$3"
     local csv="${!envname:-}"
@@ -205,7 +191,7 @@ _dispatch_csv() {
     done
 }
 
-# /dev/tcp because curl isn't installed yet at this stage.
+# /dev/tcp: curl not installed yet at this stage.
 check_connectivity() {
     local host="${1:-github.com}" port="${2:-443}"
     if ((DRY_RUN)); then
@@ -234,7 +220,6 @@ while (($#)); do
     shift
 done
 
-# Opt-in only — mandatory baseline (base, runtimes core, lsp, search-core, gh) is called directly in main().
 CATEGORIES=(
     agents
     token-savers
@@ -242,17 +227,14 @@ CATEGORIES=(
     usage-trackers
     ai-tools
     editor
-    ide-web
     runtimes
-    workflow-tools
     containers
     k8s-stack
-    iac-stack
     cloud-stack
     data-stack
     cli-extras
     security-tools
-    git-forges
+    git-tools
     blockchain
 )
 
@@ -303,7 +285,7 @@ main() {
             selected=("${CATEGORIES[@]}")
             : "${CERVELAI_AGENTS:=all}"
             : "${CERVELAI_EDITOR:=all}"
-            : "${CERVELAI_GIT_FORGES:=all}"
+            : "${CERVELAI_GIT_TOOLS:=all}"
             : "${CERVELAI_RUNTIMES:=all}"
             : "${CERVELAI_AGENT_MEMORY:=all}"
             : "${CERVELAI_AI_TOOLS:=all}"
@@ -316,7 +298,7 @@ main() {
             : "${CERVELAI_SECURITY_TOOLS:=all}"
             : "${CERVELAI_TOKEN_SAVERS:=snip}"
             : "${CERVELAI_MULTIPLEXER:=tmux+aoe}"
-            export CERVELAI_AGENTS CERVELAI_EDITOR CERVELAI_GIT_FORGES CERVELAI_RUNTIMES \
+            export CERVELAI_AGENTS CERVELAI_EDITOR CERVELAI_GIT_TOOLS CERVELAI_RUNTIMES \
                 CERVELAI_AGENT_MEMORY CERVELAI_AI_TOOLS CERVELAI_CLOUD_STACK CERVELAI_BLOCKCHAIN \
                 CERVELAI_DATA_STACK CERVELAI_CONTAINERS CERVELAI_K8S_STACK \
                 CERVELAI_CLI_EXTRAS CERVELAI_SECURITY_TOOLS CERVELAI_TOKEN_SAVERS \
@@ -326,7 +308,6 @@ main() {
         fi
         log_info "selected: ${selected[*]:-(none)}"
     else
-        # Always-asked workspace prompts (single-select) — even if user picks zero categories.
         local sh_sel="" mp_sel=""
         if menu_shell_select sh_sel; then
             CERVELAI_SHELL="$sh_sel"
@@ -469,21 +450,21 @@ main() {
                                 export CERVELAI_SECURITY_TOOLS
                             fi
                             ;;
-                        git-forges)
+                        git-tools)
                             local gf_sel=()
-                            if menu_git_forges_select gf_sel && ((${#gf_sel[@]})); then
-                                CERVELAI_GIT_FORGES="$(
+                            if menu_git_tools_select gf_sel && ((${#gf_sel[@]})); then
+                                CERVELAI_GIT_TOOLS="$(
                                     IFS=,
                                     echo "${gf_sel[*]}"
                                 )"
-                                export CERVELAI_GIT_FORGES
+                                export CERVELAI_GIT_TOOLS
                             fi
                             ;;
                     esac
                 done
                 menu_summary_confirm && break
                 log_info "redoing selection…"
-                unset CERVELAI_RUNTIMES CERVELAI_GIT_FORGES CERVELAI_AGENTS \
+                unset CERVELAI_RUNTIMES CERVELAI_GIT_TOOLS CERVELAI_AGENTS \
                     CERVELAI_EDITOR CERVELAI_TOKEN_SAVERS CERVELAI_AGENT_MEMORY \
                     CERVELAI_AI_TOOLS CERVELAI_CLOUD_STACK CERVELAI_BLOCKCHAIN \
                     CERVELAI_DATA_STACK CERVELAI_CONTAINERS CERVELAI_K8S_STACK \
@@ -495,8 +476,6 @@ main() {
             fi
         done
     fi
-
-    # --- Mandatory baseline (runs regardless of category selection) ---
 
     log_step "mise + runtimes core (node/python/pnpm/uv)"
     source_install runtimes
@@ -514,9 +493,7 @@ main() {
     log_step "shell + multiplexer"
     source_install shell && install_shell_all
 
-    # --- Opt-in categories ---
-
-    # token-savers must run AFTER agents (hooks init reads agent binaries); CATEGORIES order enforces this.
+    # token-savers must run AFTER agents — hooks init reads agent binaries; CATEGORIES order enforces this.
     local -a ordered=()
     local s
     for cat in "${CATEGORIES[@]}"; do
@@ -538,21 +515,19 @@ main() {
         fi
     done
 
-    # runtime-gated LSPs (rust-analyzer, zls, lua-LSP, kotlin-LSP, ruby-lsp) need opt-in runtimes installed first.
     log_step "language servers (runtime-gated)"
     source_install lsp && install_lsp_runtime_gated
 
-    # aoe gated on ≥1 agent installed — must run AFTER agents category.
     log_step "aoe orchestrator (post-dispatch)"
     install_shell_aoe_post_dispatch
 
     install_configs
     source_install agents && install_agents_md_links
     ensure_env_file
-    prompt_api_keys
     finalize
     lock_pnpm_release_age
     run_final_topgrade
+    clear_github_token
 
     if ((SETUP_ERRORS > 0)); then
         log_warn "$SETUP_ERRORS command(s) failed during install, see the [WARN] lines above"
