@@ -20,6 +20,7 @@ install_lsp_runtime_gated() {
     # "infinite recursion detected" error when the component is missing.
     _user_bash "command -v rustc" &>/dev/null &&
         soft _user_bash "rustup component add rust-analyzer"
+    _user_bash "command -v go" &>/dev/null && mise_use "go:golang.org/x/tools/gopls"
     _user_bash "command -v zig" &>/dev/null && mise_use "zls"
     _user_bash "command -v lua" &>/dev/null && mise_use "lua-language-server"
     _user_bash "command -v kotlin" &>/dev/null && mise_use "github:fwcd/kotlin-language-server"
