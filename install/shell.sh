@@ -48,9 +48,10 @@ _orch_load_agent_bin() {
     [[ -n "${_AGENT_BIN[*]:-}" ]] || source "${INSTALL_DIR}/agents.sh"
 }
 
-# aoe-recognized agents not installed via `agents` category — only detected if user pre-installed.
+# aoe-recognized agents NOT in cervelAI's registry — only detected if the user pre-installed them.
+# (copilot is omitted: it's already a registry binary via copilot-cli, covered by _AGENT_BIN.)
 _AOE_EXTRA_AGENTS=(
-    cursor copilot droid hermes kiro
+    cursor droid hermes kiro
 )
 
 _orch_at_least_one_agent_installed() {
@@ -95,11 +96,9 @@ install_shell_entry_handoff() {
     fi
     log_info "deploying /etc/profile.d/cervelai-entry.sh + /etc/skel libexec"
     run install -D -m 644 "$src_profile" /etc/profile.d/cervelai-entry.sh
-    local b
-    for b in "$src_libexec"/*; do
-        [[ -f "$b" ]] || continue
-        run install -D -m 755 "$b" "/etc/skel/.local/libexec/cervelai/$(basename "$b")"
-    done
+    # Bake the chosen user into the root→user login handoff (default in the file is `agent`).
+    run sed -i "s/^CERVELAI_ENTRY_USER=agent$/CERVELAI_ENTRY_USER=$(_user)/" /etc/profile.d/cervelai-entry.sh
+    _deploy_libexec /etc/skel/.local/libexec/cervelai
 
     local marker='# cervelai-entry handoff'
     local snippet='

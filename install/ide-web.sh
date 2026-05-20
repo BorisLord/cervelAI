@@ -8,7 +8,8 @@ install_ide_web_all() {
     fi
     log_info "installing code-server"
     run sh -c 'curl -fsSL https://code-server.dev/install.sh | sh'
-    local u="${CERVELAI_USER:-agent}"
+    local u
+    u="$(_user)"
     soft run systemctl enable "code-server@${u}" 2>/dev/null
     log_info "code-server enabled but not started"
     log_info "start: sudo systemctl start code-server@${u}"

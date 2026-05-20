@@ -4,6 +4,9 @@
 #   agent → exec tmux new-session -A -s shell (auto-attach the persistent `shell` session)
 #   non-interactive or already in mux → no-op
 
+# cervelAI user — rewritten by install_shell_entry_handoff to the chosen CERVELAI_USER.
+CERVELAI_ENTRY_USER=agent
+
 [ -n "$PS1" ] || return 0 2>/dev/null
 [ -n "$CERVELAI_NO_MENU" ] && return 0
 [ -n "$TMUX" ] && return 0
@@ -14,7 +17,7 @@
 [ "${SHLVL:-1}" -gt 1 ] && return 0
 
 if [ "$(id -u)" = "0" ]; then
-    id -u agent >/dev/null 2>&1 && exec su - agent
+    id -u "$CERVELAI_ENTRY_USER" >/dev/null 2>&1 && exec su - "$CERVELAI_ENTRY_USER"
     return 0
 fi
 
