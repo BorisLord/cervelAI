@@ -112,7 +112,8 @@ apt_install() {
         return 0
     fi
     log_info "apt install: ${missing[*]}"
-    run env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "${missing[@]}"
+    run env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold "${missing[@]}"
 }
 
 _user() { printf '%s' "${CERVELAI_USER:-agent}"; }

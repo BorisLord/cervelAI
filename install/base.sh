@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 install_base_apt_update() {
+    run bash -c 'echo "DPkg::Lock::Timeout \"300\";" > /etc/apt/apt.conf.d/99cervelai-lock-timeout'
     log_info "apt update + upgrade"
     run env DEBIAN_FRONTEND=noninteractive apt-get update -qq
     # confdef+confold: keep existing config files on conflicts (no interactive prompt).
@@ -76,6 +77,39 @@ install_base_sshd() {
     run systemctl restart ssh.service
 }
 
+install_base_nftables() {
+    apt_install nftables
+    ((DRY_RUN)) && {
+        log_skip "nftables ruleset (dryrun)"
+        return 0
+    }
+    log_info "deploying default-deny firewall (nftables)"
+    cat >/etc/nftables.conf <<'NFT'
+#!/usr/sbin/nft -f
+# Manage only our own table (no global flush) so Docker's iptables-nft rules survive.
+table inet cervelai {}
+delete table inet cervelai
+table inet cervelai {
+    chain input {
+        type filter hook input priority filter; policy drop;
+        iif "lo" accept
+        ct state established,related accept
+        ct state invalid drop
+        ip protocol icmp accept
+        ip6 nexthdr ipv6-icmp accept
+        tcp dport { 22, 8080 } accept
+        udp dport 60000-61000 accept
+    }
+    chain forward { type filter hook forward priority filter; policy accept; }
+}
+NFT
+    # enable --now starts it on a fresh box (service active); nft -f then force-applies our ruleset
+    # since `enable --now` won't reload an already-running service. We avoid `restart`, whose
+    # Debian ExecStop=`nft flush ruleset` would wipe Docker's rules.
+    soft run systemctl enable --now nftables
+    soft run nft -f /etc/nftables.conf
+}
+
 install_base_all() {
     install_base_apt_update
     install_base_packages
@@ -83,4 +117,5 @@ install_base_all() {
     install_base_gum
     install_base_locales
     install_base_sshd
+    install_base_nftables
 }
