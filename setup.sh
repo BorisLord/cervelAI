@@ -147,7 +147,7 @@ _deploy_libexec() {
     done
 }
 
-mise_present() { [[ -x /usr/local/bin/mise ]]; }
+mise_present() { [[ -x "/home/$(_user)/.local/bin/mise" ]]; }
 
 mise_use() {
     local pkg="$1" ver="${2:-latest}" name="${3:-}"

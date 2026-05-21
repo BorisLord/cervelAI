@@ -4,15 +4,17 @@
 _PNPM_VERSION="11.1.2"
 
 install_runtimes_mise() {
-    if [[ -x /usr/local/bin/mise ]]; then
-        log_skip "mise already installed (system-wide)"
-    else
-        log_info "installing mise system-wide to /usr/local/bin/mise"
-        run sh -c 'curl -fsSL https://mise.run | MISE_INSTALL_PATH=/usr/local/bin/mise sh'
-    fi
-    # Must deploy [settings] before any `mise use -g` appends [tools] to the same file.
     local u
     u="$(_user)"
+    # Per-user install (~/.local/bin/mise, owned by the agent) so the no-sudo agent can `mise self-update`.
+    if [[ -x "/home/$u/.local/bin/mise" ]]; then
+        log_skip "mise already installed for $u"
+    else
+        log_info "installing mise for $u (~/.local/bin/mise)"
+        # MISE_INSTALL_HELP=0: skip the installer's "add to .bashrc" advice — our .bashrc already activates mise.
+        run _user_bash 'curl -fsSL https://mise.run | MISE_INSTALL_HELP=0 sh'
+    fi
+    # Must deploy [settings] before any `mise use -g` appends [tools] to the same file.
     local cfg="/home/$u/.config/mise/config.toml"
     if [[ ! -e "$cfg" && -r "$CONFIGS_DIR/mise/config.toml" ]]; then
         run install -D -m 644 -o "$u" -g "$u" "$CONFIGS_DIR/mise/config.toml" "$cfg"
