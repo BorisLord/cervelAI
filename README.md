@@ -34,14 +34,16 @@ It isn't a replacement — it's just the script I run to *get* an AoE box. AoE n
 ## After install
 
 ```bash
-ssh agent@<host-ip>      # IP printed at the end of install (mosh also available)
+ssh  agent@<host-ip>     # IP printed at the end of install
+mosh agent@<host-ip>     # same login over UDP 60000-61000 (roaming / flaky links)
+# aoe web dashboard: http://<host-ip>:8080  (token-gated — run `aoe url` for the exact URL + token)
 ```
 
 You land in a persistent **tmux** session. `cervel` is the only cervelAI-specific command:
 
 | Command | Does what |
 |---|---|
-| `cervel help` (`-h`) | logo + cheatsheet |
+| `cervel help` (`-h`) | cheatsheet |
 | `cervel status` (`-s`) | identity, agents on PATH, disk usage |
 | `cervel ls` | list AI agents on PATH |
 | `cervel run <cmd>` | run a command, **ntfy** push when it exits (long jobs) |
@@ -128,7 +130,9 @@ GITHUB_TOKEN=ghp_… dev_mode=nomenu CERVELAI_NO_PROMPT=1 CERVELAI_SELECTED=all 
 | `CERVELAI_SHELL` / `_MULTIPLEXER` | `bash\|zsh` / `tmux+aoe\|zellij\|none` |
 | `CERVELAI_<CATEGORY>` | CSV per category (e.g. `CERVELAI_RUNTIMES=go,rust`) |
 | `CERVELAI_SSH_KEY` | pubkey added to `agent` + sshd key-only hardening |
+| `CERVELAI_USER` | agent username to create (default `agent`) |
 | `GITHUB_TOKEN` | lifts the GitHub API rate limit **during install** (not persisted) |
+| `CERVELAI_NO_PROMPT` | skip interactive prompts (e.g. `GITHUB_TOKEN`) — required for headless |
 | `CERVELAI_NO_MENU` | skip the tmux handoff (gives a plain root/agent shell) |
 
 LXC mode: `bootstrap.sh --lxc` (needs `pct` on a Proxmox host) creates the container, then runs `setup.sh` inside. Forks: `CERVELAI_REPO` / `CERVELAI_REF`.

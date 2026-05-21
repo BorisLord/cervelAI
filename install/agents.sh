@@ -67,6 +67,9 @@ declare -gA _AGENT_MD_PATH=(
     [vibe]=".vibe/AGENTS.md"
     [goose]=".config/goose/.goosehints"
     [cn]=".continue/rules/agents.md"
+    [qwen]=".qwen/QWEN.md"
+    [droid]=".factory/AGENTS.md"
+    ["kiro-cli"]=".kiro/steering/AGENTS.md"
 )
 
 install_agents_md_links() {

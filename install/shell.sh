@@ -11,9 +11,9 @@ _orch_load_agent_bin() {
     [[ -n "${_AGENT_BIN[*]:-}" ]] || source "${INSTALL_DIR}/agents.sh"
 }
 
-# aoe-recognized but not in registry; copilot excluded (covered by copilot-cli in _AGENT_BIN).
+# aoe-drivable agents cervelAI doesn't install — probe their real host binary.
 _AOE_EXTRA_AGENTS=(
-    cursor droid hermes kiro
+    cursor-agent
 )
 
 _orch_at_least_one_agent_installed() {
