@@ -35,6 +35,23 @@ install_agents_continue() { mise_use "npm:@continuedev/cli" latest cn; }
 install_agents_qwen_code() { mise_use "qwen" latest qwen; }
 install_agents_mistral_vibe() { mise_use "pipx:mistral-vibe" latest vibe; }
 install_agents_deepseek_tui() { mise_use "npm:deepseek-tui" latest deepseek; }
+install_agents_factory_droid() { mise_use "npm:droid" latest droid; }
+install_agents_hermes() {
+    if _user_bash 'command -v hermes' &>/dev/null; then
+        log_skip "Hermes already installed"
+        return 0
+    fi
+    log_info "installing Hermes (NousResearch)"
+    run _user_bash 'curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash'
+}
+install_agents_kiro_cli() {
+    if _user_bash 'command -v kiro-cli' &>/dev/null; then
+        log_skip "Kiro CLI already installed"
+        return 0
+    fi
+    log_info "installing Kiro CLI (AWS)"
+    run _user_bash 'curl -fsSL https://cli.kiro.dev/install | bash'
+}
 
 install_agents_all() {
     _dispatch_csv agents CERVELAI_AGENTS "$(cervelai_agent_packages_csv)"

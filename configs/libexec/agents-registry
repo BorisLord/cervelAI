@@ -15,6 +15,9 @@ CERVELAI_AGENTS_REGISTRY=(
     "qwen-code:qwen"
     "mistral-vibe:vibe"
     "deepseek-tui:deepseek"
+    "factory-droid:droid"
+    "hermes:hermes"
+    "kiro-cli:kiro-cli"
 )
 
 cervelai_agent_packages_csv() {

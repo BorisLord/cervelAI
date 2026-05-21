@@ -119,7 +119,10 @@ menu_agents_select() {
         continue "Continue" OFF \
         qwen-code "Qwen-Code" OFF \
         mistral-vibe "Mistral Vibe" OFF \
-        deepseek-tui "DeepSeek TUI" OFF
+        deepseek-tui "DeepSeek TUI" OFF \
+        factory-droid "Factory Droid" OFF \
+        hermes "Hermes (NousResearch)" OFF \
+        kiro-cli "Kiro CLI (AWS)" OFF
 }
 
 menu_editor_select() {

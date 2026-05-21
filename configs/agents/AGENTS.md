@@ -81,7 +81,7 @@ This file (`~/AGENTS.md`) is symlinked at install time to each installed agent's
 | Mistral Vibe | `~/.vibe/AGENTS.md` |
 | Goose | `~/.config/goose/.goosehints` |
 | Continue | `~/.continue/rules/agents.md` |
-| Others (Crush, Qwen, DeepSeek) | check their docs and add a symlink manually |
+| Others (Crush, Qwen, DeepSeek, Factory Droid, Hermes, Kiro) | check their docs and add a symlink manually |
 
 cervelAI's symlinks cover only the prompt file. To sync MCP servers, skills, slash commands across agents, install via `ai-tools` category:
 
