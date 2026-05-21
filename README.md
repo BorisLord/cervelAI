@@ -19,13 +19,17 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/
 
 ## What is cervelAI?
 
-**An install script — nothing more.** It turns a fresh Debian-based box (a VM, LXC, or any cloud server) into a ready-to-use home for terminal AI coding agents — **Claude Code, Codex, opencode, Gemini CLI and 8 more** — with the runtimes, tools, memory backends and multiplexer they need. Run it, grab a coffee; a few prompts let you tweak, defaults just work.
+**My install script for an [Agent of Empires](https://github.com/njbrake/agent-of-empires) box.** It turns a fresh Debian-based box (a VM, LXC, or any cloud server) into a disposable host that runs **AoE** to drive a fleet of terminal coding agents — **Claude Code, Codex, opencode, Gemini CLI and 11 more** — with the runtimes, tools, memory backends and isolation already in place. Run it, grab a coffee; a few prompts let you tweak, defaults just work.
 
 It follows three principles:
 
 - **Native & minimal.** [`mise`](https://mise.jdx.dev) owns every runtime and binary (precompiled, never compiled from source). The locale is OS-native (`/etc/default/locale`). Agents authenticate with their *own* login (`claude login`, `gh auth login`) — cervelAI stores **no API keys**. Its own runtime footprint is essentially one ntfy topic: remove cervelAI and the machine keeps running, you only lose the `cervel` conveniences.
 - **Isolated by default.** Agents run as an **unprivileged `agent` user** (no sudo, locked password) — they execute untrusted code, so they can't touch the system. Admin is done as `root`, deliberately.
 - **Disposable.** An idempotent script, not a hand-tuned server: re-run it to rebuild an identical box from a fresh image in minutes. Nothing precious lives here — no stored secrets, agents log in themselves — so wiping and recreating it costs nothing.
+
+### How is this different from just using AoE?
+
+It isn't a replacement — it's just the script I run to *get* an AoE box. AoE needs a host with the runtimes, agent CLIs, tools and isolation already there; this repo builds that host from a fresh Debian image and wires AoE in as the default (dashboard service, firewall opening, empire theme, mobile cockpit). If you already have a server set up the way you like, use AoE directly.
 
 ## After install
 
@@ -42,7 +46,7 @@ You land in a persistent **tmux** session. `cervel` is the only cervelAI-specifi
 | `cervel ls` | list AI agents on PATH |
 | `cervel run <cmd>` | run a command, **ntfy** push when it exits (long jobs) |
 
-Everything else is native: **`aoe`** (Agent of Empires) orchestrates N agents in parallel, each in its own git worktree, with a web dashboard reachable from any device (URL + token printed in the journal); `tmux`/`zellij` manage sessions; `topgrade` updates the installed tools.
+Everything else is native — **`aoe`** (Agent of Empires) is the centerpiece: it orchestrates N agents in parallel, each in its own git worktree, with a web dashboard + mobile cockpit reachable from any device (run `cervel status` or `aoe url` for the live URL + token). `tmux`/`zellij` manage raw sessions; `topgrade` updates the installed tools.
 
 ## What it installs
 
