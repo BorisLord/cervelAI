@@ -19,12 +19,13 @@ bash -c "$(curl -fsSL https://raw.githubusercontent.com/BorisLord/cervelAI/main/
 
 ## What is cervelAI?
 
-**An install script — nothing more.** It turns a fresh Debian box (a Proxmox LXC, a VM, or any cloud server) into a ready-to-use home for terminal AI coding agents — **Claude Code, Codex, opencode, Gemini CLI and 8 more** — with the runtimes, tools, memory backends and multiplexer they need. Run it, grab a coffee; a few prompts let you tweak, defaults just work.
+**An install script — nothing more.** It turns a fresh Debian-based box (a VM, LXC, or any cloud server) into a ready-to-use home for terminal AI coding agents — **Claude Code, Codex, opencode, Gemini CLI and 8 more** — with the runtimes, tools, memory backends and multiplexer they need. Run it, grab a coffee; a few prompts let you tweak, defaults just work.
 
-It follows two principles:
+It follows three principles:
 
 - **Native & minimal.** [`mise`](https://mise.jdx.dev) owns every runtime and binary (precompiled, never compiled from source). The locale is OS-native (`/etc/default/locale`). Agents authenticate with their *own* login (`claude login`, `gh auth login`) — cervelAI stores **no API keys**. Its own runtime footprint is essentially one ntfy topic: remove cervelAI and the machine keeps running, you only lose the `cervel` conveniences.
 - **Isolated by default.** Agents run as an **unprivileged `agent` user** (no sudo, locked password) — they execute untrusted code, so they can't touch the system. Admin is done as `root`, deliberately.
+- **Disposable.** An idempotent script, not a hand-tuned server: re-run it to rebuild an identical box from a fresh image in minutes. Nothing precious lives here — no stored secrets, agents log in themselves — so wiping and recreating it costs nothing.
 
 ## After install
 
@@ -63,6 +64,16 @@ That alone lets an agent clone, read, search, edit and run code. **Then add the 
 The menu shows the tools in each. After install, **`mise ls` is the source of truth** for what's there. Add anything later with `mise use -g <tool>`.
 </details>
 
+## Built to keep agents cheap
+
+Coding agents burn tokens on verbose output, re-reading files, and re-learning context every session. cervelAI ships the antidotes:
+
+- **token-savers** (`snip`/`rtk`) — strip 60-90% of CLI noise before it reaches the agent
+- **agent-memory** (`engram`, `qmd`, `memsearch`…) — cross-session recall, no re-discovering the repo each time
+- **usage-trackers** (`tokscale`, `ccusage`, `ccstatusline`) — see exactly what you spend
+- **agent-aware tools** (baseline `rg`/`fd`/`ast-grep` + LSPs) — precise lookups instead of whole-file dumps
+- **`AGENTS.md`** — a baseline prompt that tells every installed agent to use all of the above by default
+
 ## Isolation & admin
 
 The `agent` user has **no sudo** and a locked password — an injected agent can't escalate to root. Admin is a deliberate root action:
@@ -74,9 +85,18 @@ CERVELAI_NO_MENU=1 ssh -t root@box   # interactive root shell
 
 > If you install the `containers`/docker category, the agent joins the `docker` group — a root-equivalent escalation path, accepted as a trade-off. Rootless `podman` is the isolated alternative.
 
+A default-deny **`nftables`** firewall ships in the baseline: only `ssh`, `mosh` and the `aoe` dashboard are reachable inbound, so a port an agent opens (a stray dev server, say) isn't exposed to the network. It's netns-scoped — same ruleset works inside a VM or an unprivileged LXC.
+
+### What isolation does *not* cover
+
+The unprivileged `agent` can't take over the **host**, and the box is disposable — but a few risks are deliberately out of scope:
+
+- **Exfiltration.** Agents run untrusted code *with your own logins on disk* (`~/.claude`, `~/.config/gh`) and unrestricted outbound network — an injected agent can read those tokens and your repos and send them anywhere. Isolation protects the host, **not your secrets**. Keep agent tokens short-lived/scoped, and use a separate box per trust level if it matters.
+- **The `aoe` dashboard** binds `0.0.0.0:8080` (token-gated, and allowed through the firewall). Fine on a trusted LAN; on a public server **don't expose it** — reach it over an SSH tunnel (`ssh -L 8080:localhost:8080 agent@box`) or a mesh VPN (Tailscale/WireGuard).
+
 ## Supported environments
 
-Debian 12+, Ubuntu 22.04+, any Debian/Ubuntu derivative with systemd as PID 1. Tested on Proxmox LXC and cloud VMs (Hetzner, OVH). `setup.sh` aborts early if the distro isn't Debian-family or systemd is missing.
+Debian 12+, Ubuntu 22.04+, any Debian/Ubuntu derivative with systemd as PID 1.
 
 ## Updates
 
@@ -112,7 +132,7 @@ LXC mode: `bootstrap.sh --lxc` (needs `pct` on a Proxmox host) creates the conta
 
 ## Contributing
 
-PRs and issues welcome. Run `bash check.sh` and `bash smoke.sh` before opening a PR.
+PRs and issues welcome.
 
 ## License
 
