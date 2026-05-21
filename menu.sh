@@ -138,7 +138,8 @@ menu_agent_memory_select() {
         engram "lite: Go binary, SQLite+FTS5, CLI/HTTP/MCP/TUI" OFF \
         claude-mem "heavy: daemon, multi-IDE hooks" OFF \
         mcp-memory-service "heavy: SQLite+ONNX, MCP+REST, semantic" OFF \
-        agentmemory "heavy: MCP tools + viewer + REST API" OFF
+        agentmemory "heavy: MCP tools + viewer + REST API" OFF \
+        beads "lite: issue/memory tracker for agents (Go + SQLite/JSONL)" OFF
 }
 
 menu_token_savers_select() {
@@ -158,7 +159,9 @@ menu_ai_tools_select() {
         markitdown "Convert PDF/DOCX/PPT/HTML → Markdown (MS)" OFF \
         shell-gpt "NL → shell/code/chat REPL (sgpt)" OFF \
         gptscript "Framework: LLM ↔ tools/APIs/files (Acorn)" OFF \
-        promptfoo "Eval/test LLM prompts (regressions, A/B, metrics)" OFF
+        promptfoo "Eval/test LLM prompts (regressions, A/B, metrics)" OFF \
+        repomix "Pack a repo into one AI-ready file (token-aware)" OFF \
+        serena "Semantic code retrieval/editing MCP toolkit" OFF
 }
 
 menu_cloud_stack_select() {
@@ -178,7 +181,7 @@ menu_cloud_stack_select() {
 
 menu_blockchain_select() {
     _menu_multi "$1" "Blockchain bundles:" \
-        evm "Ethereum: solc + foundry + LSP + slither + solhint" OFF \
+        evm "Ethereum: solc + foundry + hardhat + LSP + slither + solhint" OFF \
         solana "Solana: agave validator/CLI + anchor framework" OFF \
         move "Sui + Aptos (Move language, sui is ~1 GB)" OFF \
         cosmos "Cosmos SDK: ignite scaffolder (Go)" OFF \
@@ -236,7 +239,11 @@ menu_cli_extras_select() {
         typos "Source-code spell checker" OFF \
         act "Run GitHub Actions locally" OFF \
         just "Command runner (Make-like)" OFF \
-        watchexec "Re-run a command on file change" OFF
+        watchexec "Re-run a command on file change" OFF \
+        hurl "HTTP requests/tests in plain text" OFF \
+        fq "jq for binary formats (hex/protobuf/...)" OFF \
+        btop "Resource monitor (TUI)" OFF \
+        atuin "Shell history database (search/sync)" OFF
 }
 
 menu_security_tools_select() {
@@ -250,7 +257,10 @@ menu_security_tools_select() {
         trivy "All-in-one scanner: CVE+IaC+secrets+SBOM" OFF \
         gitleaks "Scan repos for committed secrets" OFF \
         syft "Generate SBOMs from images/dirs" OFF \
-        cosign "Sign/verify container images + artifacts" OFF
+        cosign "Sign/verify container images + artifacts" OFF \
+        grype "Vuln scanner for images/filesystems/SBOMs" OFF \
+        trufflehog "Verified secret scanner (700+ detectors)" OFF \
+        semgrep "Static analysis / SAST (autofix + many langs)" OFF
 }
 
 menu_git_tools_select() {

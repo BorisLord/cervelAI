@@ -13,8 +13,10 @@ install_ai_tools_promptfoo() {
     _user_bash "command -v bun" &>/dev/null || mise_use "bun" "latest"
     soft _user_bash "bun add -g promptfoo"
 }
+install_ai_tools_repomix() { mise_use "npm:repomix" latest repomix; }
+install_ai_tools_serena() { mise_use "pipx:serena-agent" latest serena; }
 
 install_ai_tools_all() {
     _dispatch_csv ai-tools CERVELAI_AI_TOOLS \
-        "markitdown,fabric,code2prompt,llm,shell-gpt,gptscript,aichat,agents,promptfoo"
+        "markitdown,fabric,code2prompt,llm,shell-gpt,gptscript,aichat,agents,promptfoo,repomix,serena"
 }

@@ -5,6 +5,7 @@ install_blockchain_evm() {
     mise_use "foundry" latest forge
     mise_use "npm:@nomicfoundation/solidity-language-server" latest solidity-language-server
     mise_npm "solhint"
+    mise_npm "hardhat"
     mise_use "pipx:slither-analyzer" latest slither
 }
 

@@ -14,8 +14,12 @@ install_cli_extras_yazi() { mise_use "yazi"; }
 install_cli_extras_act() { mise_use "act"; }
 install_cli_extras_just() { mise_use "just"; }
 install_cli_extras_watchexec() { mise_use "watchexec"; }
+install_cli_extras_hurl() { mise_use "hurl"; }
+install_cli_extras_fq() { mise_use "aqua:wader/fq" latest fq; }
+install_cli_extras_btop() { mise_use "btop"; }
+install_cli_extras_atuin() { mise_use "atuin"; }
 
 install_cli_extras_all() {
     _dispatch_csv cli-extras CERVELAI_CLI_EXTRAS \
-        "sd,eza,glow,zoxide,tldr,hyperfine,shfmt,shellcheck,xh,typos,yazi,act,just,watchexec"
+        "sd,eza,glow,zoxide,tldr,hyperfine,shfmt,shellcheck,xh,typos,yazi,act,just,watchexec,hurl,fq,btop,atuin"
 }

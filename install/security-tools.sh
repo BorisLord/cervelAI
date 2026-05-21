@@ -10,8 +10,11 @@ install_security_tools_kingfisher() { mise_use "github:mongodb/kingfisher[bin=ki
 install_security_tools_dotenvx() { mise_use "dotenvx"; }
 install_security_tools_varlock() { mise_use "npm:varlock" latest varlock; }
 install_security_tools_infisical() { mise_use "infisical" latest infisical; }
+install_security_tools_grype() { mise_use "grype"; }
+install_security_tools_trufflehog() { mise_use "trufflehog"; }
+install_security_tools_semgrep() { mise_use "semgrep"; }
 
 install_security_tools_all() {
     _dispatch_csv security-tools CERVELAI_SECURITY_TOOLS \
-        "sops,age,gitleaks,trivy,syft,cosign,kingfisher,varlock,dotenvx,infisical"
+        "sops,age,gitleaks,trivy,syft,cosign,kingfisher,varlock,dotenvx,infisical,grype,trufflehog,semgrep"
 }
