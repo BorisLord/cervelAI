@@ -48,6 +48,45 @@ install_shell_aoe() {
     mise_use "github:njbrake/agent-of-empires[bin=aoe]" latest aoe
 }
 
+# Ship cervelAI's aoe defaults (empire theme + cockpit). Skip if the user already has a config.
+install_shell_aoe_config() {
+    local u home src dest
+    u="$(_user)"
+    home="/home/$u"
+    src="${CONFIGS_DIR}/agent-of-empires/config.toml"
+    dest="$home/.config/agent-of-empires/config.toml"
+    [[ -r "$src" ]] || {
+        log_warn "configs/agent-of-empires/config.toml missing, skip"
+        return 0
+    }
+    if [[ -e "$dest" ]]; then
+        log_skip "aoe config already present"
+        return 0
+    fi
+    log_info "deploying aoe config (empire theme + cockpit)"
+    run install -D -m 644 -o "$u" -g "$u" "$src" "$dest"
+}
+
+# Cockpit renders ACP agents natively; install npm ACP adapters for the ACP-capable
+# agents present. gemini/opencode are native, aoe-agent is bundled — no adapter needed.
+install_shell_cockpit_adapters() {
+    # <agent binary>:<npm adapter package>:<adapter binary>
+    local triples=(
+        "claude:@agentclientprotocol/claude-agent-acp:claude-agent-acp"
+        "codex:@zed-industries/codex-acp:codex-acp"
+        "pi:pi-acp:pi-acp"
+    )
+    local t bin pkg adbin
+    for t in "${triples[@]}"; do
+        bin="${t%%:*}"
+        pkg="${t#*:}"
+        pkg="${pkg%:*}"
+        adbin="${t##*:}"
+        _user_bash "command -v $bin" &>/dev/null || continue
+        mise_use "npm:$pkg" latest "$adbin"
+    done
+}
+
 # `pct enter` is interactive non-login; /etc/profile.d is skipped, so /root/.bashrc must source the handoff.
 install_shell_entry_handoff() {
     local src_profile="${CONFIGS_DIR}/profile.d/cervelai-entry.sh"
@@ -117,6 +156,8 @@ install_shell_aoe_post_dispatch() {
     _orch_load_agent_bin
     if _orch_at_least_one_agent_installed; then
         install_shell_aoe
+        install_shell_aoe_config
+        install_shell_cockpit_adapters
         install_shell_aoe_serve_systemd
     else
         log_skip "no AI agent installed, skipping aoe (menu still offers shell)"

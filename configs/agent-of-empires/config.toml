@@ -1,0 +1,10 @@
+# cervelAI defaults for Agent of Empires (~/.config/agent-of-empires/config.toml).
+# aoe merges this over its built-in defaults; everything else stays default.
+
+[theme]
+name = "empire"
+
+# Native mobile/desktop rendering of agent state (plan, tool calls, swipe-to-approve).
+# Needs Node >= 20 on PATH (baseline runtime); ACP agents render natively, others fall back to tmux.
+[cockpit]
+enabled = true

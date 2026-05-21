@@ -116,6 +116,7 @@ finalize() {
 
   Shell:    ${desired}    Multiplexer: ${CERVELAI_MULTIPLEXER:-tmux+aoe}
   Connect:  ssh ${u}@<this-ip>  |  mosh ${u}@<this-ip>
+  Agents:   aoe          Dashboard: cervel status  (live URL + token)
   Env:      ~/.config/cervelAI/env
   Notify:   cervel run <cmd>
   Tools:    cat ~/AGENTS.md
