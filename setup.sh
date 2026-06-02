@@ -539,6 +539,9 @@ main() {
         source_install paperclip && install_paperclip_all
     fi
 
+    log_step "firewall: open ports for installed dashboards"
+    open_service_ports
+
     install_configs
     source_install agents && install_agents_md_links
     ensure_env_file

@@ -84,7 +84,18 @@ install_base_nftables() {
         return 0
     }
     log_info "deploying default-deny firewall (nftables)"
-    cat >/etc/nftables.conf <<'NFT'
+    # Base ports only — paperclip/code-server aren't installed yet (menu selections run after base);
+    # open_service_ports() re-applies the full set post-dispatch.
+    _write_nftables "22, 8080"
+    # enable --now starts it on a fresh box (service active); _write_nftables's nft -f then force-applies
+    # since `enable --now` won't reload an already-running service. We avoid `restart`, whose
+    # Debian ExecStop=`nft flush ruleset` would wipe Docker's rules.
+    soft run systemctl enable --now nftables
+}
+
+# Single source for the cervelai table; $1 = the tcp dport set, e.g. "22, 8080, 3100".
+_write_nftables() {
+    cat >/etc/nftables.conf <<NFT
 #!/usr/sbin/nft -f
 # Manage only our own table (no global flush) so Docker's iptables-nft rules survive.
 table inet cervelai {}
@@ -97,17 +108,27 @@ table inet cervelai {
         ct state invalid drop
         ip protocol icmp accept
         ip6 nexthdr ipv6-icmp accept
-        tcp dport { 22, 8080 } accept
+        tcp dport { ${1} } accept
         udp dport 60000-61000 accept
     }
     chain forward { type filter hook forward priority filter; policy accept; }
 }
 NFT
-    # enable --now starts it on a fresh box (service active); nft -f then force-applies our ruleset
-    # since `enable --now` won't reload an already-running service. We avoid `restart`, whose
-    # Debian ExecStop=`nft flush ruleset` would wipe Docker's rules.
-    soft run systemctl enable --now nftables
     soft run nft -f /etc/nftables.conf
+}
+
+# Post-dispatch: open LAN ports for the dashboards that actually got installed (both bind 0.0.0.0).
+# 22=ssh, 8080=aoe (always); 3100=paperclip, 8081=code-server. These are password/login-gated.
+open_service_ports() {
+    ((DRY_RUN)) && {
+        log_skip "service firewall ports (dryrun)"
+        return 0
+    }
+    local ports="22, 8080"
+    _user_bash "command -v paperclipai" &>/dev/null && ports+=", 3100"
+    _user_bash "command -v code-server" &>/dev/null && ports+=", 8081"
+    log_info "firewall: opening service ports { $ports }"
+    _write_nftables "$ports"
 }
 
 install_base_all() {
