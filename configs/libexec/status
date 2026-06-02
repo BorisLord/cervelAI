@@ -60,11 +60,12 @@ if command -v aoe >/dev/null 2>&1; then
 fi
 if command -v paperclipai >/dev/null 2>&1; then
     _dash=1
-    printf '  paperclip    http://%s:3100  (first admin: paperclipai auth bootstrap-ceo)\n' "${_ip:-<host-ip>}"
+    printf '  paperclip    http://%s:3100  (login — bootstrap admin: paperclipai auth bootstrap-ceo)\n' "${_ip:-<host-ip>}"
 fi
 if command -v code-server >/dev/null 2>&1; then
     _dash=1
-    printf '  code-server  http://127.0.0.1:8081  (loopback — tunnel in)\n'
+    _cs_pw=$(awk '/^password:/{print $2}' "$HOME/.config/code-server/config.yaml" 2>/dev/null)
+    printf '  code-server  http://%s:8081  (password: %s)\n' "${_ip:-<host-ip>}" "${_cs_pw:-see ~/.config/code-server/config.yaml}"
 fi
 ((_dash)) || printf '  (none installed)\n'
 printf '\n'
