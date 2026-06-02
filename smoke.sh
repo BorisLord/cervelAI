@@ -50,4 +50,44 @@ else
     rc=1
 fi
 
+# install_configs must be re-run safe: deploy once, then preserve user edits (incl. the .bashrc
+# /etc/skel special-case) and backfill the provenance stamp on pre-stamp (upgraded) boxes.
+echo "── smoke: install_configs idempotency in debian:13 ──"
+if docker run --rm -i -v "$PWD:/cervelAI:ro" debian:13 bash -s <<'IDEM'; then
+set -uo pipefail
+CONFIGS_DIR=/cervelAI/configs
+DRY_RUN=0
+_user() { printf testuser; }
+run() { [ "$1" = sudo ] && return 0; "$@"; }   # skip the libexec sudo symlink; not under test
+log_info() { :; }; log_ok() { :; }; log_skip() { :; }; log_warn() { :; }; log_step() { :; }
+_deploy_libexec() { :; }
+useradd -m testuser
+# shellcheck disable=SC1091
+source /cervelAI/install/_user.sh
+H=/home/testuser
+grep -qF 'config/cervelAI/env' "$H/.bashrc" && { echo "pre: stock .bashrc already marked"; exit 1; }
+install_configs
+grep -qF 'config/cervelAI/env' "$H/.bashrc" || { echo "run1: stock .bashrc not replaced"; exit 1; }
+[ -e "$H/.config/cervelAI/provisioned" ] || { echo "run1: stamp not written"; exit 1; }
+printf '\n# USER-EDIT\n' >>"$H/.bashrc"
+printf '\n# USER-EDIT\n' >>"$H/AGENTS.md"
+install_configs
+grep -qF 'USER-EDIT' "$H/.bashrc" || { echo "re-run clobbered .bashrc"; exit 1; }
+grep -qF 'USER-EDIT' "$H/AGENTS.md" || { echo "re-run clobbered AGENTS.md"; exit 1; }
+# upgrade path: pre-stamp box (managed file + edit, no stamp) must be preserved + backfilled
+useradd -m olduser
+_user() { printf olduser; }
+install -D -m 644 -o olduser -g olduser /cervelAI/configs/agents/AGENTS.md /home/olduser/AGENTS.md
+printf '\n# OLD-EDIT\n' >>/home/olduser/AGENTS.md
+install_configs
+grep -qF 'OLD-EDIT' /home/olduser/AGENTS.md || { echo "upgrade clobbered AGENTS.md"; exit 1; }
+[ -e /home/olduser/.config/cervelAI/provisioned ] || { echo "upgrade: stamp not backfilled"; exit 1; }
+echo "container: idempotency assertions passed"
+IDEM
+    echo "smoke OK : install_configs preserves edits on re-run + upgrade"
+else
+    echo "smoke FAIL : install_configs idempotency broken"
+    rc=1
+fi
+
 exit "$rc"

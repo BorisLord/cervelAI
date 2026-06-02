@@ -82,6 +82,11 @@ install_agents_md_links() {
         _user_bash "command -v $bin" &>/dev/null || continue
         rel="${_AGENT_MD_PATH[$bin]}"
         target="$home/$rel"
+        # Idempotent re-run: don't clobber an existing link or a user's own per-agent file.
+        if [[ -e "$target" || -L "$target" ]]; then
+            log_skip "kept ~/$rel (re-run safe)"
+            continue
+        fi
         run install -d -m 755 -o "$u" -g "$u" "$(dirname "$target")"
         run sudo -u "$u" ln -sf "$src" "$target"
         log_ok "linked ~/$rel → ~/AGENTS.md"

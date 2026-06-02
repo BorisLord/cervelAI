@@ -36,8 +36,12 @@ install_runtimes_pnpm_config() {
     local src_ws="$CONFIGS_DIR/pnpm/pnpm-workspace.yaml"
     if [[ -r "$src_ws" ]]; then
         run install -d -m 755 -o "$u" -g "$u" "$pnpm_home"
-        run install -D -m 644 -o "$u" -g "$u" "$src_ws" "$pnpm_home/pnpm-workspace.yaml"
-        log_ok "pnpm-workspace.yaml deployed to ~/.local/share/pnpm (pnpm XDG dir)"
+        if [[ -e "$pnpm_home/pnpm-workspace.yaml" ]]; then
+            log_skip "pnpm-workspace.yaml present, keeping current (re-run safe)"
+        else
+            run install -D -m 644 -o "$u" -g "$u" "$src_ws" "$pnpm_home/pnpm-workspace.yaml"
+            log_ok "pnpm-workspace.yaml deployed to ~/.local/share/pnpm (pnpm XDG dir)"
+        fi
     fi
 }
 
