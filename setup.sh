@@ -3,6 +3,11 @@
 
 set -uo pipefail
 export LC_ALL=C # silences perl locale warnings
+# In-flight _user_bash temp script; an EXIT trap removes it so a Ctrl+C can't leave GITHUB_TOKEN on disk.
+_USERBASH_TMP=""
+_cleanup() { [[ -n "$_USERBASH_TMP" ]] && rm -f "$_USERBASH_TMP"; }
+trap '_cleanup' EXIT
+# `exit 130` below also triggers the EXIT trap, so _cleanup runs there too — no need to repeat it.
 trap 'printf "\n[ ABORT ] interrupted (Ctrl+C)\n" >&2; exit 130' INT TERM
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -122,6 +127,7 @@ _user_bash() {
     local u tmp rc
     u="$(_user)"
     tmp="$(mktemp /tmp/cervelai-userbash.XXXXXX)"
+    _USERBASH_TMP="$tmp"
     {
         # shellcheck disable=SC2016
         printf 'export PATH="%s"\n' "$CERVELAI_AGENT_PATH"
@@ -134,6 +140,7 @@ _user_bash() {
     sudo -u "$u" -i bash "$tmp"
     rc=$?
     rm -f "$tmp"
+    _USERBASH_TMP=""
     return "$rc"
 }
 

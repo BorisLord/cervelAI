@@ -19,19 +19,9 @@ run_final_topgrade() {
     soft _user_bash "GIT_TERMINAL_PROMPT=0 topgrade --yes"
 }
 
-# GITHUB_TOKEN is install-only; wipe it at end so runtime access uses `gh auth login` + SSH keys, not a stored token.
+# GITHUB_TOKEN is install-only — passed via env, never written to ~/.config/cervelAI/env. Unset it at the
+# end so runtime access uses `gh auth login` + SSH keys, not a stored token.
 clear_github_token() {
-    ((DRY_RUN)) && {
-        log_skip "clear GITHUB_TOKEN (dryrun)"
-        return 0
-    }
-    local u f
-    u="$(_user)"
-    f="/home/$u/${ENV_FILE_REL}"
-    if [[ -f "$f" ]] && grep -q '^export GITHUB_TOKEN=' "$f"; then
-        run sed -i '/^export GITHUB_TOKEN=/d' "$f"
-        log_ok "removed persisted GITHUB_TOKEN from $f"
-    fi
     unset GITHUB_TOKEN
     log_ok "GITHUB_TOKEN cleared (install-only, not kept on the box)"
 }

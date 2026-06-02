@@ -19,6 +19,10 @@ install_editor_code_server() {
         log_info "(dryrun) would write $cfg (127.0.0.1:8081)"
     else
         pw="$(tr -dc 'a-z0-9' </dev/urandom 2>/dev/null | head -c 24)"
+        if [[ ${#pw} -ne 24 ]]; then
+            log_err "could not generate code-server password (urandom unavailable?), skipping config"
+            return 1
+        fi
         install -d -m 700 -o "$u" -g "$u" "$(dirname "$cfg")"
         cat >"$cfg" <<EOF
 bind-addr: 127.0.0.1:8081
