@@ -35,7 +35,7 @@ printf '  uptime:  %s\n' "${_uptime:-?}"
 printf '\n'
 
 if [ -n "${CERVELAI_CATEGORIES:-}" ]; then
-    printf '── installed categories ──\n  %s\n\n' "$CERVELAI_CATEGORIES"
+    printf '── installed categories ──\n  %s\n\n' "${CERVELAI_CATEGORIES// / · }"
 fi
 
 printf '── %s sessions ──\n' "$_MUX"
@@ -47,12 +47,26 @@ if command -v aoe >/dev/null 2>&1; then
     printf '── aoe sessions ──\n'
     _aoe_sessions=$(aoe list 2>/dev/null | head -10)
     [[ -n "$_aoe_sessions" ]] && printf '%s\n' "$_aoe_sessions" || printf '  (none)\n'
-    printf '\n── aoe dashboard ──\n'
-    _aoe_url=$(aoe url 2>/dev/null)
-    [[ -n "$_aoe_url" ]] && printf '%s\n' "$_aoe_url" || printf '  (aoe-serve.service not running)\n'
-else
-    printf '── aoe ──\n  (not installed)\n'
+    printf '\n'
 fi
+
+# Every installed service that serves a web UI — open these in a browser.
+printf '── dashboards ──\n'
+_dash=0
+if command -v aoe >/dev/null 2>&1; then
+    _dash=1
+    _aoe_url=$(aoe url 2>/dev/null)
+    printf '  aoe          %s\n' "${_aoe_url:-(aoe-serve.service not running)}"
+fi
+if command -v paperclipai >/dev/null 2>&1; then
+    _dash=1
+    printf '  paperclip    http://%s:3100  (first admin: paperclipai auth bootstrap-ceo)\n' "${_ip:-<host-ip>}"
+fi
+if command -v code-server >/dev/null 2>&1; then
+    _dash=1
+    printf '  code-server  http://127.0.0.1:8081  (loopback — tunnel in)\n'
+fi
+((_dash)) || printf '  (none installed)\n'
 printf '\n'
 
 printf '── ntfy (cervel run notifications) ──\n'
@@ -71,7 +85,8 @@ for a in $(cervelai_agent_bins 2>/dev/null); do
     command -v "$a" >/dev/null 2>&1 && _found+=("$a")
 done
 if ((${#_found[@]} > 0)); then
-    printf '  %s\n' "${_found[*]}"
+    _agents="${_found[*]}"
+    printf '  %s\n' "${_agents// / · }"
 else
     printf '  (none installed)\n'
 fi
