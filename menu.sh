@@ -86,6 +86,12 @@ menu_multiplexer_select() {
         none "none (direct shell login, no persistence)" OFF
 }
 
+# Sibling of aoe, not a category: a heavyweight opt-in orchestrator. rc 0 = install. Default No.
+menu_paperclip_confirm() {
+    gum confirm --default=No \
+        "Add Paperclip orchestrator on :3100? (STATEFUL — embedded Postgres + stored secrets)" </dev/tty
+}
+
 menu_runtimes_select() {
     _menu_multi "$1" "Extra runtimes (node/python/pnpm/uv + gcc/g++/make always installed):" \
         c-cpp "C/C++: clang, clang-format/tidy, lld, lldb, cmake, gdb, clangd" OFF \
@@ -280,6 +286,7 @@ menu_summary_confirm() {
         printf '\n──── Selection summary ────\n'
         printf '  Shell:         %s\n' "${CERVELAI_SHELL:-bash}"
         printf '  Multiplexer:   %s\n' "${CERVELAI_MULTIPLEXER:-tmux+aoe}"
+        [[ "${CERVELAI_PAPERCLIP:-0}" == "1" ]] && printf '  Paperclip:     on (:3100, stateful)\n'
         printf '  Categories:    %s\n' "${selected[*]:-(none beyond mandatory)}"
         [[ -n "${CERVELAI_AGENTS:-}" ]] && printf '  Agents:        %s\n' "$CERVELAI_AGENTS"
         [[ -n "${CERVELAI_TOKEN_SAVERS:-}" ]] && printf '  Token-saver:   %s\n' "$CERVELAI_TOKEN_SAVERS"

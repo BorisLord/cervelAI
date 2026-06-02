@@ -318,6 +318,10 @@ main() {
             CERVELAI_MULTIPLEXER="$mp_sel"
             export CERVELAI_MULTIPLEXER
         fi
+        if menu_paperclip_confirm; then
+            CERVELAI_PAPERCLIP=1
+            export CERVELAI_PAPERCLIP
+        fi
 
         while :; do
             if menu_select selected; then
@@ -521,6 +525,12 @@ main() {
 
     log_step "aoe orchestrator (post-dispatch)"
     install_shell_aoe_post_dispatch
+
+    # paperclip: opt-in sibling of aoe (stateful, off unless CERVELAI_PAPERCLIP=1 or the menu toggle).
+    if [[ "${CERVELAI_PAPERCLIP:-0}" == "1" ]]; then
+        log_step "paperclip orchestrator (opt-in)"
+        source_install paperclip && install_paperclip_all
+    fi
 
     install_configs
     source_install agents && install_agents_md_links

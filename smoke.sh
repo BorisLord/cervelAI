@@ -19,7 +19,7 @@ if (
     done
     declare -F \
         menu_select \
-        menu_shell_select menu_multiplexer_select \
+        menu_shell_select menu_multiplexer_select menu_paperclip_confirm \
         menu_runtimes_select menu_agents_select menu_editor_select \
         menu_token_savers_select menu_agent_memory_select menu_ai_tools_select \
         menu_data_stack_select menu_containers_select menu_k8s_stack_select \

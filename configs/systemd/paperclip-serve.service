@@ -1,0 +1,22 @@
+[Unit]
+Description=Paperclip AI agent orchestrator (LAN)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# PATH includes mise shims so paperclipai (and the agent CLIs its adapters spawn) are found.
+Environment="PATH=%h/.local/bin:%h/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin"
+Environment="NODE_ENV=production"
+# mise shim so `mise upgrade paperclipai` takes effect on next restart.
+ExecStart=%h/.local/share/mise/shims/paperclipai run
+Restart=on-failure
+RestartSec=5s
+
+NoNewPrivileges=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+[Install]
+WantedBy=default.target

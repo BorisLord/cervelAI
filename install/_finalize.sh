@@ -45,6 +45,7 @@ write_manifest() {
     {
         printf 'CERVELAI_SHELL=%q\n' "${CERVELAI_SHELL:-bash}"
         printf 'CERVELAI_MULTIPLEXER=%q\n' "${CERVELAI_MULTIPLEXER:-tmux+aoe}"
+        printf 'CERVELAI_PAPERCLIP=%q\n' "${CERVELAI_PAPERCLIP:-0}"
         printf 'CERVELAI_CATEGORIES=%q\n' "${selected[*]:-}"
         printf 'CERVELAI_AGENTS=%q\n' "${CERVELAI_AGENTS:-}"
         printf 'CERVELAI_EDITOR=%q\n' "${CERVELAI_EDITOR:-}"

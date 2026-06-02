@@ -60,12 +60,14 @@ Everything else is native — **`aoe`** (Agent of Empires) is the centerpiece: i
 - **Universal LSPs** — bash, yaml, json, taplo, marksman, typescript, basedpyright
 - **Git** — gh, delta
 
-That alone lets an agent clone, read, search, edit and run code. **Then add the tools you actually want**, selected à la carte from a menu — **15 opt-in categories**, sensible defaults pre-selected, zero bloat:
+That alone lets an agent clone, read, search, edit and run code. **Then add the tools you actually want**, selected à la carte from a menu — **16 opt-in categories**, sensible defaults pre-selected, zero bloat:
 
 <details>
 <summary>The 15 categories</summary>
 
 `agents` · `token-savers` · `agent-memory` · `usage-trackers` · `ai-tools` · `editor` · `runtimes` · `containers` · `k8s-stack` · `cloud-stack` · `data-stack` · `cli-extras` · `security-tools` · `git-tools` · `blockchain`
+
+> Not a category: **`paperclip`** is an opt-in sibling of `aoe` — a **stateful** orchestrator (embedded Postgres + a generated auth secret) that runs agents as a "company" on `:3100`. It sits next to the multiplexer choice as a toggle (default OFF); enable it only if you want that state on the box, via the menu or `CERVELAI_PAPERCLIP=1`.
 
 The menu shows the tools in each. After install, **`mise ls` is the source of truth** for what's there. Add anything later with `mise use -g <tool>`.
 </details>
