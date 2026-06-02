@@ -4,6 +4,12 @@
 [theme]
 name = "empire"
 
+# "auto" backs off when a ~/.tmux.conf exists (cervelAI ships one) → force on, else the
+# empire status bar and agents' OSC52 clipboard pass-through never apply to aoe sessions.
+[tmux]
+status_bar = "enabled"
+clipboard = "enabled"
+
 # Native mobile/desktop rendering of agent state (plan, tool calls, swipe-to-approve).
 # Needs Node >= 20 on PATH (baseline runtime); ACP agents render natively, others fall back to tmux.
 [cockpit]

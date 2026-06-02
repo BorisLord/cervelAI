@@ -15,12 +15,13 @@ if [ "$(id -u)" = "0" ]; then
     return 0
 fi
 
-# exec replaces this shell, so .bashrc is skipped; source env manually.
+# Sourced before the multiplexer so panes inherit NTFY_* (the $TMUX guard above skips this inside panes).
 # shellcheck source=/dev/null
 [ -r "$HOME/.config/cervelAI/env" ] && . "$HOME/.config/cervelAI/env"
 
+# No exec: detaching (prefix d) returns to this shell instead of closing the SSH connection.
 if command -v tmux >/dev/null 2>&1; then
-    exec tmux new-session -A -s shell
+    tmux new-session -A -s shell
 elif command -v zellij >/dev/null 2>&1; then
-    exec zellij attach -c shell
+    zellij attach -c shell
 fi
