@@ -551,7 +551,10 @@ main() {
         log_warn "$SETUP_ERRORS command(s) failed during install, see the [WARN] lines above"
     fi
     print_final_summary
-    ((SETUP_ERRORS == 0))
+    local final_rc=0
+    ((SETUP_ERRORS == 0)) || final_rc=1
+    handoff_to_agent
+    return "$final_rc"
 }
 
 source_install() {

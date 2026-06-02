@@ -56,9 +56,24 @@ print_final_summary() {
 
   cervelAI is ready on ${u}@$(hostname) (${ip:-<detect: ip a>})
 
-  → run  cervel status  for the full picture — stack, sessions, endpoints
+  Now switching you to the '${u}' user. Once there, run:
+
+      cervel status      stack · sessions · dashboards · endpoints
 
 EOF
+}
+
+# Land the operator on the agent user after a direct install, where cervel + the toolchain are on
+# PATH (root has neither). Only on a real terminal: the LXC push path runs setup via 'pct exec'
+# without a PTY and must just return so cervelAI-lxc.sh can print its own summary.
+handoff_to_agent() {
+    ((DRY_RUN)) && return 0
+    [ -t 0 ] && [ -t 1 ] || return 0
+    [ "$(id -u)" -eq 0 ] || return 0
+    local u
+    u="$(_user)"
+    id "$u" >/dev/null 2>&1 || return 0
+    su - "$u"
 }
 
 finalize() {
