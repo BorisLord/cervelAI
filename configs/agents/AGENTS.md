@@ -1,76 +1,43 @@
-# AGENTS.md — cervelAI host
+Debian/Ubuntu host pre-loaded for AI coding agents (cervelAI). A project's own `AGENTS.md` overrides this. This is a **starter** — customize it; project build/test/style belong in a project-level `AGENTS.md`.
 
-Debian/Ubuntu host pre-loaded for AI coding agents. Project-local `AGENTS.md` overrides this.
+## Token-saver — prefix shell commands
 
-## Prefix shell commands with the installed token-saver
+cervelAI installs **`snip`** or **`rtk`** (chosen at install): a PreToolUse filter that strips ~70-90 % of verbose CLI output before it reaches you. Detect once per session with `command -v snip || command -v rtk`, then prefix every command (`snip <cmd>`). Passthrough when no filter matches (always safe); drop the prefix if it fails or hides info you need.
 
-cervelAI installs **`snip`** OR **`rtk`** (single-select at install) — a PreToolUse filter that strips ~70-90 % of verbose output (git, cargo, docker, kubectl, ls, find, …) before it reaches you.
-
-```bash
-snip <cmd>   # or `rtk <cmd>` — whichever is on PATH
-```
-
-Detect once per session: `command -v snip || command -v rtk`. Pass-through if no filter matches, always safe. Retry without the prefix if it fails or returns insufficient info.
-
-## Use agent-aware tools, not legacy ones
-
-Gitignore-aware, less noise, more signal:
+## Prefer agent-aware tools (gitignore-aware, less noise)
 
 | Use | Not |
 |---|---|
-| `rg <pattern>` | `grep -r` |
-| `fd <pattern>` | `find . -name` |
-| `jq` / `gron` / `yq` / `dasel` | `python -c "import json/yaml..."` |
+| `rg` | `grep -r` |
+| `fd` | `find . -name` |
+| `jq` / `gron` / `yq` / `dasel` | `python -c "import json/yaml…"` |
 | Read / Edit / Write tools | `cat`, `head`, `tail`, `sed -i`, `echo > file` |
 
-`bat`, `delta` only when piping to the user's terminal (they add ANSI/colors).
+`bat`/`delta` only when piping to the user's terminal (they add ANSI). Reference `file:line` rather than pasting code that goes stale.
 
-## Discover
+## Discover & run
 
 ```bash
-mise ls                # every managed tool
-cervel ls              # installed AI agents
-cervel status          # host + agents + stack + sessions
-command -v <tool>      # single binary check
-<tool> --help          # most tools have it
+mise ls            # installed tools — the source of truth (baseline + opt-in)
+cervel ls/status   # AI agents on PATH · host + stack + sessions
+cervel run <cmd>   # wrap a long job, ntfy push on exit
+cervel help        # tmux / aoe / cervel cheatsheet
+aoe                # parallel agents in tmux + web dashboard (`aoe url`)
+topgrade           # update mise + user-space (apt/system = root's job)
+<tool> --help      # confirm flags before non-trivial use
 ```
 
-## Mandatory baseline (always installed)
+Baseline always present: C/C++ (gcc/g++/make), node/pnpm/python/uv (+ tsc/tsx/ruff), rg/fd/fzf/jq/yq/dasel/gron/ast-grep/bat, gh/delta, LSPs (bash/yaml/taplo/marksman/typescript/json/basedpyright). Everything else is opt-in.
 
-- **C/C++ base**: gcc, g++, make
-- **Runtimes core**: node lts, pnpm, tsc, tsx, python, ruff, uv
-- **Search & parsing**: ripgrep, fd, fzf, jq, yq, dasel, gron, ast-grep, bat
-- **Git**: gh, delta
-- **Universal LSPs**: bash, yaml, taplo, marksman, typescript, json, basedpyright
-- **Update**: topgrade
+## Add a tool
 
-Everything else is opt-in (`mise ls` for the actual catalog).
+`mise use -g <spec>`, in this order: `aqua:<o>/<r>` (~3500 precompiled) → `github:<o>/<r>` (`[bin=<name>]` if needed) → `npm:<pkg>` → `pipx:<pkg>` → `apt` (OS-level only: daemons, C/C++ toolchain). Avoid `go:` / `cargo:` — they compile from source.
 
-## cervelAI helpers
+## This file is shared across agents
 
-- `cervel run <cmd>` — wrap a long-running command, ntfy push on exit
-- `cervel help` — tmux/aoe/cervel cheatsheet
-- `cervel ls` / `cervel status` — discoverability
-- `aoe` — parallel agents in tmux + web dashboard
-- `topgrade` — update mise + user-space (apt/system updates are root's job)
+Symlinked at install to each installed agent's prompt path — edit `~/AGENTS.md`, all pick it up:
 
-## Adding a tool
-
-Order:
-
-1. `mise use -g aqua:<owner>/<repo>` — ~3500 precompiled tools
-2. `mise use -g github:<owner>/<repo>` — release asset (`[bin=<name>]` if needed)
-3. `mise use -g npm:<pkg>` — JS via pnpm
-4. `mise use -g pipx:<pkg>` — Python wheels via uv
-5. `apt install` — OS-level only (daemons, C/C++ toolchain)
-
-Avoid `go:` / `cargo:` backends — they compile from source.
-
-## Per-editor prompt paths
-
-This file (`~/AGENTS.md`) is symlinked at install time to each installed agent's prompt location — edit `~/AGENTS.md`, every agent picks it up:
-
-| Agent | Path (symlinked → ~/AGENTS.md) |
+| Agent | Path |
 |---|---|
 | Claude Code | `~/.claude/CLAUDE.md` |
 | Codex | `~/.codex/AGENTS.md` |
@@ -81,18 +48,10 @@ This file (`~/AGENTS.md`) is symlinked at install time to each installed agent's
 | Mistral Vibe | `~/.vibe/AGENTS.md` |
 | Goose | `~/.config/goose/.goosehints` |
 | Continue | `~/.continue/rules/agents.md` |
-| Others (Crush, Qwen, DeepSeek, Factory Droid, Hermes, Kiro) | check their docs and add a symlink manually |
+| Crush · Qwen · DeepSeek · Droid · Hermes · Kiro | check docs, symlink manually |
 
-cervelAI's symlinks cover only the prompt file. To sync MCP servers, skills, slash commands across agents, install via `ai-tools` category:
+Symlinks cover only the prompt file. For MCP / skills / slash-command sync across agents, the `ai-tools` **`agents`** package ([amtiYo/agents](https://github.com/amtiYo/agents)) is default-on. Format ref: [AGENTS.md](https://agents.md/).
 
-- **`agents`** ([amtiYo/agents](https://github.com/amtiYo/agents)) — canonical AGENTS.md + skills + MCP sync across Codex/Claude/Gemini/Cursor/Copilot/OpenCode/Windsurf/Junie. Default-on in cervelAI.
+## Verify, don't guess
 
-Reference: [AGENTS.md](https://agents.md/) — Linux Foundation standard format.
-
-## Verify before acting
-
-CLI flags, package names and APIs drift between versions. Before running anything non-trivial, confirm with `<tool> --help`, `man <tool>`, or the official docs (use WebFetch on the project homepage if needed). Trust the source over memory — "I think this flag exists" is never enough.
-
----
-
-Flag this file if the human hasn't customized it yet — a starter is fine, project-specific build/test/style belongs in a project-level `AGENTS.md`.
+CLI flags, package names and APIs drift between versions. Confirm with `<tool> --help`, `man`, or the official docs (WebFetch the homepage) before anything non-trivial — "I think this flag exists" is never enough.
