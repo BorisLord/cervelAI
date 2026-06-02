@@ -23,13 +23,12 @@ install_paperclip_cli() {
         log_skip "paperclipai already on PATH"
         return 0
     fi
-    # npm 11 quarantines dependency lifecycle scripts; paperclipai needs them to build its native
-    # deps (better-sqlite3, @embedded-postgres, sharp, esbuild) — on install AND on later
-    # `mise upgrade`, so this is set persistently on purpose (per-install scoping would break
-    # auto-updates). Low risk: this box's no-sudo agent already runs untrusted agent code by design,
-    # so npm's script quarantine is not a meaningful boundary; the setting touches the agent's npm only.
-    run _user_bash "npm config set dangerously-allow-all-scripts true"
-    mise_npm "paperclipai"
+    # Install with npm, NOT cervelAI's default pnpm. paperclipai pulls native modules — sqlite3 (its
+    # install script fetches an N-API prebuilt via prebuild-install) and @embedded-postgres (postinstall
+    # hydrates the bundled Postgres binary). pnpm 11 blocks dependency build scripts by default, so the
+    # bindings end up missing and the server can't start; npm runs them, so the native deps are ready.
+    # Same MISE_NPM_PACKAGE_MANAGER=npm escape hatch the pnpm bootstrap uses in install/runtimes.sh.
+    run _user_bash "MISE_NPM_PACKAGE_MANAGER=npm mise use -g npm:paperclipai@latest"
 }
 
 # Authenticated/private + bind lan: reachable on the LAN, login required (Better Auth). Idempotent —
