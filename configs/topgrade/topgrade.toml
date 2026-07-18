@@ -9,3 +9,9 @@ disable = [
     "pip3",  # mise:pipx backend covers it
     "yarn",  # not used
 ]
+
+# hermes is installed via curl|bash (not mise/apt) AND has no auto-updater, so topgrade would never
+# refresh it — pull its updates here. Guarded so it's a no-op when hermes isn't installed.
+# (claude self-updates on its own; codex/opencode/etc. are mise-managed — no entry needed.)
+[commands]
+"hermes agent" = "if command -v hermes >/dev/null 2>&1; then hermes update --yes; fi"
